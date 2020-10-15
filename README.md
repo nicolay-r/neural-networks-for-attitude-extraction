@@ -10,7 +10,7 @@ In order to increase the size of a train collection, it is possible to include *
 * Embeddings
     * RusVectores [[news-w2v-download]](http://rusvectores.org/static/models/rusvectores2/news_mystem_skipgram_1000_20_2015.bin.gz);
         
-## How to run exepriment
+## How to run exeperiment
 
 Using `run_serialize_data.sh` in order to prepare data for a particular experiment, for a certain versions of 
 RuAttiutdes and RuSentrel collections, appropriate input format, etc. 
@@ -21,19 +21,18 @@ Using `run_train_classifier.sh` to run an experiment in following formats:
 * **[RuAttitudes](https://github.com/nicolay-r/RuAttitudes)** collection -- distant supervision application for models pretraining;
 * **RuSentRel with RuAttitudes** -- is a combined training, with an evaluation process within RuAttitudes collection.
 
-## Model options
+### Input formats
 
-Supporting the following input formats:
 * **Single instance** (Single context) 
-* **Multi instance** (Multiple contexts, MaxPooling over multipe sentences by default) [TODO.  Provide ref]
+* **Multi instance** (Multiple contexts, MaxPooling over multiple sentences by default) [TODO.  Provide ref]
+* **Attention-based Multi instance** [TODO. Provide ref]
 
-## Evaluation formats
+### Evaluation formats
 
-Evaluation formats:
 * Fixed separation of RuSentRel 
 * k-Fold cross validation.
 
-## Bechmark results 
+## Benchmark results 
 
 ## References
 > TODO. Provide references for such experiments, prior models.
