@@ -1,0 +1,24 @@
+import tensorflow as tf
+from arekit.contrib.networks.engine import ExperimentEngine
+from arekit.contrib.networks.context.architectures.pcnn import PiecewiseCNN
+from arekit.contrib.networks.core.feeding.bags.collection.single import SingleBagsCollection
+from arekit.contrib.networks.context.configurations.cnn import CNNConfig
+from rusentrel.classic.common import classic_ctx_common_config_settings
+
+
+def ctx_pcnn_custom_config(config):
+    assert(isinstance(config, CNNConfig))
+    config.modify_bags_per_minibatch(2)
+    config.modify_weight_initializer(tf.contrib.layers.xavier_initializer())
+
+
+def run_testing_pcnn(experiment, load_model, custom_callback_func):
+    ExperimentEngine.run_testing(
+        experiment=experiment,
+        load_model=load_model,
+        create_network=PiecewiseCNN,
+        create_config=CNNConfig,
+        bags_collection_type=SingleBagsCollection,
+        common_callback_modification_func=custom_callback_func,
+        custom_config_modification_func=ctx_pcnn_custom_config,
+        common_config_modification_func=classic_ctx_common_config_settings)
