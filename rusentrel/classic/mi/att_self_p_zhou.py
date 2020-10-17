@@ -4,22 +4,21 @@ from arekit.contrib.networks.context.architectures.att_self_p_zhou_bilstm import
 from arekit.contrib.networks.multi.configurations.max_pooling import MaxPoolingOverSentencesConfig
 from arekit.contrib.networks.context.configurations.att_self_p_zhou_bilstm import AttentionSelfPZhouBiLSTMConfig
 from arekit.contrib.networks.multi.architectures.max_pooling import MaxPoolingOverSentences
-from rusentrel.classic.ctx.att_self_p_zhou import ctx_att_bilstm_custom_config
-from rusentrel.classic.common import classic_mi_common_config_settings, classic_common_callback_modification_func
+from rusentrel.classic.ctx.att_self_p_zhou import ctx_att_bilstm_p_zhou_custom_config
+from rusentrel.classic.common import classic_mi_common_config_settings
 
 
 def mi_att_bilstm_custom_config(config):
-    ctx_att_bilstm_custom_config(config.ContextConfig)
+    ctx_att_bilstm_p_zhou_custom_config(config.ContextConfig)
     config.fix_context_parameters()
 
 
 def run_mi_testing_att_bilstm_p_zhou(experiment,
                                      load_model,
+                                     custom_callback_func,
                                      network_classtype=MaxPoolingOverSentences,
                                      config_classtype=MaxPoolingOverSentencesConfig,
-                                     custom_config_func=mi_att_bilstm_custom_config,
-                                     custom_callback_func=classic_common_callback_modification_func):
-
+                                     custom_config_func=mi_att_bilstm_custom_config):
     ExperimentEngine.run_testing(
         experiment=experiment,
         load_model=load_model,

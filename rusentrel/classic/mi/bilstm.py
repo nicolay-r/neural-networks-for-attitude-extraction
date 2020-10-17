@@ -5,7 +5,7 @@ from arekit.contrib.networks.context.configurations.bilstm import BiLSTMConfig
 from arekit.contrib.networks.multi.architectures.max_pooling import MaxPoolingOverSentences
 from arekit.contrib.networks.context.architectures.bilstm import BiLSTM
 from rusentrel.classic.ctx.bilstm import ctx_bilstm_custom_config
-from rusentrel.classic.common import classic_common_callback_modification_func, classic_mi_common_config_settings
+from rusentrel.classic.common import classic_mi_common_config_settings
 
 
 def mi_bilstm_custom_config(config):
@@ -15,10 +15,10 @@ def mi_bilstm_custom_config(config):
 
 def run_mi_testing_bilstm(experiment,
                           load_model,
+                          custom_callback_func,
                           network_classtype=MaxPoolingOverSentences,
                           config_classtype=MaxPoolingOverSentencesConfig,
-                          custom_config_func=mi_bilstm_custom_config,
-                          custom_callback_func=classic_common_callback_modification_func):
+                          custom_config_func=mi_bilstm_custom_config):
 
     ExperimentEngine.run_testing(
         load_model=load_model,

@@ -3,7 +3,7 @@ from arekit.contrib.networks.context.configurations.att_self_z_yang_bilstm impor
 from arekit.contrib.networks.core.feeding.bags.collection.single import SingleBagsCollection
 from arekit.contrib.networks.engine import ExperimentEngine
 from rusentrel.rusentrel_ds.common import ds_ctx_common_config_settings
-from rusentrel.classic.ctx.att_self_z_yang import ctx_att_hidden_zyang_bilstm_custom_config
+from rusentrel.classic.ctx.att_self_z_yang import ctx_att_bilstm_z_yang_custom_config
 
 
 def run_testing_ds_att_hidden_zyang_bilstm(experiment, load_model, custom_callback_func):
@@ -14,4 +14,4 @@ def run_testing_ds_att_hidden_zyang_bilstm(experiment, load_model, custom_callba
                                  bags_collection_type=SingleBagsCollection,
                                  common_config_modification_func=ds_ctx_common_config_settings,
                                  common_callback_modification_func=custom_callback_func,
-                                 custom_config_modification_func=ctx_att_hidden_zyang_bilstm_custom_config)
+                                 custom_config_modification_func=ctx_att_bilstm_z_yang_custom_config)

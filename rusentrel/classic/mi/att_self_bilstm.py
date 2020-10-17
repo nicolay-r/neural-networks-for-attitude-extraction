@@ -19,10 +19,10 @@ def mi_self_att_bilstm_custom_config(config):
 def run_mi_testing_self_att_bilstm(
         experiment,
         load_model,
+        custom_callback_func,
         network_classtype=MaxPoolingOverSentences,
         config_classtype=MaxPoolingOverSentencesConfig,
-        custom_config_func=mi_self_att_bilstm_custom_config,
-        custom_callback_func=classic_common_callback_modification_func):
+        custom_config_func=mi_self_att_bilstm_custom_config):
 
     ExperimentEngine.run_testing(
         experiment=experiment,

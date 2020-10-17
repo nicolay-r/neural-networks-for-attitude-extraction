@@ -1,5 +1,4 @@
 from arekit.contrib.networks.context.configurations.rnn import RNNConfig
-from arekit.contrib.networks.context.architectures.rnn import RNN
 from arekit.contrib.networks.engine import ExperimentEngine
 from arekit.contrib.networks.tf_helpers.cell_types import CellTypes
 from arekit.contrib.networks.core.feeding.bags.collection.single import SingleBagsCollection
@@ -16,13 +15,13 @@ def ctx_lstm_custom_config(config):
     config.modify_terms_per_context(25)
 
 
-def run_testing_lstm(experiment, load_model, custom_callback_func):
+def run_testing_lstm(experiment, load_model, custom_callback_func, create_network, create_config, custom_config):
     ExperimentEngine.run_testing(
         load_model=load_model,
         experiment=experiment,
-        create_network=RNN,
-        create_config=RNNConfig,
+        create_network=create_network,
+        create_config=create_config,
         bags_collection_type=SingleBagsCollection,
         common_callback_modification_func=custom_callback_func,
-        custom_config_modification_func=ctx_lstm_custom_config,
+        custom_config_modification_func=custom_config,
         common_config_modification_func=classic_ctx_common_config_settings)
