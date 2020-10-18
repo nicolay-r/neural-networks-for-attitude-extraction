@@ -1,9 +1,7 @@
-from arekit.contrib.experiments.rusentrel.experiment import RuSentRelExperiment
 from arekit.contrib.networks.context.configurations.base.base import DefaultNetworkConfig
 from arekit.contrib.networks.multi.configurations.base import BaseMultiInstanceConfig
 from rusentrel.default import MI_CONTEXTS_PER_OPINION
 from callback import CustomCallback
-from io_utils import RuSentRelBasedExperimentsIOUtils
 
 
 def classic_ctx_common_config_settings(config):
@@ -40,10 +38,3 @@ def classic_common_callback_modification_func(callback):
 
     callback.set_test_on_epochs(range(0, 151, 10))
     callback.set_key_stop_training_by_cost(False)
-
-
-def create_rusentrel_experiment(data_io):
-    assert(isinstance(data_io, RuSentRelBasedExperimentsIOUtils))
-    return RuSentRelExperiment(data_io=data_io,
-                               version=data_io.RuSentRelVersion,
-                               prepare_model_root=True)

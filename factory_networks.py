@@ -15,48 +15,51 @@ from arekit.contrib.networks.context.configurations.cnn import CNNConfig
 from arekit.contrib.networks.context.configurations.rcnn import RCNNConfig
 from arekit.contrib.networks.context.configurations.rnn import RNNConfig
 from arekit.contrib.networks.context.configurations.self_att_bilstm import SelfAttentionBiLSTMConfig
-from rusentrel.classic.ctx.att_self_bilstm import ctx_self_att_bilstm_custom_config
-from rusentrel.classic.ctx.att_self_p_zhou import ctx_att_bilstm_p_zhou_custom_config
-from rusentrel.classic.ctx.att_self_z_yang import ctx_att_bilstm_z_yang_custom_config
-from rusentrel.classic.ctx.bilstm import ctx_bilstm_custom_config
-from rusentrel.classic.ctx.cnn import ctx_cnn_custom_config
-from rusentrel.classic.ctx.lstm import ctx_lstm_custom_config
-from rusentrel.classic.ctx.pcnn import ctx_pcnn_custom_config
-from rusentrel.classic.ctx.rcnn import ctx_rcnn_custom_config
-from rusentrel.classic.ctx.rcnn_att_p_zhou import ctx_rcnn_p_zhou_custom_config
-from rusentrel.classic.ctx.rcnn_att_z_yang import ctx_rcnn_z_yang_custom_config
+from arekit.contrib.networks.core.feeding.bags.collection.multi import MultiInstanceBagsCollection
+from arekit.contrib.networks.core.feeding.bags.collection.single import SingleBagsCollection
+from arekit.contrib.networks.multi.architectures.att_self import AttSelfOverSentences
+from arekit.contrib.networks.multi.architectures.base.base import BaseMultiInstanceNeuralNetwork
+from arekit.contrib.networks.multi.architectures.max_pooling import MaxPoolingOverSentences
+from arekit.contrib.networks.multi.configurations.att_self import AttSelfOverSentencesConfig
+from arekit.contrib.networks.multi.configurations.base import BaseMultiInstanceConfig
+from arekit.contrib.networks.multi.configurations.max_pooling import MaxPoolingOverSentencesConfig
 from rusentrel.ctx_names import ModelNames
 
-
-def get_custom_config(model_name, model_input_type):
-    assert(isinstance(model_input_type, str))
-
-    model_names = ModelNames()
-    if model_name == model_names.SelfAttentionBiLSTM:
-        return ctx_self_att_bilstm_custom_config
-    if model_name == model_names.AttSelfPZhouBiLSTM:
-        return ctx_att_bilstm_p_zhou_custom_config
-    if model_name == model_names.AttSelfZYangBiLSTM:
-        return ctx_att_bilstm_z_yang_custom_config
-    if model_name == model_names.BiLSTM:
-        return ctx_bilstm_custom_config
-    if model_name == model_names.CNN:
-        return ctx_cnn_custom_config
-    if model_name == model_names.LSTM:
-        return ctx_lstm_custom_config
-    if model_name == model_names.PCNN:
-        return ctx_pcnn_custom_config
-    if model_name == model_names.RCNN:
-        raise ctx_rcnn_custom_config
-    if model_name == model_names.RCNNAttZYang:
-        return ctx_rcnn_z_yang_custom_config
-    if model_name == model_names.RCNNAttPZhou:
-        raise ctx_rcnn_p_zhou_custom_config
-
-    raise NotImplementedError()
+INPUT_TYPE_SINGLE_INSTANCE = 'ctx'
+INPUT_TYPE_MULTI_INSTANCE = 'mi'
+INPUT_TYPE_MULTI_INSTANCE_WITH_ATTENTION = 'mi'
 
 
-def get_network_with_config(model_name):
+def compose_network_and_network_config_funcs(model_name, model_input_type):
+    assert(isinstance(model_name, unicode))
+    assert(isinstance(model_input_type, unicode))
+
+    ctx_network_func, ctx_config_func = __get_network_with_config_types(model_name)
+
+    if model_input_type == INPUT_TYPE_SINGLE_INSTANCE:
+        # In case of a single instance model, there is no need to perform extra wrapping
+        # since all the base models assumes to work with a single context (input).
+        return ctx_network_func, ctx_config_func
+
+    # Compose multi-instance neural network and related configuration
+    # in a form of a wrapper over context-based neural network and configuration respectively.
+    mi_network, mi_config = __get_mi_network_with_config(model_input_type)
+    assert(issubclass(mi_network, BaseMultiInstanceNeuralNetwork))
+    assert(issubclass(mi_config, BaseMultiInstanceConfig))
+    return lambda: mi_network(context_network=ctx_network_func()), \
+           lambda: mi_config(context_config=ctx_config_func())
+
+
+# region private functions
+
+def __get_mi_network_with_config(model_input_type):
+    if model_input_type == INPUT_TYPE_MULTI_INSTANCE:
+        return MaxPoolingOverSentences, MaxPoolingOverSentencesConfig
+    if model_input_type == INPUT_TYPE_MULTI_INSTANCE_WITH_ATTENTION:
+        return AttSelfOverSentences, AttSelfOverSentencesConfig
+
+
+def __get_network_with_config_types(model_name):
     assert(isinstance(model_name, str))
 
     model_names = ModelNames()
@@ -80,3 +83,15 @@ def get_network_with_config(model_name):
         return AttentionSelfZYangRCNN, RCNNConfig
     if model_name == model_names.RCNNAttPZhou:
         return AttentionSelfPZhouRCNN, RCNNConfig
+
+# endregion
+
+def create_bags_collection_type(model_input_type):
+    assert(isinstance(model_input_type, unicode))
+
+    if model_input_type == INPUT_TYPE_SINGLE_INSTANCE:
+        return SingleBagsCollection
+    if model_input_type == INPUT_TYPE_SINGLE_INSTANCE:
+        return MultiInstanceBagsCollection
+    if model_input_type == INPUT_TYPE_MULTI_INSTANCE_WITH_ATTENTION:
+        return MultiInstanceBagsCollection

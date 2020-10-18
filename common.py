@@ -2,10 +2,11 @@ from arekit.common.experiment.scales.three import ThreeLabelScaler
 from arekit.common.experiment.scales.two import TwoLabelScaler
 from arekit.contrib.experiments.ruattitudes.experiment import RuAttitudesExperiment
 from arekit.contrib.experiments.rusentrel.experiment import RuSentRelExperiment
+from arekit.contrib.experiments.rusentrel_ds.experiment import RuSentRelWithRuAttitudesExperiment
 from args.experiment import SUPERVISED_LEARNING, SUPERVISED_LEARNING_WITH_DS, DISTANT_SUPERVISION
 from io_utils import RuSentRelBasedExperimentsIOUtils
 from rusentrel.base import data_io_post_initialization
-from rusentrel.rusentrel_ds.common import create_rsr_ds_experiment, DS_NAME_PREFIX
+from rusentrel.rusentrel_ds.common import DS_NAME_PREFIX
 
 
 class Common:
@@ -34,7 +35,10 @@ class Common:
 
         if exp_type == SUPERVISED_LEARNING_WITH_DS:
             # Supervised learning with an application of distant supervision in training process.
-            return create_rsr_ds_experiment(data_io=data_io, version=ra_version)
+            return RuSentRelWithRuAttitudesExperiment(version=ra_version,
+                                                      data_io=data_io,
+                                                      rusentrel_version=data_io.RuSentRelVersion,
+                                                      prepare_model_root=True)
 
         if exp_type == DISTANT_SUPERVISION:
             # Application of the distant supervision only (assumes for pretraining purposes)
