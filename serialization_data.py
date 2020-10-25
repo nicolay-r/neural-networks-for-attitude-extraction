@@ -1,7 +1,6 @@
 import logging
 from os import path
 from os.path import dirname, join
-from model_io import CustomNeuralNetworkIO
 from embeddings.rusvectores import RusvectoresEmbedding
 
 from arekit.common.experiment.cv.sentence_based import SentenceBasedCVFolding
@@ -26,8 +25,7 @@ class RuSentRelSerializationData(NetworkSerializationData):
     def __init__(self,
                  labels_scaler,
                  frames_version=RuSentiFramesVersions.V10,
-                 rusentrel_version=RuSentRelVersions.V11,
-                 model_states_dir=None):
+                 rusentrel_version=RuSentRelVersions.V11):
         assert(isinstance(rusentrel_version, RuSentRelVersions))
         assert(isinstance(frames_version, RuSentiFramesVersions))
         super(RuSentRelSerializationData, self).__init__(labels_scaler)
@@ -45,7 +43,6 @@ class RuSentRelSerializationData(NetworkSerializationData):
             variants_with_id=self.__frames_collection.iter_frame_id_and_variants(),
             stemmer=self.__stemmer)
 
-        self.__model_io = CustomNeuralNetworkIO(model_states_dir)
         self.__str_entity_formatter = StringSimpleMaskedEntityFormatter()
         self.__word_embedding = None
         self.__sources_dir = None
@@ -63,10 +60,6 @@ class RuSentRelSerializationData(NetworkSerializationData):
     @property
     def Stemmer(self):
         return self.__stemmer
-
-    @property
-    def ModelIO(self):
-        return self.__model_io
 
     @property
     def SynonymsCollection(self):

@@ -1,4 +1,6 @@
 import argparse
+
+from arekit.contrib.networks.core.io_utils import NetworkIOUtils
 from common import Common
 
 from arekit.contrib.networks.run_serializer import NetworksExperimentInputSerializer
@@ -28,19 +30,21 @@ if __name__ == "__main__":
     ra_version = RuAttitudesVersionArg.read_argument(args)
     cv_count = CvCountArg.read_argument(args)
     labels_count = LabelsCountArg.read_argument(args)
+    io_utils = NetworkIOUtils
 
     # Preparing necesary structures for further initializations.
     labels_scaler = Common.create_labels_scaler(labels_count)
     experiment_data = RuSentRelSerializationData(labels_scaler=labels_scaler)
+
     experiment = Common.create_experiment(exp_type=exp_type,
                                           experiment_data=experiment_data,
                                           cv_count=cv_count,
-                                          model_name=u"NONAME",
                                           rusentrel_version=RuSentRelVersions.V11,
                                           ruattitudes_version=ra_version)
 
     # Performing serialization process.
     serialization_engine = NetworksExperimentInputSerializer(experiment=experiment,
-                                                             skip_folder_if_exists=True)
+                                                             skip_folder_if_exists=True,
+                                                             io_utils=io_utils)
 
     serialization_engine.run()

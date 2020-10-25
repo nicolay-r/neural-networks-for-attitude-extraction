@@ -1,5 +1,7 @@
 import argparse
 
+from arekit.contrib.networks.core.io_utils import NetworkIOUtils
+from arekit.contrib.networks.core.nn_io import NeuralNetworkModelIO
 from arekit.contrib.networks.run_training import NetworksTrainingEngine
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from args.cv_index import CvCountArg
@@ -99,6 +101,7 @@ if __name__ == "__main__":
     model_input_type = args.model_input_type
     pretrained_filepath = args.pretrained_filepath
     model_name = args.model_name
+    io_utils = NetworkIOUtils
 
     # init handler
     callback_func = get_callback_func(exp_type=exp_type, cv_count=cv_count)
@@ -110,19 +113,25 @@ if __name__ == "__main__":
 
     # Creating experiment
     labels_scaler = Common.create_labels_scaler(labels_count)
-    data_io = RuSentRelTrainingData(labels_scaler=labels_scaler)
+    experiment_data = RuSentRelTrainingData(labels_scaler=labels_scaler)
 
     experiment = Common.create_experiment(exp_type=exp_type,
-                                          experiment_data=data_io,
+                                          experiment_data=experiment_data,
                                           cv_count=cv_count,
-                                          model_name=model_name,
                                           rusentrel_version=RuSentRelVersions.V11,
                                           ruattitudes_version=ra_version)
+
+    model_io = NeuralNetworkModelIO(model_name=Common.create_full_model_name(exp_type=exp_type,
+                                                                             cv_count=cv_count,
+                                                                             model_name=u"NONAME"),
+                                    model_dir=io_utils.get_target_dir(experiment))
+    experiment_data.set_model_io(model_io)
 
     training_engine = NetworksTrainingEngine(load_model=pretrained_filepath is not None,
                                              experiment=experiment,
                                              create_network_func=network,
                                              create_config=network_config,
+                                             io_utils=io_utils,
                                              bags_collection_type=bags_collection_type,
                                              custom_config_modification_func=custom_config_func,
                                              common_config_modification_func=common_config_func,

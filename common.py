@@ -1,3 +1,5 @@
+import logging
+
 from arekit.common.experiment.data.base import DataIO
 from arekit.common.experiment.scales.three import ThreeLabelScaler
 from arekit.common.experiment.scales.two import TwoLabelScaler
@@ -5,8 +7,10 @@ from arekit.contrib.experiments.ruattitudes.experiment import RuAttitudesExperim
 from arekit.contrib.experiments.rusentrel.experiment import RuSentRelExperiment
 from arekit.contrib.experiments.rusentrel_ds.experiment import RuSentRelWithRuAttitudesExperiment
 from args.experiment import SUPERVISED_LEARNING, SUPERVISED_LEARNING_WITH_DS, DISTANT_SUPERVISION
-from rusentrel.base import data_io_post_initialization
 from rusentrel.rusentrel_ds.common import DS_NAME_PREFIX
+
+
+logger = logging.getLogger(__name__)
 
 
 class Common:
@@ -14,18 +18,17 @@ class Common:
     CV_NAME_PREFIX = u'cv_'
 
     @staticmethod
-    def create_experiment(exp_type, experiment_data, cv_count, model_name, rusentrel_version, ruattitudes_version=None):
+    def create_full_model_name(exp_type, cv_count, model_name):
+        cv_prefix = Common.CV_NAME_PREFIX if cv_count > 0 else ""  # TODO. name prefixes are: cv, ds_cv, ds, ""
+        exp_prefix = DS_NAME_PREFIX if exp_type == SUPERVISED_LEARNING_WITH_DS else ""
+        return u"{}{}{}".format(cv_prefix, exp_prefix, model_name)
+
+    @staticmethod
+    def create_experiment(exp_type, experiment_data, cv_count, rusentrel_version, ruattitudes_version=None):
         assert(isinstance(experiment_data, DataIO))
         assert(isinstance(cv_count, int))
 
-        cv_prefix = Common.CV_NAME_PREFIX if cv_count > 0 else ""  # TODO. name prefixes are: cv, ds_cv, ds, ""
-        exp_prefix = DS_NAME_PREFIX if exp_type == SUPERVISED_LEARNING_WITH_DS else ""
-        full_model_name = u"{}{}{}".format(cv_prefix, exp_prefix, model_name)
-
-        # Peforming post initialization
-        data_io_post_initialization(experiment_data=experiment_data,
-                                    full_model_name=full_model_name,
-                                    cv_count=cv_count)
+        experiment_data.CVFoldingAlgorithm.set_cv_count(cv_count)
 
         if exp_type == SUPERVISED_LEARNING:
             # Supervised learning experiment type.
