@@ -2,10 +2,9 @@ from args.base import BaseArg
 from arekit.contrib.source.ruattitudes.io_utils import RuAttitudesVersions
 
 
-# RuAttitudes supported verisons
+# RuAttitudes supported versions
 ra_versions = {
-    '1.1': RuAttitudesVersions.V11,
-    '2.0': RuAttitudesVersions.V20
+    '1.1': RuAttitudesVersions.V11
 }
 
 

@@ -1,6 +1,7 @@
 import argparse
 
-from arekit.contrib.networks.engine import ExperimentEngine
+from arekit.contrib.networks.run_training import NetworksTrainingEngine
+from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from args.cv_index import CvCountArg
 from args.experiment import ExperimentTypeArg, SUPERVISED_LEARNING, SUPERVISED_LEARNING_WITH_DS
 from args.labels_count import LabelsCountArg
@@ -14,12 +15,12 @@ from factory_networks import \
     compose_network_and_network_config_funcs, \
     create_bags_collection_type
 from factory_config_setups import get_custom_config_func, get_common_config_func
-from io_utils import RuSentRelBasedExperimentsIOUtils
 from rusentrel.classic.common import classic_common_callback_modification_func
 from rusentrel.callback_utils import classic_cv_common_callback_modification_func, \
     ds_cv_common_callback_modification_func
 from rusentrel.ctx_names import ModelNames
 from rusentrel.rusentrel_ds.common import ds_common_callback_modification_func
+from training_data import RuSentRelTrainingData
 
 
 def supported_model_names():
@@ -109,20 +110,22 @@ if __name__ == "__main__":
 
     # Creating experiment
     labels_scaler = Common.create_labels_scaler(labels_count)
-    data_io = RuSentRelBasedExperimentsIOUtils(model_states_dir=pretrained_filepath,
-                                               labels_scaler=labels_scaler)
+    data_io = RuSentRelTrainingData(labels_scaler=labels_scaler)
 
     experiment = Common.create_experiment(exp_type=exp_type,
-                                          data_io=data_io,
+                                          experiment_data=data_io,
                                           cv_count=cv_count,
                                           model_name=model_name,
-                                          ra_version=ra_version)
+                                          rusentrel_version=RuSentRelVersions.V11,
+                                          ruattitudes_version=ra_version)
 
-    ExperimentEngine.run_testing(load_model=pretrained_filepath is not None,
-                                 experiment=experiment,
-                                 create_network=network,
-                                 create_config=network_config,
-                                 bags_collection_type=bags_collection_type,
-                                 custom_config_modification_func=custom_config_func,
-                                 common_config_modification_func=common_config_func,
-                                 common_callback_modification_func=callback_func)
+    training_engine = NetworksTrainingEngine(load_model=pretrained_filepath is not None,
+                                             experiment=experiment,
+                                             create_network_func=network,
+                                             create_config=network_config,
+                                             bags_collection_type=bags_collection_type,
+                                             custom_config_modification_func=custom_config_func,
+                                             common_config_modification_func=common_config_func,
+                                             common_callback_modification_func=callback_func)
+
+    training_engine.run()

@@ -1,16 +1,14 @@
 import argparse
-import logging
 from common import Common
-from io_utils import RuSentRelBasedExperimentsIOUtils
+
+from arekit.contrib.networks.run_serializer import NetworksExperimentInputSerializer
+from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
+from serialization_data import RuSentRelSerializationData
 
 from args.cv_index import CvCountArg
 from args.experiment import ExperimentTypeArg
 from args.labels_count import LabelsCountArg
 from args.ra_ver import RuAttitudesVersionArg
-
-from arekit.contrib.networks.context.configurations.base.base import DefaultNetworkConfig
-from arekit.contrib.networks.engine import ExperimentEngine
-
 
 if __name__ == "__main__":
 
@@ -33,24 +31,16 @@ if __name__ == "__main__":
 
     # Preparing necesary structures for further initializations.
     labels_scaler = Common.create_labels_scaler(labels_count)
-    data_io = RuSentRelBasedExperimentsIOUtils(labels_scaler=labels_scaler)
-    config = DefaultNetworkConfig()
+    experiment_data = RuSentRelSerializationData(labels_scaler=labels_scaler)
     experiment = Common.create_experiment(exp_type=exp_type,
-                                          data_io=data_io,
+                                          experiment_data=experiment_data,
                                           cv_count=cv_count,
                                           model_name=u"NONAME",
-                                          ra_version=ra_version)
-
-    # Setup logger info
-    stream_handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s %(levelname)8s %(name)s | %(message)s')
-    stream_handler.setFormatter(formatter)
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-    logger.addHandler(stream_handler)
+                                          rusentrel_version=RuSentRelVersions.V11,
+                                          ruattitudes_version=ra_version)
 
     # Performing serialization process.
-    ExperimentEngine.run_serialization(logger=logger,
-                                       experiment=experiment,
-                                       create_config=lambda: config,
-                                       skip_if_folder_exists=True)
+    serialization_engine = NetworksExperimentInputSerializer(experiment=experiment,
+                                                             skip_folder_if_exists=True)
+
+    serialization_engine.run()

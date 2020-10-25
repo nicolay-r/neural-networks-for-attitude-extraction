@@ -1,22 +1,15 @@
 import logging
 from os import path
 from os.path import dirname, join
-
-from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
-from callback import CustomCallback
 from model_io import CustomNeuralNetworkIO
-
 from embeddings.rusvectores import RusvectoresEmbedding
 
-from arekit.common.evaluation.evaluators.two_class import TwoClassEvaluator
-from arekit.common.experiment.cv.default import SimpleCVFolding
 from arekit.common.experiment.cv.sentence_based import SentenceBasedCVFolding
-from arekit.common.experiment.scales.base import BaseLabelScaler
-from arekit.common.experiment.scales.three import ThreeLabelScaler
 from arekit.common.frame_variants.collection import FrameVariantsCollection
 from arekit.common.utils import create_dir_if_not_exists
 from arekit.common.experiment.cv.doc_stat.rusentrel import RuSentRelDocStatGenerator
-from arekit.common.experiment.data_io import DataIO
+from arekit.contrib.networks.core.data.serializing import NetworkSerializationData
+from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from arekit.contrib.networks.entities.str_fmt import StringSimpleMaskedEntityFormatter
 from arekit.contrib.source.rusentiframes.collection import RuSentiFramesCollection
 from arekit.contrib.source.rusentiframes.io_utils import RuSentiFramesVersions
@@ -28,19 +21,16 @@ from arekit.contrib.source.rusentrel.synonyms import RuSentRelSynonymsCollection
 logger = logging.getLogger(__name__)
 
 
-class RuSentRelBasedExperimentsIOUtils(DataIO):
+class RuSentRelSerializationData(NetworkSerializationData):
 
     def __init__(self,
-                 rusentrel_version=RuSentRelVersions.V11,
+                 labels_scaler,
                  frames_version=RuSentiFramesVersions.V10,
-                 model_states_dir=None,
-                 labels_scaler=None):
+                 rusentrel_version=RuSentRelVersions.V11,
+                 model_states_dir=None):
         assert(isinstance(rusentrel_version, RuSentRelVersions))
         assert(isinstance(frames_version, RuSentiFramesVersions))
-        assert(isinstance(labels_scaler, BaseLabelScaler) or labels_scaler is None)
-
-        super(RuSentRelBasedExperimentsIOUtils, self).__init__(
-            labels_scale=ThreeLabelScaler() if labels_scaler is None else labels_scaler)
+        super(RuSentRelSerializationData, self).__init__(labels_scaler)
 
         self.__rusentrel_version = rusentrel_version
         self.__stemmer = MystemWrapper()
@@ -48,7 +38,6 @@ class RuSentRelBasedExperimentsIOUtils(DataIO):
             stemmer=self.__stemmer,
             is_read_only=True)
         self.__opinion_formatter = RuSentRelOpinionCollectionFormatter(self.__synonym_collection)
-        self.__word_embedding = None
         self.__cv_folding_algorithm = self.__init_sentence_based_cv_folding_algorithm()
 
         self.__frames_collection = RuSentiFramesCollection.read_collection(version=frames_version)
@@ -56,18 +45,12 @@ class RuSentRelBasedExperimentsIOUtils(DataIO):
             variants_with_id=self.__frames_collection.iter_frame_id_and_variants(),
             stemmer=self.__stemmer)
 
-        self.__evaluator = TwoClassEvaluator(self.__synonym_collection)
-        self.__callback = CustomCallback()
-
         self.__model_io = CustomNeuralNetworkIO(model_states_dir)
-
-        self.__str_entity_formatter = self._init_str_entity_formatter()
+        self.__str_entity_formatter = StringSimpleMaskedEntityFormatter()
+        self.__word_embedding = None
+        self.__sources_dir = None
 
     # region public properties
-
-    @property
-    def RuSentRelVersion(self):
-        return self.__rusentrel_version
 
     @property
     def DistanceInTermsBetweenOpinionEndsBound(self):
@@ -99,11 +82,8 @@ class RuSentRelBasedExperimentsIOUtils(DataIO):
 
     @property
     def WordEmbedding(self):
-
-        # Perform optional initialization
         if self.__word_embedding is None:
             self.__word_embedding = self.__create_word_embedding()
-
         return self.__word_embedding
 
     @property
@@ -111,23 +91,16 @@ class RuSentRelBasedExperimentsIOUtils(DataIO):
         return self.__opinion_formatter
 
     @property
-    def Evaluator(self):
-        return self.__evaluator
-
-    @property
     def CVFoldingAlgorithm(self):
         return self.__cv_folding_algorithm
 
     @property
-    def Callback(self):
-        return self.__callback
+    def TermsPerContext(self):
+        return 50
 
     # endregion
 
     # region private methods
-
-    def _init_str_entity_formatter(self):
-        return StringSimpleMaskedEntityFormatter()
 
     def __create_word_embedding(self):
         we_filepath = path.join(self.get_data_root(), u"w2v/news_rusvectores2.bin.gz")
@@ -140,9 +113,6 @@ class RuSentRelBasedExperimentsIOUtils(DataIO):
             docs_stat=RuSentRelDocStatGenerator(synonyms=self.__synonym_collection,
                                                 version=self.__rusentrel_version),
             docs_stat_filepath=path.join(self.get_data_root(), u"docs_stat.txt"))
-
-    def __init_simple_cv_folding_algoritm(self):
-        return SimpleCVFolding()
 
     # endregion
 
@@ -159,5 +129,12 @@ class RuSentRelBasedExperimentsIOUtils(DataIO):
 
     def get_word_embedding_filepath(self):
         return path.join(self.get_data_root(), u"w2v/news_rusvectores2.bin.gz")
+
+    def get_experiment_sources_dir(self):
+        src_dir = self.__sources_dir
+        if self.__sources_dir is None:
+            # Considering a source dir by default.
+            src_dir = join(self.get_data_root())
+        return src_dir
 
     # endregion
