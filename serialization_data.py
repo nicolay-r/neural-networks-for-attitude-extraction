@@ -2,7 +2,6 @@ import logging
 from os import path
 from os.path import dirname, join
 
-from common import Common
 from embeddings.rusvectores import RusvectoresEmbedding
 
 from arekit.common.frame_variants.collection import FrameVariantsCollection

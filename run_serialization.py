@@ -12,6 +12,7 @@ from args.experiment import ExperimentTypeArg
 from args.labels_count import LabelsCountArg
 from args.ra_ver import RuAttitudesVersionArg
 
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Data serializer (train/test) for further experiments organization")
@@ -35,18 +36,17 @@ if __name__ == "__main__":
     # Preparing necesary structures for further initializations.
     labels_scaler = Common.create_labels_scaler(labels_count)
     experiment_data = RuSentRelSerializationData(labels_scaler=labels_scaler)
-
     experiment = Common.create_experiment(exp_type=exp_type,
                                           experiment_data=experiment_data,
                                           cv_count=cv_count,
                                           rusentrel_version=RuSentRelVersions.V11,
                                           ruattitudes_version=ra_version)
 
-    cv_folding_algo = Common.create_folding_algorithm(
-        doc_operations=experiment.DocumentOperations,
-        data_dir=experiment_data.get_data_root())
-    experiment_data.set_cv_folding_algorithm(cv_folding_algo)
+    # Initialize cv_count and setup cv-splitter
+    splitter = Common.create_folding_splitter(doc_operations=experiment.DocumentOperations,
+                                              data_dir=experiment_data.get_data_root())
     experiment_data.CVFoldingAlgorithm.set_cv_count(cv_count)
+    experiment_data.CVFoldingAlgorithm.set_splitter(splitter)
 
     # Performing serialization process.
     serialization_engine = NetworksExperimentInputSerializer(experiment=experiment,
