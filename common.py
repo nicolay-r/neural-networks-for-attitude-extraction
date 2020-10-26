@@ -1,16 +1,15 @@
 import logging
 from os.path import join
 
-from arekit.common.experiment.cv.doc_stat.rusentrel import RuSentRelDocStatGenerator
-from arekit.common.experiment.cv.sentence_based import SentenceBasedCVFolding
+from arekit.common.experiment.cv.doc_stat.sentence import SentenceBasedDocumentStatGenerator
+from arekit.common.experiment.cv.sentence_based import StatBasedCVFolding
 from arekit.common.experiment.data.base import DataIO
+from arekit.common.experiment.formats.documents import DocumentOperations
 from arekit.common.experiment.scales.three import ThreeLabelScaler
 from arekit.common.experiment.scales.two import TwoLabelScaler
-from arekit.common.synonyms import SynonymsCollection
 from arekit.contrib.experiments.ruattitudes.experiment import RuAttitudesExperiment
 from arekit.contrib.experiments.rusentrel.experiment import RuSentRelExperiment
 from arekit.contrib.experiments.rusentrel_ds.experiment import RuSentRelWithRuAttitudesExperiment
-from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from args.experiment import SUPERVISED_LEARNING, SUPERVISED_LEARNING_WITH_DS, DISTANT_SUPERVISION
 from rusentrel.rusentrel_ds.common import DS_NAME_PREFIX
 
@@ -23,16 +22,14 @@ class Common:
     CV_NAME_PREFIX = u'cv_'
 
     @staticmethod
-    def create_folding_algorithm(synonyms, rusentrel_version, data_dir):
-        # TODO. Problem: it is limited by RuSentRel collection.
-        # TODO. Provide also a simple.
-        # TODO. Update API: considering doc reading function outside of the cv-splitter.
-        assert(isinstance(synonyms, SynonymsCollection))
-        assert(isinstance(rusentrel_version, RuSentRelVersions))
-        return SentenceBasedCVFolding(
-            docs_stat=RuSentRelDocStatGenerator(synonyms=synonyms,
-                                                version=rusentrel_version),
-            docs_stat_filepath=join(data_dir, u"docs_stat.txt"))
+    def create_folding_algorithm(doc_operations, data_dir):
+        assert(isinstance(doc_operations, DocumentOperations))
+
+        docs_stat = SentenceBasedDocumentStatGenerator(
+            news_parser_func=lambda doc_id: doc_operations.read_news(doc_id)),
+
+        return StatBasedCVFolding(docs_stat=docs_stat,
+                                  docs_stat_filepath=join(data_dir, u"docs_stat.txt"))
 
     @staticmethod
     def create_full_model_name(exp_type, cv_count, model_name):
@@ -44,8 +41,6 @@ class Common:
     def create_experiment(exp_type, experiment_data, cv_count, rusentrel_version, ruattitudes_version=None):
         assert(isinstance(experiment_data, DataIO))
         assert(isinstance(cv_count, int))
-
-        experiment_data.CVFoldingAlgorithm.set_cv_count(cv_count)
 
         if exp_type == SUPERVISED_LEARNING:
             # Supervised learning experiment type.
