@@ -1,11 +1,16 @@
 import logging
+from os.path import join
 
+from arekit.common.experiment.cv.doc_stat.rusentrel import RuSentRelDocStatGenerator
+from arekit.common.experiment.cv.sentence_based import SentenceBasedCVFolding
 from arekit.common.experiment.data.base import DataIO
 from arekit.common.experiment.scales.three import ThreeLabelScaler
 from arekit.common.experiment.scales.two import TwoLabelScaler
+from arekit.common.synonyms import SynonymsCollection
 from arekit.contrib.experiments.ruattitudes.experiment import RuAttitudesExperiment
 from arekit.contrib.experiments.rusentrel.experiment import RuSentRelExperiment
 from arekit.contrib.experiments.rusentrel_ds.experiment import RuSentRelWithRuAttitudesExperiment
+from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from args.experiment import SUPERVISED_LEARNING, SUPERVISED_LEARNING_WITH_DS, DISTANT_SUPERVISION
 from rusentrel.rusentrel_ds.common import DS_NAME_PREFIX
 
@@ -16,6 +21,18 @@ logger = logging.getLogger(__name__)
 class Common:
 
     CV_NAME_PREFIX = u'cv_'
+
+    @staticmethod
+    def create_folding_algorithm(synonyms, rusentrel_version, data_dir):
+        # TODO. Problem: it is limited by RuSentRel collection.
+        # TODO. Provide also a simple.
+        # TODO. Update API: considering doc reading function outside of the cv-splitter.
+        assert(isinstance(synonyms, SynonymsCollection))
+        assert(isinstance(rusentrel_version, RuSentRelVersions))
+        return SentenceBasedCVFolding(
+            docs_stat=RuSentRelDocStatGenerator(synonyms=synonyms,
+                                                version=rusentrel_version),
+            docs_stat_filepath=join(data_dir, u"docs_stat.txt"))
 
     @staticmethod
     def create_full_model_name(exp_type, cv_count, model_name):

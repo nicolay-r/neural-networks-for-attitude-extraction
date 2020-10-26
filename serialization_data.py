@@ -1,12 +1,12 @@
 import logging
 from os import path
 from os.path import dirname, join
+
+from common import Common
 from embeddings.rusvectores import RusvectoresEmbedding
 
-from arekit.common.experiment.cv.sentence_based import SentenceBasedCVFolding
 from arekit.common.frame_variants.collection import FrameVariantsCollection
 from arekit.common.utils import create_dir_if_not_exists
-from arekit.common.experiment.cv.doc_stat.rusentrel import RuSentRelDocStatGenerator
 from arekit.contrib.networks.core.data.serializing import NetworkSerializationData
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from arekit.contrib.networks.entities.str_fmt import StringSimpleMaskedEntityFormatter
@@ -32,11 +32,15 @@ class RuSentRelSerializationData(NetworkSerializationData):
 
         self.__rusentrel_version = rusentrel_version
         self.__stemmer = MystemWrapper()
-        self.__synonym_collection = RuSentRelSynonymsCollection.load_collection(
-            stemmer=self.__stemmer,
-            is_read_only=True)
+
+        # Provide as a parameter.
+        self.__synonym_collection = RuSentRelSynonymsCollection.load_collection(stemmer=self.__stemmer,
+                                                                                is_read_only=True)
+
         self.__opinion_formatter = RuSentRelOpinionCollectionFormatter(self.__synonym_collection)
-        self.__cv_folding_algorithm = self.__init_sentence_based_cv_folding_algorithm()
+        self.__cv_folding_algorithm = Common.create_folding_algorithm(synonyms=self.__synonym_collection,
+                                                                      rusentrel_version=self.__rusentrel_version,
+                                                                      data_dir=self.get_data_root())
 
         self.__frames_collection = RuSentiFramesCollection.read_collection(version=frames_version)
         self.__unique_frame_variants = FrameVariantsCollection.create_unique_variants_from_iterable(
@@ -100,12 +104,6 @@ class RuSentRelSerializationData(NetworkSerializationData):
         logger.info("Loading word embedding: {}".format(we_filepath))
         return RusvectoresEmbedding.from_word2vec_format(filepath=we_filepath,
                                                          binary=True)
-
-    def __init_sentence_based_cv_folding_algorithm(self):
-        return SentenceBasedCVFolding(
-            docs_stat=RuSentRelDocStatGenerator(synonyms=self.__synonym_collection,
-                                                version=self.__rusentrel_version),
-            docs_stat_filepath=path.join(self.get_data_root(), u"docs_stat.txt"))
 
     # endregion
 
