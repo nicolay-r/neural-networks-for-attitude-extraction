@@ -38,9 +38,6 @@ class RuSentRelSerializationData(NetworkSerializationData):
                                                                                 is_read_only=True)
 
         self.__opinion_formatter = RuSentRelOpinionCollectionFormatter(self.__synonym_collection)
-        self.__cv_folding_algorithm = Common.create_folding_algorithm(synonyms=self.__synonym_collection,
-                                                                      rusentrel_version=self.__rusentrel_version,
-                                                                      data_dir=self.get_data_root())
 
         self.__frames_collection = RuSentiFramesCollection.read_collection(version=frames_version)
         self.__unique_frame_variants = FrameVariantsCollection.create_unique_variants_from_iterable(
@@ -86,10 +83,6 @@ class RuSentRelSerializationData(NetworkSerializationData):
     @property
     def OpinionFormatter(self):
         return self.__opinion_formatter
-
-    @property
-    def CVFoldingAlgorithm(self):
-        return self.__cv_folding_algorithm
 
     @property
     def TermsPerContext(self):

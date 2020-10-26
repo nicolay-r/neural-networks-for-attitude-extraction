@@ -42,6 +42,12 @@ if __name__ == "__main__":
                                           rusentrel_version=RuSentRelVersions.V11,
                                           ruattitudes_version=ra_version)
 
+    cv_folding_algo = Common.create_folding_algorithm(
+        doc_operations=experiment.DocumentOperations,
+        data_dir=experiment_data.get_data_root())
+    experiment_data.set_cv_folding_algorithm(cv_folding_algo)
+    experiment_data.CVFoldingAlgorithm.set_cv_count(cv_count)
+
     # Performing serialization process.
     serialization_engine = NetworksExperimentInputSerializer(experiment=experiment,
                                                              skip_folder_if_exists=True,
