@@ -11,7 +11,6 @@ from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from arekit.contrib.networks.entities.str_fmt import StringSimpleMaskedEntityFormatter
 from arekit.contrib.source.rusentiframes.collection import RuSentiFramesCollection
 from arekit.contrib.source.rusentiframes.io_utils import RuSentiFramesVersions
-
 from arekit.processing.lemmatization.mystem import MystemWrapper
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
 from arekit.contrib.source.rusentrel.synonyms import RuSentRelSynonymsCollection
@@ -19,7 +18,7 @@ from arekit.contrib.source.rusentrel.synonyms import RuSentRelSynonymsCollection
 logger = logging.getLogger(__name__)
 
 
-class RuSentRelSerializationData(NetworkSerializationData):
+class RuSentRelExperimentSerializationData(NetworkSerializationData):
 
     def __init__(self,
                  labels_scaler,
@@ -27,7 +26,7 @@ class RuSentRelSerializationData(NetworkSerializationData):
                  rusentrel_version=RuSentRelVersions.V11):
         assert(isinstance(rusentrel_version, RuSentRelVersions))
         assert(isinstance(frames_version, RuSentiFramesVersions))
-        super(RuSentRelSerializationData, self).__init__(labels_scaler)
+        super(RuSentRelExperimentSerializationData, self).__init__(labels_scaler=labels_scaler)
 
         self.__rusentrel_version = rusentrel_version
         self.__stemmer = MystemWrapper()
@@ -92,32 +91,11 @@ class RuSentRelSerializationData(NetworkSerializationData):
     # region private methods
 
     def __create_word_embedding(self):
-        we_filepath = path.join(self.get_data_root(), u"w2v/news_rusvectores2.bin.gz")
+        # TODO. This might be provided from cmd.
+        we_filepath = path.join(path.join(dirname(__file__), u"data/"),
+                                u"w2v/news_rusvectores2.bin.gz")
         logger.info("Loading word embedding: {}".format(we_filepath))
         return RusvectoresEmbedding.from_word2vec_format(filepath=we_filepath,
                                                          binary=True)
-
-    # endregion
-
-    # region public methods
-
-    def get_data_root(self):
-        return path.join(dirname(__file__), u"data/")
-
-    def get_experiments_dir(self):
-        experiments_name = u'rusentrel'
-        target_dir = join(self.get_data_root(), u"./{}/".format(experiments_name))
-        create_dir_if_not_exists(target_dir)
-        return target_dir
-
-    def get_word_embedding_filepath(self):
-        return path.join(self.get_data_root(), u"w2v/news_rusvectores2.bin.gz")
-
-    def get_experiment_sources_dir(self):
-        src_dir = self.__sources_dir
-        if self.__sources_dir is None:
-            # Considering a source dir by default.
-            src_dir = join(self.get_data_root())
-        return src_dir
 
     # endregion

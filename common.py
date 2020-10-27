@@ -11,6 +11,7 @@ from arekit.contrib.experiments.rusentrel.experiment import RuSentRelExperiment
 from arekit.contrib.experiments.rusentrel.folding_type import FoldingType
 from arekit.contrib.experiments.rusentrel_ds.experiment import RuSentRelWithRuAttitudesExperiment
 from args.experiment import SUPERVISED_LEARNING, SUPERVISED_LEARNING_WITH_DS, DISTANT_SUPERVISION
+from experiment_io import CustomNetworkExperimentIO
 from rusentrel.rusentrel_ds.common import DS_NAME_PREFIX
 
 
@@ -37,29 +38,34 @@ class Common:
         return u"{}{}{}".format(cv_prefix, exp_prefix, model_name)
 
     @staticmethod
-    def create_experiment(exp_type, experiment_data, cv_count, rusentrel_version, ruattitudes_version=None):
+    def create_experiment(exp_type, experiment_data, cv_count, rusentrel_version,
+                          experiment_io=CustomNetworkExperimentIO,
+                          ruattitudes_version=None):
         assert(isinstance(experiment_data, DataIO))
         assert(isinstance(cv_count, int))
 
-        folding_type = FoldingType.Fixed if  cv_count == 1 else FoldingType.CrossValidation
+        folding_type = FoldingType.Fixed if cv_count == 1 else FoldingType.CrossValidation
 
         if exp_type == SUPERVISED_LEARNING:
             # Supervised learning experiment type.
             return RuSentRelExperiment(data_io=experiment_data,
                                        version=rusentrel_version,
-                                       folding_type=folding_type)
+                                       folding_type=folding_type,
+                                       experiment_io=experiment_io)
 
         if exp_type == SUPERVISED_LEARNING_WITH_DS:
             # Supervised learning with an application of distant supervision in training process.
             return RuSentRelWithRuAttitudesExperiment(ruattitudes_version=ruattitudes_version,
                                                       data_io=experiment_data,
                                                       rusentrel_version=rusentrel_version,
-                                                      folding_type=folding_type)
+                                                      folding_type=folding_type,
+                                                      experiment_io=experiment_io)
 
         if exp_type == DISTANT_SUPERVISION:
             # Application of the distant supervision only (assumes for pretraining purposes)
             return RuAttitudesExperiment(data_io=experiment_data,
-                                         version=ruattitudes_version)
+                                         version=ruattitudes_version,
+                                         experiment_io=experiment_io)
 
     @staticmethod
     def create_labels_scaler(labels_count):
