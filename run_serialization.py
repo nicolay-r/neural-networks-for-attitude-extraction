@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     # Initialize cv_count and setup cv-splitter
     splitter = Common.create_folding_splitter(doc_operations=experiment.DocumentOperations,
-                                              data_dir=experiment.ExperimentIO.get_target_dir(experiment))
+                                              data_dir=experiment.ExperimentIO.get_target_dir())
     experiment_data.CVFoldingAlgorithm.set_cv_count(cv_count)
     experiment_data.CVFoldingAlgorithm.set_splitter(splitter)
 
