@@ -1,6 +1,6 @@
 import logging
 import numpy as np
-from gensim.models import Word2Vec
+from gensim.models import KeyedVectors
 from arekit.processing.lemmatization.base import Stemmer
 from arekit.common.embeddings.base import Embedding
 
@@ -22,7 +22,7 @@ class RusvectoresEmbedding(Embedding):
     def from_word2vec_format(cls, filepath, binary):
         assert(isinstance(binary, bool))
 
-        w2v_model = Word2Vec.load_word2vec_format(filepath, binary=binary)
+        w2v_model = KeyedVectors.load_word2vec_format(filepath, binary=binary)
         words_count = len(w2v_model.wv.vocab)
 
         return cls(matrix=np.array([vector for vector in w2v_model.syn0]),
