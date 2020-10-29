@@ -1,23 +1,25 @@
 from arekit.common.evaluation.evaluators.two_class import TwoClassEvaluator
 from arekit.common.experiment.data.training import TrainingData
-from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
-from arekit.contrib.source.rusentrel.synonyms import RuSentRelSynonymsCollection
-from arekit.processing.lemmatization.mystem import MystemWrapper
+from arekit.common.opinions.formatter import OpinionCollectionsFormatter
+from arekit.common.synonyms import SynonymsCollection
+from arekit.processing.lemmatization.base import Stemmer
 from callback import CustomCallback
 
 
 class RuSentRelTrainingData(TrainingData):
 
-    def __init__(self, labels_scaler):
+    def __init__(self, labels_scaler, stemmer, synonyms, opinion_formatter, evaluator):
+        assert(isinstance(synonyms, SynonymsCollection))
+        assert(isinstance(stemmer, Stemmer))
+        assert(isinstance(opinion_formatter, OpinionCollectionsFormatter))
+
         super(RuSentRelTrainingData, self).__init__(labels_scaler)
 
         self.__callback = CustomCallback()
-        self.__stemmer = MystemWrapper()
-        self.__synonym_collection = RuSentRelSynonymsCollection.load_collection(
-            stemmer=self.__stemmer,
-            is_read_only=True)
-        self.__opinion_formatter = RuSentRelOpinionCollectionFormatter(self.__synonym_collection)
-        self.__evaluator = TwoClassEvaluator(self.__synonym_collection)
+        self.__stemmer = stemmer
+        self.__synonym_collection = synonyms
+        self.__opinion_formatter = opinion_formatter
+        self.__evaluator = evaluator
 
     @property
     def Evaluator(self):

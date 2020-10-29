@@ -4,18 +4,18 @@ from args.embedding import RusVectoresEmbeddingFilepathArg
 from args.entity_fmt import EnitityFormatterTypesArg
 from args.frames import RuSentiFramesVersionArg
 from args.rusentrel import RuSentRelVersionArg
+from args.stemmer import StemmerArg
 from args.terms_per_context import TermsPerContextArg
 from common import Common
 
 from arekit.contrib.networks.run_serializer import NetworksExperimentInputSerializer
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
-from serialization_data import RuSentRelExperimentSerializationData
 
 from args.cv_index import CvCountArg
 from args.experiment import ExperimentTypeArg
 from args.labels_count import LabelsCountArg
 from args.ra_ver import RuAttitudesVersionArg
-
+from data_serializing import RuSentRelExperimentSerializationData
 
 if __name__ == "__main__":
 
@@ -31,6 +31,7 @@ if __name__ == "__main__":
     RuSentiFramesVersionArg.add_argument(parser)
     RuSentRelVersionArg.add_argument(parser)
     EnitityFormatterTypesArg.add_argument(parser)
+    StemmerArg.add_argument(parser)
 
     # Parsing arguments.
     args = parser.parse_args()
@@ -45,15 +46,20 @@ if __name__ == "__main__":
     frames_version = RuSentiFramesVersionArg.read_argument(args)
     rusentrel_version = RuSentRelVersionArg.read_argument(args)
     entity_fmt = EnitityFormatterTypesArg.read_argument(args)
+    stemmer = StemmerArg.read_argument(args)
 
     # Preparing necesary structures for further initializations.
+    synonyms = Common.load_synonoyms_collection(filepath=None, stemmer=stemmer)
     experiment_data = RuSentRelExperimentSerializationData(
         labels_scaler=Common.create_labels_scaler(labels_count),
         embedding=Common.load_rusvectores_word_embedding(embedding_filepath),
         terms_per_context=terms_per_context,
         frames_version=frames_version,
         rusentrel_version=rusentrel_version,
-        str_entity_formatter=entity_fmt)
+        str_entity_formatter=entity_fmt,
+        stemmer=stemmer,
+        synonyms=synonyms,
+        opinion_formatter=Common.create_opinion_collection_formatter(synonyms=synonyms))
 
     experiment = Common.create_experiment(exp_type=exp_type,
                                           experiment_data=experiment_data,

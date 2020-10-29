@@ -1,14 +1,17 @@
 import argparse
 
+from arekit.common.evaluation.evaluators.two_class import TwoClassEvaluator
 from arekit.contrib.networks.core.nn_io import NeuralNetworkModelIO
 from arekit.contrib.networks.run_training import NetworksTrainingEngine
-from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from args.cv_index import CvCountArg
 from args.experiment import ExperimentTypeArg, SUPERVISED_LEARNING, SUPERVISED_LEARNING_WITH_DS
 from args.labels_count import LabelsCountArg
 from args.ra_ver import RuAttitudesVersionArg
+from args.rusentrel import RuSentRelVersionArg
+from args.stemmer import StemmerArg
 from common import Common
 # TODO. Move this parameters into args/input_format.py
+from data_training import RuSentRelTrainingData
 from factory_networks import \
     INPUT_TYPE_SINGLE_INSTANCE, \
     INPUT_TYPE_MULTI_INSTANCE, \
@@ -21,7 +24,6 @@ from rusentrel.callback_utils import classic_cv_common_callback_modification_fun
     ds_cv_common_callback_modification_func
 from rusentrel.ctx_names import ModelNames
 from rusentrel.rusentrel_ds.common import ds_common_callback_modification_func
-from training_data import RuSentRelTrainingData
 
 
 def supported_model_names():
@@ -64,6 +66,8 @@ if __name__ == "__main__":
     CvCountArg.add_argument(parser)
     LabelsCountArg.add_argument(parser)
     ExperimentTypeArg.add_argument(parser)
+    RuSentRelVersionArg.add_argument(parser)
+    StemmerArg.add_argument(parser)
 
     parser.add_argument('--model-input-type',
                         dest='model_input_type',
@@ -95,8 +99,10 @@ if __name__ == "__main__":
     # Reading arguments.
     exp_type = ExperimentTypeArg.read_argument(args)
     labels_count = LabelsCountArg.read_argument(args)
+    rusentrel_version = RuSentRelVersionArg.read_argument(args)
     cv_count = CvCountArg.read_argument(args)
     ra_version = RuAttitudesVersionArg.read_argument(args)
+    stemmer = StemmerArg.read_argument(args)
     model_input_type = args.model_input_type
     pretrained_filepath = args.pretrained_filepath
     model_name = unicode(args.model_name[0])
@@ -110,18 +116,24 @@ if __name__ == "__main__":
                                                                        model_input_type=model_input_type)
 
     # Creating experiment
-    labels_scaler = Common.create_labels_scaler(labels_count)
-    experiment_data = RuSentRelTrainingData(labels_scaler=labels_scaler)
+    synonyms = Common.load_synonoyms_collection(filepath=None, stemmer=stemmer)
+    evaluator = TwoClassEvaluator(synonyms)
+    experiment_data = RuSentRelTrainingData(
+        labels_scaler=Common.create_labels_scaler(labels_count),
+        stemmer=stemmer,
+        synonyms=synonyms,
+        opinion_formatter=Common.create_opinion_collection_formatter(synonyms),
+        evaluator=evaluator)
 
     experiment = Common.create_experiment(exp_type=exp_type,
                                           experiment_data=experiment_data,
                                           cv_count=cv_count,
-                                          rusentrel_version=RuSentRelVersions.V11,
+                                          rusentrel_version=rusentrel_version,
                                           ruattitudes_version=ra_version)
 
-    model_io = NeuralNetworkModelIO(model_name=Common.create_full_model_name(exp_type=exp_type,
-                                                                             cv_count=cv_count,
-                                                                             model_name=model_name),
+    model_io = NeuralNetworkModelIO(full_model_name=Common.create_full_model_name(exp_type=exp_type,
+                                                                                  cv_count=cv_count,
+                                                                                  model_name=model_name),
                                     model_dir=experiment.ExperimentIO.get_target_dir())
     experiment_data.set_model_io(model_io)
 
