@@ -1,19 +1,16 @@
 import logging
-from os import path
-from os.path import dirname, join
 
-from embeddings.rusvectores import RusvectoresEmbedding
-
+from arekit.common.embeddings.base import Embedding
+from arekit.common.entities.str_fmt import StringEntitiesFormatter
 from arekit.common.frame_variants.collection import FrameVariantsCollection
-from arekit.common.utils import create_dir_if_not_exists
 from arekit.contrib.networks.core.data.serializing import NetworkSerializationData
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from arekit.contrib.networks.entities.str_fmt import StringSimpleMaskedEntityFormatter
 from arekit.contrib.source.rusentiframes.collection import RuSentiFramesCollection
 from arekit.contrib.source.rusentiframes.io_utils import RuSentiFramesVersions
-from arekit.processing.lemmatization.mystem import MystemWrapper
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
 from arekit.contrib.source.rusentrel.synonyms import RuSentRelSynonymsCollection
+from arekit.processing.lemmatization.mystem import MystemWrapper
 
 logger = logging.getLogger(__name__)
 
@@ -22,14 +19,23 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
 
     def __init__(self,
                  labels_scaler,
-                 frames_version=RuSentiFramesVersions.V10,
-                 rusentrel_version=RuSentRelVersions.V11):
+                 embedding,
+                 terms_per_context,
+                 frames_version,
+                 str_entity_formatter,
+                 rusentrel_version):
+        assert(isinstance(embedding, Embedding))
         assert(isinstance(rusentrel_version, RuSentRelVersions))
         assert(isinstance(frames_version, RuSentiFramesVersions))
+        assert(isinstance(str_entity_formatter, StringEntitiesFormatter))
+        assert(isinstance(terms_per_context, int))
         super(RuSentRelExperimentSerializationData, self).__init__(labels_scaler=labels_scaler)
 
+        self.__terms_per_context = terms_per_context
         self.__rusentrel_version = rusentrel_version
+        self.__str_entity_formatter = str_entity_formatter
         self.__stemmer = MystemWrapper()
+        self.__word_embedding = embedding
 
         # Provide as a parameter.
         self.__synonym_collection = RuSentRelSynonymsCollection.load_collection(stemmer=self.__stemmer,
@@ -41,10 +47,6 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
         self.__unique_frame_variants = FrameVariantsCollection.create_unique_variants_from_iterable(
             variants_with_id=self.__frames_collection.iter_frame_id_and_variants(),
             stemmer=self.__stemmer)
-
-        self.__str_entity_formatter = StringSimpleMaskedEntityFormatter()
-        self.__word_embedding = None
-        self.__sources_dir = None
 
     # region public properties
 
@@ -74,8 +76,6 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
 
     @property
     def WordEmbedding(self):
-        if self.__word_embedding is None:
-            self.__word_embedding = self.__create_word_embedding()
         return self.__word_embedding
 
     @property
@@ -84,18 +84,6 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
 
     @property
     def TermsPerContext(self):
-        return 50
-
-    # endregion
-
-    # region private methods
-
-    def __create_word_embedding(self):
-        # TODO. This might be provided from cmd.
-        we_filepath = path.join(path.join(dirname(__file__), u"data/"),
-                                u"w2v/news_rusvectores2.bin.gz")
-        logger.info("Loading word embedding: {}".format(we_filepath))
-        return RusvectoresEmbedding.from_word2vec_format(filepath=we_filepath,
-                                                         binary=True)
+        return self.__terms_per_context
 
     # endregion
