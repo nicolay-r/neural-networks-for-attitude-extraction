@@ -11,9 +11,6 @@ class RuSentRelTrainingData(TrainingData):
     def __init__(self, labels_scaler):
         super(RuSentRelTrainingData, self).__init__(labels_scaler)
 
-        self.__evaluator = None
-        self.__sources_dir = None
-        self.__results_dir = None
         self.__callback = CustomCallback()
         self.__stemmer = MystemWrapper()
         self.__synonym_collection = RuSentRelSynonymsCollection.load_collection(
