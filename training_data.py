@@ -1,5 +1,8 @@
-from os.path import join, dirname
+from arekit.common.evaluation.evaluators.two_class import TwoClassEvaluator
 from arekit.common.experiment.data.training import TrainingData
+from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
+from arekit.contrib.source.rusentrel.synonyms import RuSentRelSynonymsCollection
+from arekit.processing.lemmatization.mystem import MystemWrapper
 from callback import CustomCallback
 
 
@@ -7,10 +10,17 @@ class RuSentRelTrainingData(TrainingData):
 
     def __init__(self, labels_scaler):
         super(RuSentRelTrainingData, self).__init__(labels_scaler)
-        
+
+        self.__evaluator = None
         self.__sources_dir = None
         self.__results_dir = None
         self.__callback = CustomCallback()
+        self.__stemmer = MystemWrapper()
+        self.__synonym_collection = RuSentRelSynonymsCollection.load_collection(
+            stemmer=self.__stemmer,
+            is_read_only=True)
+        self.__opinion_formatter = RuSentRelOpinionCollectionFormatter(self.__synonym_collection)
+        self.__evaluator = TwoClassEvaluator(self.__synonym_collection)
 
     @property
     def Evaluator(self):
@@ -18,32 +28,12 @@ class RuSentRelTrainingData(TrainingData):
 
     @property
     def SynonymsCollection(self):
-        pass
+        return self.__synonym_collection
 
     @property
     def OpinionFormatter(self):
-        pass
-
-    @property
-    def CVFoldingAlgorithm(self):
-        pass
+        return self.__opinion_formatter
 
     @property
     def Callback(self):
         return self.__callback
-
-    def get_data_root(self):
-        return join(dirname(__file__), u"data/")
-
-    def get_experiment_sources_dir(self):
-        src_dir = self.__sources_dir
-        if self.__sources_dir is None:
-            # Considering a source dir by default.
-            src_dir = join(self.get_data_root())
-        return src_dir
-
-    def get_experiment_results_dir(self):
-        if self.__results_dir is None:
-            # Considering the same as a source dir
-            return self.get_experiment_sources_dir()
-        return self.__results_dir
