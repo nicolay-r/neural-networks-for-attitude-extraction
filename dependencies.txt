@@ -1,5 +1,5 @@
 # Consider gensim for word embeddings with the smart-open specific dependency
-gensim==0.13.4
-smart-open==1.10.1
+gensim==2.3.0
+smart-open==1.8.0
 # For data serialization
 pandas==0.20.3
