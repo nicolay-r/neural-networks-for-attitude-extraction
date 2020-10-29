@@ -60,7 +60,7 @@ def __get_mi_network_with_config(model_input_type):
 
 
 def __get_network_with_config_types(model_name):
-    assert(isinstance(model_name, str))
+    assert(isinstance(model_name, unicode))
 
     model_names = ModelNames()
     if model_name == model_names.SelfAttentionBiLSTM:
