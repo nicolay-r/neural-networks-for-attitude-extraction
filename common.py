@@ -4,7 +4,7 @@ from arekit.common.experiment.scales.three import ThreeLabelScaler
 from arekit.common.experiment.scales.two import TwoLabelScaler
 from arekit.contrib.experiments.ruattitudes.experiment import RuAttitudesExperiment
 from arekit.contrib.experiments.rusentrel.experiment import RuSentRelExperiment
-from arekit.contrib.experiments.rusentrel.folding import FoldingType
+from arekit.contrib.experiments.folding_type import FoldingType
 from arekit.contrib.experiments.rusentrel_ds.experiment import RuSentRelWithRuAttitudesExperiment
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
 from arekit.contrib.source.rusentrel.synonyms import RuSentRelSynonymsCollection
