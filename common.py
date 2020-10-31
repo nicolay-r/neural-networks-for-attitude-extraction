@@ -1,14 +1,10 @@
 import logging
-from os.path import join
-
-from arekit.common.experiment.cv.doc_stat.sentence import SentenceBasedDocumentStatGenerator
-from arekit.common.experiment.cv.splitters.statistical import StatBasedCrossValidataionSplitter
 from arekit.common.experiment.data.base import DataIO
 from arekit.common.experiment.scales.three import ThreeLabelScaler
 from arekit.common.experiment.scales.two import TwoLabelScaler
 from arekit.contrib.experiments.ruattitudes.experiment import RuAttitudesExperiment
 from arekit.contrib.experiments.rusentrel.experiment import RuSentRelExperiment
-from arekit.contrib.experiments.rusentrel.folding_type import FoldingType
+from arekit.contrib.experiments.rusentrel.folding import FoldingType
 from arekit.contrib.experiments.rusentrel_ds.experiment import RuSentRelWithRuAttitudesExperiment
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
 from arekit.contrib.source.rusentrel.synonyms import RuSentRelSynonymsCollection
@@ -39,15 +35,6 @@ class Common:
     @staticmethod
     def create_opinion_collection_formatter(synonyms):
         return RuSentRelOpinionCollectionFormatter(synonyms)
-
-    @staticmethod
-    def create_folding_splitter(doc_operations, data_dir):
-
-        docs_stat = SentenceBasedDocumentStatGenerator(
-            news_parser_func=lambda doc_id: doc_operations.read_news(doc_id))
-
-        return StatBasedCrossValidataionSplitter(docs_stat_filepath=join(data_dir, u"docs_stat.txt"),
-                                                 docs_stat=docs_stat)
 
     @staticmethod
     def create_full_model_name(exp_type, cv_count, model_name):

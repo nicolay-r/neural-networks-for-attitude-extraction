@@ -135,13 +135,8 @@ if __name__ == "__main__":
                                                                                   cv_count=cv_count,
                                                                                   model_name=model_name),
                                     model_dir=experiment.ExperimentIO.get_target_dir())
-    experiment_data.set_model_io(model_io)
 
-    # Initialize cv_count and setup cv-splitter
-    splitter = Common.create_folding_splitter(doc_operations=experiment.DocumentOperations,
-                                              data_dir=experiment.ExperimentIO.get_target_dir())
-    experiment_data.CVFoldingAlgorithm.set_cv_count(cv_count)
-    experiment_data.CVFoldingAlgorithm.set_splitter(splitter)
+    experiment_data.set_model_io(model_io)
 
     training_engine = NetworksTrainingEngine(load_model=pretrained_filepath is not None,
                                              experiment=experiment,

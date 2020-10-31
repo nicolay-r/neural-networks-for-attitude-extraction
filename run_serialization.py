@@ -67,12 +67,6 @@ if __name__ == "__main__":
                                           rusentrel_version=RuSentRelVersions.V11,
                                           ruattitudes_version=ra_version)
 
-    # Initialize cv_count and setup cv-splitter
-    splitter = Common.create_folding_splitter(doc_operations=experiment.DocumentOperations,
-                                              data_dir=experiment.ExperimentIO.get_target_dir())
-    experiment_data.CVFoldingAlgorithm.set_cv_count(cv_count)
-    experiment_data.CVFoldingAlgorithm.set_splitter(splitter)
-
     # Performing serialization process.
     serialization_engine = NetworksExperimentInputSerializer(experiment=experiment,
                                                              skip_folder_if_exists=True)
