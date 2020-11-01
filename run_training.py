@@ -116,7 +116,7 @@ if __name__ == "__main__":
                                                                        model_input_type=model_input_type)
 
     # Creating experiment
-    evaluator = TwoClassEvaluator(synonyms)
+    evaluator = TwoClassEvaluator()
     experiment_data = RuSentRelTrainingData(labels_scaler=Common.create_labels_scaler(labels_count),
                                             stemmer=stemmer,
                                             opinion_formatter=Common.create_opinion_collection_formatter(),
