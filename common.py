@@ -7,7 +7,6 @@ from arekit.contrib.experiments.rusentrel.experiment import RuSentRelExperiment
 from arekit.contrib.experiments.folding_type import FoldingType
 from arekit.contrib.experiments.rusentrel_ds.experiment import RuSentRelWithRuAttitudesExperiment
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
-from arekit.contrib.source.rusentrel.synonyms import RuSentRelSynonymsCollection
 from args.experiment import SUPERVISED_LEARNING, SUPERVISED_LEARNING_WITH_DS, DISTANT_SUPERVISION
 from embeddings.rusvectores import RusvectoresEmbedding
 from experiment_io import CustomNetworkExperimentIO
@@ -22,19 +21,13 @@ class Common:
     CV_NAME_PREFIX = u'cv_'
 
     @staticmethod
-    def load_synonoyms_collection(filepath, stemmer):
-        if filepath is None:
-            return RuSentRelSynonymsCollection.load_collection(stemmer=stemmer,
-                                                               is_read_only=True)
-
-    @staticmethod
     def load_rusvectores_word_embedding(filepath):
         logger.info("Loading word embedding: {}".format(filepath))
         return RusvectoresEmbedding.from_word2vec_format(filepath=filepath, binary=True)
 
     @staticmethod
-    def create_opinion_collection_formatter(synonyms):
-        return RuSentRelOpinionCollectionFormatter(synonyms)
+    def create_opinion_collection_formatter():
+        return RuSentRelOpinionCollectionFormatter()
 
     @staticmethod
     def create_full_model_name(exp_type, cv_count, model_name):

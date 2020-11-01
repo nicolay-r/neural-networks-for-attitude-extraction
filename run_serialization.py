@@ -49,7 +49,6 @@ if __name__ == "__main__":
     stemmer = StemmerArg.read_argument(args)
 
     # Preparing necesary structures for further initializations.
-    synonyms = Common.load_synonoyms_collection(filepath=None, stemmer=stemmer)
     experiment_data = RuSentRelExperimentSerializationData(
         labels_scaler=Common.create_labels_scaler(labels_count),
         embedding=Common.load_rusvectores_word_embedding(embedding_filepath),
@@ -58,8 +57,7 @@ if __name__ == "__main__":
         rusentrel_version=rusentrel_version,
         str_entity_formatter=entity_fmt,
         stemmer=stemmer,
-        synonyms=synonyms,
-        opinion_formatter=Common.create_opinion_collection_formatter(synonyms=synonyms))
+        opinion_formatter=Common.create_opinion_collection_formatter())
 
     experiment = Common.create_experiment(exp_type=exp_type,
                                           experiment_data=experiment_data,

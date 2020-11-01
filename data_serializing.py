@@ -18,7 +18,6 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
     def __init__(self,
                  labels_scaler,
                  stemmer,
-                 synonyms,
                  embedding,
                  terms_per_context,
                  frames_version,
@@ -32,20 +31,19 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
         assert(isinstance(str_entity_formatter, StringEntitiesFormatter))
         assert(isinstance(opinion_formatter, OpinionCollectionsFormatter))
         assert(isinstance(terms_per_context, int))
-        super(RuSentRelExperimentSerializationData, self).__init__(labels_scaler=labels_scaler)
+        super(RuSentRelExperimentSerializationData, self).__init__(labels_scaler=labels_scaler,
+                                                                   stemmer=stemmer)
 
-        self.__stemmer = stemmer
         self.__terms_per_context = terms_per_context
         self.__rusentrel_version = rusentrel_version
         self.__str_entity_formatter = str_entity_formatter
         self.__word_embedding = embedding
         self.__opinion_formatter = opinion_formatter
-        self.__synonym_collection = synonyms
 
         self.__frames_collection = RuSentiFramesCollection.read_collection(version=frames_version)
         self.__unique_frame_variants = FrameVariantsCollection.create_unique_variants_from_iterable(
             variants_with_id=self.__frames_collection.iter_frame_id_and_variants(),
-            stemmer=self.__stemmer)
+            stemmer=self.Stemmer)
 
     # region public properties
 
@@ -56,14 +54,6 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
     @property
     def StringEntityFormatter(self):
         return self.__str_entity_formatter
-
-    @property
-    def Stemmer(self):
-        return self.__stemmer
-
-    @property
-    def SynonymsCollection(self):
-        return self.__synonym_collection
 
     @property
     def FramesCollection(self):

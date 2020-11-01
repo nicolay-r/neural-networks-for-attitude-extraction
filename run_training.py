@@ -116,14 +116,11 @@ if __name__ == "__main__":
                                                                        model_input_type=model_input_type)
 
     # Creating experiment
-    synonyms = Common.load_synonoyms_collection(filepath=None, stemmer=stemmer)
     evaluator = TwoClassEvaluator(synonyms)
-    experiment_data = RuSentRelTrainingData(
-        labels_scaler=Common.create_labels_scaler(labels_count),
-        stemmer=stemmer,
-        synonyms=synonyms,
-        opinion_formatter=Common.create_opinion_collection_formatter(synonyms),
-        evaluator=evaluator)
+    experiment_data = RuSentRelTrainingData(labels_scaler=Common.create_labels_scaler(labels_count),
+                                            stemmer=stemmer,
+                                            opinion_formatter=Common.create_opinion_collection_formatter(),
+                                            evaluator=evaluator)
 
     experiment = Common.create_experiment(exp_type=exp_type,
                                           experiment_data=experiment_data,
