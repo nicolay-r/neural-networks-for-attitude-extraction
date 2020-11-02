@@ -86,12 +86,12 @@ if __name__ == "__main__":
                         nargs=1,
                         help='Name of a model to be utilized in experiment')
 
-    parser.add_argument('--load-pretrained',
-                        dest='pretrained_filepath',
+    parser.add_argument('--model-state-dir',
+                        dest='model_load_dir',
                         type=unicode,
                         default=None,
                         nargs='?',
-                        help='Load pretrained state')
+                        help='Use pretrained state as initial')
 
     # Parsing arguments.
     args = parser.parse_args()
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     ra_version = RuAttitudesVersionArg.read_argument(args)
     stemmer = StemmerArg.read_argument(args)
     model_input_type = args.model_input_type
-    pretrained_filepath = args.pretrained_filepath
+    model_load_dir = args.model_load_dir
     model_name = unicode(args.model_name[0])
 
     # init handler
@@ -131,11 +131,12 @@ if __name__ == "__main__":
     model_io = NeuralNetworkModelIO(full_model_name=Common.create_full_model_name(exp_type=exp_type,
                                                                                   cv_count=cv_count,
                                                                                   model_name=model_name),
-                                    model_dir=experiment.ExperimentIO.get_target_dir())
+                                    model_dir=experiment.ExperimentIO.get_target_dir(),
+                                    load_dir=model_load_dir)
 
     experiment_data.set_model_io(model_io)
 
-    training_engine = NetworksTrainingEngine(load_model=pretrained_filepath is not None,
+    training_engine = NetworksTrainingEngine(load_model=model_load_dir is not None,
                                              experiment=experiment,
                                              create_network_func=network,
                                              create_config=network_config,
