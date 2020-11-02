@@ -131,8 +131,8 @@ if __name__ == "__main__":
     model_io = NeuralNetworkModelIO(full_model_name=Common.create_full_model_name(exp_type=exp_type,
                                                                                   cv_count=cv_count,
                                                                                   model_name=model_name),
-                                    model_dir=experiment.ExperimentIO.get_target_dir(),
-                                    load_dir=model_load_dir)
+                                    target_dir=experiment.ExperimentIO.get_target_dir(),
+                                    source_dir=model_load_dir)
 
     experiment_data.set_model_io(model_io)
 
