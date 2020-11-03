@@ -4,7 +4,10 @@ from arekit.contrib.source.ruattitudes.io_utils import RuAttitudesVersions
 
 # RuAttitudes supported versions
 ra_versions = {
-    '1.1': RuAttitudesVersions.V11
+    u'1.1': RuAttitudesVersions.V11,
+    u'1.2': RuAttitudesVersions.V12,
+    u'2.0b': RuAttitudesVersions.V20Base,
+    u'2.0l': RuAttitudesVersions.V20Large
 }
 
 
