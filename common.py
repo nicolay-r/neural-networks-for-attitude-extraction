@@ -37,7 +37,7 @@ class Common:
 
     @staticmethod
     def create_experiment(exp_type, experiment_data, cv_count, rusentrel_version,
-                          experiment_io=CustomNetworkExperimentIO,
+                          experiment_io_type=CustomNetworkExperimentIO,
                           ruattitudes_version=None):
         assert(isinstance(experiment_data, DataIO))
         assert(isinstance(cv_count, int))
@@ -49,7 +49,7 @@ class Common:
             return RuSentRelExperiment(data_io=experiment_data,
                                        version=rusentrel_version,
                                        folding_type=folding_type,
-                                       experiment_io=experiment_io)
+                                       experiment_io_type=experiment_io_type)
 
         if exp_type == SUPERVISED_LEARNING_WITH_DS:
             # Supervised learning with an application of distant supervision in training process.
@@ -57,13 +57,13 @@ class Common:
                                                       data_io=experiment_data,
                                                       rusentrel_version=rusentrel_version,
                                                       folding_type=folding_type,
-                                                      experiment_io=experiment_io)
+                                                      experiment_io_type=experiment_io_type)
 
         if exp_type == DISTANT_SUPERVISION:
             # Application of the distant supervision only (assumes for pretraining purposes)
             return RuAttitudesExperiment(data_io=experiment_data,
                                          version=ruattitudes_version,
-                                         experiment_io=experiment_io)
+                                         experiment_io_type=experiment_io_type)
 
     @staticmethod
     def create_labels_scaler(labels_count):
