@@ -126,7 +126,8 @@ if __name__ == "__main__":
                                           experiment_data=experiment_data,
                                           cv_count=cv_count,
                                           rusentrel_version=rusentrel_version,
-                                          ruattitudes_version=ra_version)
+                                          ruattitudes_version=ra_version,
+                                          is_training=False)
 
     model_io = NeuralNetworkModelIO(full_model_name=Common.create_full_model_name(exp_type=exp_type,
                                                                                   cv_count=cv_count,

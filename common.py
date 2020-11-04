@@ -36,11 +36,12 @@ class Common:
         return u"{}{}{}".format(cv_prefix, exp_prefix, model_name)
 
     @staticmethod
-    def create_experiment(exp_type, experiment_data, cv_count, rusentrel_version,
+    def create_experiment(exp_type, experiment_data, cv_count, rusentrel_version, is_training,
                           experiment_io_type=CustomNetworkExperimentIO,
                           ruattitudes_version=None):
         assert(isinstance(experiment_data, DataIO))
         assert(isinstance(cv_count, int))
+        assert(isinstance(is_training, bool))
 
         folding_type = FoldingType.Fixed if cv_count == 1 else FoldingType.CrossValidation
 
@@ -63,7 +64,8 @@ class Common:
             # Application of the distant supervision only (assumes for pretraining purposes)
             return RuAttitudesExperiment(data_io=experiment_data,
                                          version=ruattitudes_version,
-                                         experiment_io_type=experiment_io_type)
+                                         experiment_io_type=experiment_io_type,
+                                         load_ruatittudes=is_training)
 
     @staticmethod
     def create_labels_scaler(labels_count):

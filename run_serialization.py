@@ -63,7 +63,8 @@ if __name__ == "__main__":
                                           experiment_data=experiment_data,
                                           cv_count=cv_count,
                                           rusentrel_version=RuSentRelVersions.V11,
-                                          ruattitudes_version=ra_version)
+                                          ruattitudes_version=ra_version,
+                                          is_training=True)
 
     # Performing serialization process.
     serialization_engine = NetworksExperimentInputSerializer(experiment=experiment,
