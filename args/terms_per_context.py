@@ -16,7 +16,7 @@ class TermsPerContextArg(BaseArg):
     def add_argument(parser):
         parser.add_argument('--terms-per-context',
                             dest='terms_per_context',
-                            type=unicode,
+                            type=int,
                             default=TermsPerContextArg.default,
                             nargs='?',
                             help='The max possible length of an input context in terms (Default: {})'.format(

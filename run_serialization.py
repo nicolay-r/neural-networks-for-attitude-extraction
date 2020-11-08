@@ -1,5 +1,7 @@
 import argparse
 
+from arekit.common.experiment.folding.types import FoldingType
+from arekit.contrib.experiments.factory import create_experiment
 from args.embedding import RusVectoresEmbeddingFilepathArg
 from args.entity_fmt import EnitityFormatterTypesArg
 from args.frames import RuSentiFramesVersionArg
@@ -16,6 +18,7 @@ from args.experiment import ExperimentTypeArg
 from args.labels_count import LabelsCountArg
 from args.ra_ver import RuAttitudesVersionArg
 from data_serializing import RuSentRelExperimentSerializationData
+from experiment_io import CustomNetworkExperimentIO
 
 if __name__ == "__main__":
 
@@ -59,12 +62,13 @@ if __name__ == "__main__":
         stemmer=stemmer,
         opinion_formatter=Common.create_opinion_collection_formatter())
 
-    experiment = Common.create_experiment(exp_type=exp_type,
-                                          experiment_data=experiment_data,
-                                          cv_count=cv_count,
-                                          rusentrel_version=RuSentRelVersions.V11,
-                                          ruattitudes_version=ra_version,
-                                          is_training=True)
+    experiment = create_experiment(exp_type=exp_type,
+                                   experiment_data=experiment_data,
+                                   folding_type=FoldingType.Fixed if cv_count == 1 else FoldingType.CrossValidation,
+                                   rusentrel_version=RuSentRelVersions.V11,
+                                   ruattitudes_version=ra_version,
+                                   experiment_io_type=CustomNetworkExperimentIO,
+                                   is_training=True)
 
     # Performing serialization process.
     serialization_engine = NetworksExperimentInputSerializer(experiment=experiment,

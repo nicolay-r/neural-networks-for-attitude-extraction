@@ -1,10 +1,13 @@
 import argparse
 
 from arekit.common.evaluation.evaluators.two_class import TwoClassEvaluator
+from arekit.common.experiment.folding.types import FoldingType
+from arekit.contrib.experiments.factory import create_experiment
+from arekit.contrib.experiments.types import ExperimentTypes
 from arekit.contrib.networks.core.model_io import NeuralNetworkModelIO
 from arekit.contrib.networks.run_training import NetworksTrainingEngine
 from args.cv_index import CvCountArg
-from args.experiment import ExperimentTypeArg, SUPERVISED_LEARNING, SUPERVISED_LEARNING_WITH_DS
+from args.experiment import ExperimentTypeArg
 from args.labels_count import LabelsCountArg
 from args.ra_ver import RuAttitudesVersionArg
 from args.rusentrel import RuSentRelVersionArg
@@ -12,6 +15,7 @@ from args.stemmer import StemmerArg
 from common import Common
 # TODO. Move this parameters into args/input_format.py
 from data_training import RuSentRelTrainingData
+from experiment_io import CustomNetworkExperimentIO
 from factory_networks import \
     INPUT_TYPE_SINGLE_INSTANCE, \
     INPUT_TYPE_MULTI_INSTANCE, \
@@ -45,12 +49,12 @@ def supported_model_names():
 def get_callback_func(exp_type, cv_count):
     assert(isinstance(cv_count, int))
 
-    if exp_type == SUPERVISED_LEARNING:
+    if exp_type == ExperimentTypes.RuSentRel:
         if cv_count == 1:
             return classic_common_callback_modification_func
         else:
             return classic_cv_common_callback_modification_func
-    if exp_type == SUPERVISED_LEARNING_WITH_DS:
+    if exp_type == ExperimentTypes.RuSentRelWithRuAttitudes:
         if cv_count == 1:
             return ds_common_callback_modification_func
         else:
@@ -136,15 +140,15 @@ if __name__ == "__main__":
                                             opinion_formatter=Common.create_opinion_collection_formatter(),
                                             evaluator=evaluator)
 
-    experiment = Common.create_experiment(exp_type=exp_type,
-                                          experiment_data=experiment_data,
-                                          cv_count=cv_count,
-                                          rusentrel_version=rusentrel_version,
-                                          ruattitudes_version=ra_version,
-                                          is_training=False)
+    experiment = create_experiment(exp_type=exp_type,
+                                   experiment_data=experiment_data,
+                                   folding_type=FoldingType.Fixed if cv_count == 1 else FoldingType.CrossValidation,
+                                   rusentrel_version=rusentrel_version,
+                                   ruattitudes_version=ra_version,
+                                   experiment_io_type=CustomNetworkExperimentIO,
+                                   is_training=False)
 
-    model_io = NeuralNetworkModelIO(full_model_name=Common.create_full_model_name(exp_type=exp_type,
-                                                                                  cv_count=cv_count,
+    model_io = NeuralNetworkModelIO(full_model_name=Common.create_full_model_name(cv_count=cv_count,
                                                                                   model_name=model_name),
                                     target_dir=experiment.ExperimentIO.get_target_dir(),
                                     source_dir=model_load_dir,

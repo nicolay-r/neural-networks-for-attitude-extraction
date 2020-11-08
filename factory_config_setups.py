@@ -1,4 +1,4 @@
-from args.experiment import SUPERVISED_LEARNING, DISTANT_SUPERVISION, SUPERVISED_LEARNING_WITH_DS
+from arekit.contrib.experiments.types import ExperimentTypes
 from factory_networks import INPUT_TYPE_SINGLE_INSTANCE, INPUT_TYPE_MULTI_INSTANCE
 from rusentrel.classic.common import classic_ctx_common_config_settings, classic_mi_common_config_settings
 from rusentrel.classic.ctx.att_self_bilstm import ctx_self_att_bilstm_custom_config
@@ -47,16 +47,16 @@ def get_custom_config_func(model_name, model_input_type):
 
 
 def get_common_config_func(exp_type, model_input_type):
-    assert(isinstance(exp_type, unicode))
+    assert(isinstance(exp_type, ExperimentTypes))
     assert(isinstance(model_input_type, unicode))
-    if exp_type == SUPERVISED_LEARNING:
+    if exp_type == ExperimentTypes.RuSentRel:
         if model_input_type == INPUT_TYPE_SINGLE_INSTANCE:
             return classic_ctx_common_config_settings
         if model_input_type == INPUT_TYPE_MULTI_INSTANCE:
             return classic_mi_common_config_settings
-    if exp_type == DISTANT_SUPERVISION:
+    if exp_type == ExperimentTypes.RuAttitudes:
         raise NotImplementedError
-    if exp_type == SUPERVISED_LEARNING_WITH_DS:
+    if exp_type == ExperimentTypes.RuSentRelWithRuAttitudes:
         if model_input_type == INPUT_TYPE_SINGLE_INSTANCE:
             return ds_ctx_common_config_settings
         if model_input_type == INPUT_TYPE_MULTI_INSTANCE:

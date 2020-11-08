@@ -5,9 +5,9 @@ from arekit.common.entities.str_fmt import StringEntitiesFormatter
 from arekit.common.frame_variants.collection import FrameVariantsCollection
 from arekit.common.opinions.formatter import OpinionCollectionsFormatter
 from arekit.contrib.networks.core.data.serializing import NetworkSerializationData
+from arekit.contrib.source.rusentiframes.types import RuSentiFramesVersions
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from arekit.contrib.source.rusentiframes.collection import RuSentiFramesCollection
-from arekit.contrib.source.rusentiframes.io_utils import RuSentiFramesVersions
 from arekit.processing.lemmatization.base import Stemmer
 
 logger = logging.getLogger(__name__)
