@@ -1,7 +1,7 @@
 import argparse
 
 from arekit.common.evaluation.evaluators.two_class import TwoClassEvaluator
-from arekit.contrib.networks.core.nn_io import NeuralNetworkModelIO
+from arekit.contrib.networks.core.model_io import NeuralNetworkModelIO
 from arekit.contrib.networks.run_training import NetworksTrainingEngine
 from args.cv_index import CvCountArg
 from args.experiment import ExperimentTypeArg, SUPERVISED_LEARNING, SUPERVISED_LEARNING_WITH_DS
@@ -93,6 +93,18 @@ if __name__ == "__main__":
                         nargs='?',
                         help='Use pretrained state as initial')
 
+    parser.add_argument('--emb-filepath',
+                        dest='embedding_filepath',
+                        type=unicode,
+                        nargs='?',
+                        help='Custom embedding filepath')
+
+    parser.add_argument('--vocab-filepath',
+                        dest='vocab_filepath',
+                        type=unicode,
+                        nargs='?',
+                        help='Custom vocabulary filepath')
+
     # Parsing arguments.
     args = parser.parse_args()
 
@@ -106,6 +118,8 @@ if __name__ == "__main__":
     model_input_type = args.model_input_type
     model_load_dir = args.model_load_dir
     model_name = unicode(args.model_name[0])
+    embedding_filepath = args.embedding_filepath
+    vocab_filepath = args.vocab_filepath
 
     # init handler
     callback_func = get_callback_func(exp_type=exp_type, cv_count=cv_count)
@@ -133,7 +147,9 @@ if __name__ == "__main__":
                                                                                   cv_count=cv_count,
                                                                                   model_name=model_name),
                                     target_dir=experiment.ExperimentIO.get_target_dir(),
-                                    source_dir=model_load_dir)
+                                    source_dir=model_load_dir,
+                                    embedding_filepath=embedding_filepath,
+                                    vocab_filepath=vocab_filepath)
 
     experiment_data.set_model_io(model_io)
 
