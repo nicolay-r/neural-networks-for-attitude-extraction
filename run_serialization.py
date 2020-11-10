@@ -1,5 +1,6 @@
 import argparse
 
+from arekit.common.entities.formatters.factory import create_entity_formatter
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.contrib.experiments.factory import create_experiment
 from args.embedding import RusVectoresEmbeddingFilepathArg
@@ -58,7 +59,7 @@ if __name__ == "__main__":
         terms_per_context=terms_per_context,
         frames_version=frames_version,
         rusentrel_version=rusentrel_version,
-        str_entity_formatter=entity_fmt,
+        str_entity_formatter=create_entity_formatter(entity_fmt),
         stemmer=stemmer,
         opinion_formatter=Common.create_opinion_collection_formatter())
 
