@@ -14,9 +14,12 @@ class RuAttitudesVersionArg(BaseArg):
                             type=unicode,
                             nargs='?',
                             choices=list(RuAttitudesVersionsService.iter_supported_names()),
-                            default=False,
+                            default=None,
                             help='RuAttitudes collection version')
 
     @staticmethod
     def read_argument(args):
+        if args.ra_version is None:
+            return None
+
         return RuAttitudesVersionsService.find_by_name(args.ra_version)
