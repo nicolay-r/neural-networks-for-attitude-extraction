@@ -37,11 +37,11 @@ def get_custom_config_func(model_name, model_input_type):
         if model_name == model_names.PCNN:
             return ctx_pcnn_custom_config
         if model_name == model_names.RCNN:
-            raise ctx_rcnn_custom_config
+            return ctx_rcnn_custom_config
         if model_name == model_names.RCNNAttZYang:
             return ctx_rcnn_z_yang_custom_config
         if model_name == model_names.RCNNAttPZhou:
-            raise ctx_rcnn_p_zhou_custom_config
+            return ctx_rcnn_p_zhou_custom_config
 
     raise NotImplementedError()
 
