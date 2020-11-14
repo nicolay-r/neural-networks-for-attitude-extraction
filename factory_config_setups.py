@@ -55,7 +55,10 @@ def get_common_config_func(exp_type, model_input_type):
         if model_input_type == INPUT_TYPE_MULTI_INSTANCE:
             return classic_mi_common_config_settings
     if exp_type == ExperimentTypes.RuAttitudes:
-        raise NotImplementedError
+        if model_input_type == INPUT_TYPE_SINGLE_INSTANCE:
+            return ds_ctx_common_config_settings
+        if model_input_type == INPUT_TYPE_MULTI_INSTANCE:
+            return ds_mi_common_config_settings
     if exp_type == ExperimentTypes.RuSentRelWithRuAttitudes:
         if model_input_type == INPUT_TYPE_SINGLE_INSTANCE:
             return ds_ctx_common_config_settings
