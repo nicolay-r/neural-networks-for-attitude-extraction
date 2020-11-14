@@ -46,19 +46,30 @@ def supported_model_names():
     ]
 
 
-def get_callback_func(exp_type, cv_count):
-    assert(isinstance(cv_count, int))
+def get_callback_func(exp_type, folding_type):
+    assert(isinstance(folding_type, FoldingType))
 
     if exp_type == ExperimentTypes.RuSentRel:
-        if cv_count == 1:
+        if folding_type == FoldingType.Fixed:
             return classic_common_callback_modification_func
-        else:
+        elif folding_type == FoldingType.CrossValidation:
             return classic_cv_common_callback_modification_func
-    if exp_type == ExperimentTypes.RuSentRelWithRuAttitudes:
-        if cv_count == 1:
+
+    if exp_type == ExperimentTypes.RuAttitudes:
+        if folding_type == FoldingType.Fixed:
             return ds_common_callback_modification_func
-        else:
+        elif folding_type == FoldingType.CrossValidation:
             return ds_cv_common_callback_modification_func
+
+    if exp_type == ExperimentTypes.RuSentRelWithRuAttitudes:
+        if folding_type == FoldingType.Fixed:
+            return ds_common_callback_modification_func
+        elif folding_type == FoldingType.CrossValidation:
+            return ds_cv_common_callback_modification_func
+
+    raise Exception("Experiment type `{exp_type}` or folding type `{folding_type}` does not supported!".format(
+        exp_type=exp_type,
+        folding_type=folding_type))
 
 
 if __name__ == "__main__":
@@ -125,8 +136,11 @@ if __name__ == "__main__":
     embedding_filepath = args.embedding_filepath
     vocab_filepath = args.vocab_filepath
 
+    # Defining folding type
+    folding_type = FoldingType.Fixed if cv_count == 1 else FoldingType.CrossValidation
+
     # init handler
-    callback_func = get_callback_func(exp_type=exp_type, cv_count=cv_count)
+    callback_func = get_callback_func(exp_type=exp_type, folding_type=folding_type)
     bags_collection_type = create_bags_collection_type(model_input_type=model_input_type)
     common_config_func = get_common_config_func(exp_type=exp_type, model_input_type=model_input_type)
     custom_config_func = get_custom_config_func(model_name=model_name, model_input_type=model_input_type)
@@ -142,7 +156,7 @@ if __name__ == "__main__":
 
     experiment = create_experiment(exp_type=exp_type,
                                    experiment_data=experiment_data,
-                                   folding_type=FoldingType.Fixed if cv_count == 1 else FoldingType.CrossValidation,
+                                   folding_type=folding_type,
                                    rusentrel_version=rusentrel_version,
                                    ruattitudes_version=ra_version,
                                    experiment_io_type=CustomNetworkExperimentIO,
