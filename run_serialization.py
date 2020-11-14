@@ -52,7 +52,7 @@ if __name__ == "__main__":
     entity_fmt = EnitityFormatterTypesArg.read_argument(args)
     stemmer = StemmerArg.read_argument(args)
 
-    # Preparing necesary structures for further initializations.
+    # Preparing necessary structures for further initializations.
     experiment_data = RuSentRelExperimentSerializationData(
         labels_scaler=Common.create_labels_scaler(labels_count),
         embedding=Common.load_rusvectores_word_embedding(embedding_filepath),

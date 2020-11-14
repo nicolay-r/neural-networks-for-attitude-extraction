@@ -1,5 +1,8 @@
+import sys
 from args.base import BaseArg
 from rusentrel.default import TERMS_PER_CONTEXT
+
+sys.path.append('../')
 
 
 class TermsPerContextArg(BaseArg):
@@ -20,5 +23,7 @@ class TermsPerContextArg(BaseArg):
                             type=int,
                             default=TermsPerContextArg.default,
                             nargs='?',
-                            help='The max possible length of an input context in terms (Default: {})'.format(
-                                TermsPerContextArg.default))
+                            help='The max possible length of an input context in terms (Default: {})\n'
+                                 'NOTE: Use greater or equal value for this parameter during experiment'
+                                 'process; otherwize you may encounter with exception during sample '
+                                 'creation process!'.format(TermsPerContextArg.default))
