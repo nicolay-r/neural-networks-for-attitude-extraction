@@ -1,6 +1,6 @@
 from arekit.contrib.networks.context.configurations.base.base import DefaultNetworkConfig
 from arekit.contrib.networks.multi.configurations.base import BaseMultiInstanceConfig
-from rusentrel.default import MI_CONTEXTS_PER_OPINION
+from rusentrel.default import MI_CONTEXTS_PER_OPINION, TERMS_PER_CONTEXT
 from callback import CustomCallback
 
 
@@ -16,7 +16,7 @@ def classic_ctx_common_config_settings(config):
     config.modify_bag_size(1)
     config.modify_bags_per_minibatch(8)
     config.modify_embedding_dropout_keep_prob(1.0)
-    config.modify_terms_per_context(50)
+    config.modify_terms_per_context(TERMS_PER_CONTEXT)
     config.modify_use_entity_types_in_embedding(False)
 
 
