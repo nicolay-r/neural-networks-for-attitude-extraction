@@ -6,13 +6,13 @@ from callback import CustomCallback
 
 class RuSentRelTrainingData(TrainingData):
 
-    def __init__(self, labels_scaler, stemmer, opinion_formatter, evaluator):
+    def __init__(self, labels_scaler, stemmer, opinion_formatter, evaluator, do_eval):
         assert(isinstance(stemmer, Stemmer))
         assert(isinstance(opinion_formatter, OpinionCollectionsFormatter))
 
         super(RuSentRelTrainingData, self).__init__(labels_scaler, stemmer)
 
-        self.__callback = CustomCallback()
+        self.__callback = CustomCallback(do_eval=do_eval)
         self.__opinion_formatter = opinion_formatter
         self.__evaluator = evaluator
 

@@ -10,9 +10,12 @@ logger.setLevel(logging.INFO)
 
 class CustomCallback(NeuralNetworkCallback):
 
-    def __init__(self):
+    def __init__(self, do_eval):
+        assert(isinstance(do_eval, bool))
+
         super(CustomCallback, self).__init__()
 
+        self.__do_eval = do_eval
         self.__costs_history = None
         self.__costs_window = 5
         self.__cancellation_acc_bound = 0.99
@@ -57,7 +60,11 @@ class CustomCallback(NeuralNetworkCallback):
             logger.info("Stop feeding process: avg_fit_acc > {}".format(self.__cancellation_acc_bound))
             operation_cancel.Cancel()
 
-        if epoch_index in self._test_on_epochs or operation_cancel.IsCancelled:
+        # Deciding whether there is a need in evaluation process organization.
+        is_need_eval = epoch_index in self._test_on_epochs or operation_cancel.IsCancelled
+
+        # Performing evaluation process (optionally).
+        if self.__do_eval and is_need_eval:
             self.__test(operation_cancel=operation_cancel,
                         epoch_index=epoch_index,
                         avg_fit_cost=avg_fit_cost)
@@ -76,9 +83,9 @@ class CustomCallback(NeuralNetworkCallback):
         f1_train = result_train.get_result_by_metric(result_train.C_F1)
         if f1_train >= self.__cancellation_f1_train_bound:
 
-            logger.info("Stop feeding process: F1-train ({}) > {}".format(
-                round(f1_train, 3),
-                self.__cancellation_f1_train_bound))
+            logger.info("Stop feeding process: F1-train ({f1_actual}) > {f1_bound}".format(
+                f1_actual=round(f1_train, 3),
+                f1_bound=self.__cancellation_f1_train_bound))
 
             operation_cancel.Cancel()
 

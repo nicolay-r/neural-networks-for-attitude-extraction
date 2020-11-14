@@ -120,6 +120,14 @@ if __name__ == "__main__":
                         nargs='?',
                         help='Custom vocabulary filepath')
 
+    parser.add_argument('--do-eval',
+                        dest='do_eval',
+                        type=unicode,
+                        const=True,
+                        default=False,
+                        nargs='?',
+                        help='Perform evaluation during training process')
+
     # Parsing arguments.
     args = parser.parse_args()
 
@@ -135,6 +143,7 @@ if __name__ == "__main__":
     model_name = unicode(args.model_name[0])
     embedding_filepath = args.embedding_filepath
     vocab_filepath = args.vocab_filepath
+    do_eval = args.do_eval
 
     # Defining folding type
     folding_type = FoldingType.Fixed if cv_count == 1 else FoldingType.CrossValidation
@@ -152,7 +161,8 @@ if __name__ == "__main__":
     experiment_data = RuSentRelTrainingData(labels_scaler=Common.create_labels_scaler(labels_count),
                                             stemmer=stemmer,
                                             opinion_formatter=Common.create_opinion_collection_formatter(),
-                                            evaluator=evaluator)
+                                            evaluator=evaluator,
+                                            do_eval=do_eval)
 
     experiment = create_experiment(exp_type=exp_type,
                                    experiment_data=experiment_data,
