@@ -1,4 +1,5 @@
 import argparse
+from os.path import join
 
 from arekit.common.evaluation.evaluators.two_class import TwoClassEvaluator
 from arekit.common.experiment.folding.types import FoldingType
@@ -13,6 +14,7 @@ from args.labels_count import LabelsCountArg
 from args.ra_ver import RuAttitudesVersionArg
 from args.rusentrel import RuSentRelVersionArg
 from args.stemmer import StemmerArg
+from callback import CustomCallback
 from common import Common
 # TODO. Move this parameters into args/input_format.py
 from data_training import RuSentRelTrainingData
@@ -156,13 +158,22 @@ if __name__ == "__main__":
     network, network_config = compose_network_and_network_config_funcs(model_name=model_name,
                                                                        model_input_type=model_input_type)
 
+    #####################
+    # Initialize callback
+    #####################
+    callback = CustomCallback(do_eval=do_eval)
+    callback_func = get_callback_func(exp_type=exp_type, folding_type=folding_type)
+    callback.PredictVerbosePerFileStatistic = False
+    callback_func(callback)
+
     # Creating experiment
     evaluator = TwoClassEvaluator()
-    experiment_data = RuSentRelTrainingData(labels_scaler=Common.create_labels_scaler(labels_count),
-                                            stemmer=stemmer,
-                                            opinion_formatter=Common.create_opinion_collection_formatter(),
-                                            evaluator=evaluator,
-                                            do_eval=do_eval)
+    experiment_data = RuSentRelTrainingData(
+        labels_scaler=Common.create_labels_scaler(labels_count),
+        stemmer=stemmer,
+        opinion_formatter=Common.create_opinion_collection_formatter(),
+        evaluator=evaluator,
+        callback=callback)
 
     experiment = create_experiment(exp_type=exp_type,
                                    experiment_data=experiment_data,
@@ -179,12 +190,14 @@ if __name__ == "__main__":
                                     embedding_filepath=embedding_filepath,
                                     vocab_filepath=vocab_filepath)
 
+    # Setup logging dir.
+    callback.set_log_dir(join(model_io.get_model_dir(), u"log/"))
+
     experiment_data.set_model_io(model_io)
 
     ###################
     # Initialize config
     ###################
-    callback_func = get_callback_func(exp_type=exp_type, folding_type=folding_type)
     config = network_config()
     assert(isinstance(config, DefaultNetworkConfig))
 
