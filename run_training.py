@@ -4,6 +4,7 @@ from arekit.common.evaluation.evaluators.two_class import TwoClassEvaluator
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.contrib.experiments.factory import create_experiment
 from arekit.contrib.experiments.types import ExperimentTypes
+from arekit.contrib.networks.context.configurations.base.base import DefaultNetworkConfig
 from arekit.contrib.networks.core.model_io import NeuralNetworkModelIO
 from arekit.contrib.networks.run_training import NetworksTrainingEngine
 from args.cv_index import CvCountArg
@@ -149,7 +150,6 @@ if __name__ == "__main__":
     folding_type = FoldingType.Fixed if cv_count == 1 else FoldingType.CrossValidation
 
     # init handler
-    callback_func = get_callback_func(exp_type=exp_type, folding_type=folding_type)
     bags_collection_type = create_bags_collection_type(model_input_type=model_input_type)
     common_config_func = get_common_config_func(exp_type=exp_type, model_input_type=model_input_type)
     custom_config_func = get_custom_config_func(model_name=model_name, model_input_type=model_input_type)
@@ -181,13 +181,29 @@ if __name__ == "__main__":
 
     experiment_data.set_model_io(model_io)
 
+    ###################
+    # Initialize config
+    ###################
+    callback_func = get_callback_func(exp_type=exp_type, folding_type=folding_type)
+    config = network_config()
+    assert(isinstance(config, DefaultNetworkConfig))
+
+    # Setup amount of output classes count.
+    config.modify_classes_count(value=experiment.DataIO.LabelsScaler.classes_count())
+
+    # Common modification func.
+    if common_config_func is not None:
+        common_config_func(config=config)
+
+    # Custom (post-common) modification func.
+    if custom_config_func is not None:
+        custom_config_func(config)
+
     training_engine = NetworksTrainingEngine(load_model=model_load_dir is not None,
                                              experiment=experiment,
                                              create_network_func=network,
-                                             create_config=network_config,
+                                             config=config,
                                              bags_collection_type=bags_collection_type,
-                                             custom_config_modification_func=custom_config_func,
-                                             common_config_modification_func=common_config_func,
                                              common_callback_modification_func=callback_func)
 
     training_engine.run()

@@ -1,13 +1,13 @@
 import sys
+sys.path.append('../')
+
 from args.base import BaseArg
 from rusentrel.default import TERMS_PER_CONTEXT
-
-sys.path.append('../')
 
 
 class TermsPerContextArg(BaseArg):
 
-    default = TERMS_PER_CONTEXT
+    default = 50
 
     def __init__(self):
         pass
