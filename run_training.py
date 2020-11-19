@@ -153,10 +153,9 @@ if __name__ == "__main__":
 
     # init handler
     bags_collection_type = create_bags_collection_type(model_input_type=model_input_type)
-    common_config_func = get_common_config_func(exp_type=exp_type, model_input_type=model_input_type)
-    custom_config_func = get_custom_config_func(model_name=model_name, model_input_type=model_input_type)
-    network, network_config = compose_network_and_network_config_funcs(model_name=model_name,
-                                                                       model_input_type=model_input_type)
+    network_func, network_config_func = compose_network_and_network_config_funcs(
+        model_name=model_name,
+        model_input_type=model_input_type)
 
     #####################
     # Initialize callback
@@ -198,23 +197,18 @@ if __name__ == "__main__":
     ###################
     # Initialize config
     ###################
-    config = network_config()
+    config = network_config_func()
     assert(isinstance(config, DefaultNetworkConfig))
-
-    # Setup amount of output classes count.
+    # Setup config.
     config.modify_classes_count(value=experiment.DataIO.LabelsScaler.classes_count())
-
-    # Common modification func.
-    if common_config_func is not None:
-        common_config_func(config=config)
-
-    # Custom (post-common) modification func.
-    if custom_config_func is not None:
-        custom_config_func(config)
+    common_config_func = get_common_config_func(exp_type=exp_type, model_input_type=model_input_type)
+    custom_config_func = get_custom_config_func(model_name=model_name, model_input_type=model_input_type)
+    common_config_func(config=config)
+    custom_config_func(config)
 
     training_engine = NetworksTrainingEngine(load_model=model_load_dir is not None,
                                              experiment=experiment,
-                                             create_network_func=network,
+                                             create_network_func=network_func,
                                              config=config,
                                              bags_collection_type=bags_collection_type,
                                              common_callback_modification_func=callback_func)

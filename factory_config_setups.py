@@ -43,7 +43,8 @@ def get_custom_config_func(model_name, model_input_type):
         if model_name == model_names.RCNNAttPZhou:
             return ctx_rcnn_p_zhou_custom_config
 
-    raise NotImplementedError()
+    raise NotImplementedError(u"Model input type {input_type} is not supported".format(
+        input_type=model_input_type))
 
 
 def get_common_config_func(exp_type, model_input_type):
@@ -64,3 +65,7 @@ def get_common_config_func(exp_type, model_input_type):
             return ds_ctx_common_config_settings
         if model_input_type == INPUT_TYPE_MULTI_INSTANCE:
             return ds_mi_common_config_settings
+
+    raise Exception(u"Experiment type {exp_type} or "
+                    u"model_input_type {input_type} is not supported".format(exp_type=exp_type,
+                                                                             input_type=model_input_type))
