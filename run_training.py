@@ -87,6 +87,8 @@ if __name__ == "__main__":
     RuSentRelVersionArg.add_argument(parser)
     StemmerArg.add_argument(parser)
 
+    # TODO. Provide other training parameters.
+
     parser.add_argument('--model-input-type',
                         dest='model_input_type',
                         type=unicode,

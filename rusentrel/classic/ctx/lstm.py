@@ -1,6 +1,6 @@
-from rusentrel.default import TERMS_PER_CONTEXT
 from arekit.contrib.networks.context.configurations.rnn import RNNConfig
 from arekit.contrib.networks.tf_helpers.cell_types import CellTypes
+from args.default import TERMS_PER_CONTEXT
 
 
 def ctx_lstm_custom_config(config):
