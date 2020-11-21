@@ -4,5 +4,4 @@ from arekit.contrib.networks.context.configurations.att_self_z_yang_bilstm impor
 
 def ctx_att_bilstm_z_yang_custom_config(config):
     assert(isinstance(config, AttentionSelfZYangBiLSTMConfig))
-    config.modify_bags_per_minibatch(2)
     config.modify_weight_initializer(tf.contrib.layers.xavier_initializer())
