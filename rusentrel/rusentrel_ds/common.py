@@ -1,30 +1,15 @@
-from arekit.contrib.networks.context.configurations.base.base import DefaultNetworkConfig
 from arekit.contrib.networks.multi.configurations.base import BaseMultiInstanceConfig
 from callback import CustomCallback
-from rusentrel.classic.common import classic_ctx_common_config_settings
 from rusentrel.default import MI_CONTEXTS_PER_OPINION
 
 DS_NAME_PREFIX = u'ds_'
 
 
-def ds_ctx_common_config_settings(config):
-    """
-    This function describes a base config setup for all models.
-    """
-    assert(isinstance(config, DefaultNetworkConfig))
-
-    # Apply classic settings
-    classic_ctx_common_config_settings(config)
-
-
-def ds_mi_common_config_settings(config):
+def apply_ds_mi_settings(config):
     """
     This function describes a base config setup for all models.
     """
     assert(isinstance(config, BaseMultiInstanceConfig))
-    ds_ctx_common_config_settings(config)
-
-    # Increasing memory limit consumption
     config.set_contexts_per_opinion(MI_CONTEXTS_PER_OPINION)
     config.modify_bags_per_minibatch(2)
 

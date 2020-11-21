@@ -16,7 +16,7 @@ class DropoutKeepProbArg(BaseArg):
     @staticmethod
     def add_argument(parser):
         parser.add_argument('--dropout-keep-prob',
-                            dest='dropout-keep-prob',
+                            dest='dropout_keep_prob',
                             type=int,
                             default=DropoutKeepProbArg.default,
                             nargs='?',

@@ -9,11 +9,15 @@ from arekit.contrib.networks.context.configurations.base.base import DefaultNetw
 from arekit.contrib.networks.core.model_io import NeuralNetworkModelIO
 from arekit.contrib.networks.run_training import NetworksTrainingEngine
 from args.cv_index import CvCountArg
+from args.default import BAG_SIZE
 from args.experiment import ExperimentTypeArg
 from args.labels_count import LabelsCountArg
 from args.ra_ver import RuAttitudesVersionArg
 from args.rusentrel import RuSentRelVersionArg
 from args.stemmer import StemmerArg
+from args.train_bags_per_minibatch import BagsPerMinibatchArg
+from args.train_dropout_keep_prob import DropoutKeepProbArg
+from args.train_terms_per_context import TermsPerContextArg
 from callback import CustomCallback
 from common import Common
 # TODO. Move this parameters into args/input_format.py
@@ -25,7 +29,7 @@ from factory_networks import \
     INPUT_TYPE_MULTI_INSTANCE_WITH_ATTENTION, \
     compose_network_and_network_config_funcs, \
     create_bags_collection_type
-from factory_config_setups import get_custom_config_func, get_common_config_func
+from factory_config_setups import modify_config_for_model, optionally_modify_config_for_experiment
 from rusentrel.classic.common import classic_common_callback_modification_func
 from rusentrel.callback_utils import classic_cv_common_callback_modification_func, \
     ds_cv_common_callback_modification_func
@@ -86,6 +90,9 @@ if __name__ == "__main__":
     ExperimentTypeArg.add_argument(parser)
     RuSentRelVersionArg.add_argument(parser)
     StemmerArg.add_argument(parser)
+    DropoutKeepProbArg.add_argument(parser)
+    BagsPerMinibatchArg.add_argument(parser)
+    TermsPerContextArg.add_argument(parser)
 
     # TODO. Provide other training parameters.
 
@@ -149,6 +156,9 @@ if __name__ == "__main__":
     embedding_filepath = args.embedding_filepath
     vocab_filepath = args.vocab_filepath
     do_eval = args.do_eval
+    dropout_keep_prob = DropoutKeepProbArg.read_argument(args)
+    bags_per_minibatch = BagsPerMinibatchArg.read_argument(args)
+    terms_per_context = TermsPerContextArg.read_argument(args)
 
     # Defining folding type
     folding_type = FoldingType.Fixed if cv_count == 1 else FoldingType.CrossValidation
@@ -200,19 +210,36 @@ if __name__ == "__main__":
     # Initialize config
     ###################
     config = network_config_func()
+
     assert(isinstance(config, DefaultNetworkConfig))
-    # Setup config.
+
+    # Default settings, applied from cmd arguments.
     config.modify_classes_count(value=experiment.DataIO.LabelsScaler.classes_count())
-    common_config_func = get_common_config_func(exp_type=exp_type, model_input_type=model_input_type)
-    custom_config_func = get_custom_config_func(model_name=model_name, model_input_type=model_input_type)
-    common_config_func(config=config)
-    custom_config_func(config)
+    config.modify_learning_rate(0.1)
+    config.modify_use_class_weights(True)
+    config.modify_dropout_keep_prob(dropout_keep_prob)
+    config.modify_bag_size(BAG_SIZE)
+    config.modify_bags_per_minibatch(bags_per_minibatch)
+    config.modify_embedding_dropout_keep_prob(1.0)
+    config.modify_terms_per_context(terms_per_context)
+    config.modify_use_entity_types_in_embedding(False)
+
+    # Modify config parameters. This may affect
+    # the settings, already applied above!
+    optionally_modify_config_for_experiment(exp_type=exp_type,
+                                            model_input_type=model_input_type,
+                                            config=config)
+
+    # Modify config parameters. This may affect
+    # the settings, already applied above!
+    modify_config_for_model(model_name=model_name,
+                            model_input_type=model_input_type,
+                            config=config)
 
     training_engine = NetworksTrainingEngine(load_model=model_load_dir is not None,
                                              experiment=experiment,
                                              create_network_func=network_func,
                                              config=config,
-                                             bags_collection_type=bags_collection_type,
-                                             common_callback_modification_func=callback_func)
+                                             bags_collection_type=bags_collection_type)
 
     training_engine.run()
