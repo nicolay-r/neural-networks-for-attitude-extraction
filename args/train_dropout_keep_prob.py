@@ -17,7 +17,7 @@ class DropoutKeepProbArg(BaseArg):
     def add_argument(parser):
         parser.add_argument('--dropout-keep-prob',
                             dest='dropout_keep_prob',
-                            type=int,
+                            type=float,
                             default=DropoutKeepProbArg.default,
                             nargs='?',
                             help='Dropout keep prob (Default: {})'.format(DropoutKeepProbArg.default))
