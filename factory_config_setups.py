@@ -45,6 +45,17 @@ def modify_config_for_model(model_name, model_input_type, config):
 
         return
 
+    if model_input_type == INPUT_TYPE_MULTI_INSTANCE:
+        # We assign all the settings related to the case of
+        # single instance model.
+        modify_config_for_model(model_name=model_name,
+                                model_input_type=INPUT_TYPE_SINGLE_INSTANCE,
+                                config=config)
+        # We apply modification of some parameters
+        config.fix_context_parameters()
+
+        return
+
     raise NotImplementedError(u"Model input type {input_type} is not supported".format(
         input_type=model_input_type))
 

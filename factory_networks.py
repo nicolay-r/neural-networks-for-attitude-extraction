@@ -27,7 +27,7 @@ from rusentrel.ctx_names import ModelNames
 
 INPUT_TYPE_SINGLE_INSTANCE = u'ctx'
 INPUT_TYPE_MULTI_INSTANCE = u'mi'
-INPUT_TYPE_MULTI_INSTANCE_WITH_ATTENTION = u'mi'
+INPUT_TYPE_MULTI_INSTANCE_WITH_ATTENTION = u'mi-att'
 
 
 def compose_network_and_network_config_funcs(model_name, model_input_type):
