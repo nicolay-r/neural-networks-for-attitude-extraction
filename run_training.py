@@ -17,6 +17,7 @@ from args.rusentrel import RuSentRelVersionArg
 from args.stemmer import StemmerArg
 from args.train_bags_per_minibatch import BagsPerMinibatchArg
 from args.train_dropout_keep_prob import DropoutKeepProbArg
+from args.train_learning_rate import LearningRateArg
 from args.train_terms_per_context import TermsPerContextArg
 from callback import CustomCallback
 from common import Common
@@ -93,6 +94,7 @@ if __name__ == "__main__":
     DropoutKeepProbArg.add_argument(parser)
     BagsPerMinibatchArg.add_argument(parser)
     TermsPerContextArg.add_argument(parser)
+    LearningRateArg.add_argument(parser)
 
     # TODO. Provide other training parameters.
 
@@ -159,6 +161,7 @@ if __name__ == "__main__":
     dropout_keep_prob = DropoutKeepProbArg.read_argument(args)
     bags_per_minibatch = BagsPerMinibatchArg.read_argument(args)
     terms_per_context = TermsPerContextArg.read_argument(args)
+    learning_rate = LearningRateArg.read_argument(args)
 
     # Defining folding type
     folding_type = FoldingType.Fixed if cv_count == 1 else FoldingType.CrossValidation
@@ -217,7 +220,7 @@ if __name__ == "__main__":
 
     # Default settings, applied from cmd arguments.
     config.modify_classes_count(value=experiment.DataIO.LabelsScaler.classes_count())
-    config.modify_learning_rate(0.1)
+    config.modify_learning_rate(learning_rate)
     config.modify_use_class_weights(True)
     config.modify_dropout_keep_prob(dropout_keep_prob)
     config.modify_bag_size(BAG_SIZE)
