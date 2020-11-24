@@ -19,7 +19,7 @@ from args.train_bags_per_minibatch import BagsPerMinibatchArg
 from args.train_dropout_keep_prob import DropoutKeepProbArg
 from args.train_learning_rate import LearningRateArg
 from args.train_terms_per_context import TermsPerContextArg
-from callback import CustomCallback
+from callback import NeuralNetworkCustomEvaluationCallback
 from common import Common
 # TODO. Move this parameters into args/input_format.py
 from data_training import RuSentRelTrainingData
@@ -175,7 +175,7 @@ if __name__ == "__main__":
     #####################
     # Initialize callback
     #####################
-    callback = CustomCallback(do_eval=do_eval)
+    callback = NeuralNetworkCustomEvaluationCallback(do_eval=do_eval)
     callback_func = get_callback_func(exp_type=exp_type, folding_type=folding_type)
     callback.PredictVerbosePerFileStatistic = False
     callback_func(callback)

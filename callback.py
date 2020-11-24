@@ -1,19 +1,19 @@
 import logging
 
 from arekit.common.experiment.data_type import DataType
-from arekit.contrib.networks.core.callback.network import NeuralNetworkCallback
+from arekit.contrib.networks.core.callback.network import NeuralNetworkEvaluationCallback
 from arekit.contrib.networks.core.cancellation import OperationCancellation
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-class CustomCallback(NeuralNetworkCallback):
+class NeuralNetworkCustomEvaluationCallback(NeuralNetworkEvaluationCallback):
 
     def __init__(self, do_eval):
         assert(isinstance(do_eval, bool))
 
-        super(CustomCallback, self).__init__()
+        super(NeuralNetworkCustomEvaluationCallback, self).__init__()
 
         self.__do_eval = do_eval
         self.__costs_history = None
@@ -23,7 +23,7 @@ class CustomCallback(NeuralNetworkCallback):
 
     # region public methods
 
-    def reset_experiment_dependent_parameters(self):
+    def on_experiment_iteration_begin(self):
         self.__costs_history = []
 
     def set_cancellation_acc_bound(self, value):
@@ -70,7 +70,7 @@ class CustomCallback(NeuralNetworkCallback):
                         avg_fit_cost=avg_fit_cost)
 
         # Running base method
-        super(CustomCallback, self).on_epoch_finished(
+        super(NeuralNetworkCustomEvaluationCallback, self).on_epoch_finished(
             avg_fit_cost=avg_fit_cost,
             avg_fit_acc=avg_fit_acc,
             epoch_index=epoch_index,

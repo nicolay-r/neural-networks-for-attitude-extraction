@@ -1,13 +1,13 @@
 from arekit.common.experiment.data.training import TrainingData
 from arekit.common.opinions.formatter import OpinionCollectionsFormatter
 from arekit.processing.lemmatization.base import Stemmer
-from callback import CustomCallback
+from callback import NeuralNetworkCustomEvaluationCallback
 
 
 class RuSentRelTrainingData(TrainingData):
 
     def __init__(self, labels_scaler, stemmer, opinion_formatter, evaluator, callback):
-        assert(isinstance(callback, CustomCallback))
+        assert(isinstance(callback, NeuralNetworkCustomEvaluationCallback))
         assert(isinstance(stemmer, Stemmer))
         assert(isinstance(opinion_formatter, OpinionCollectionsFormatter))
 
