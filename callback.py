@@ -12,7 +12,7 @@ from arekit.contrib.networks.core.callback.utils_model_eval import evaluate_mode
 from arekit.contrib.networks.core.cancellation import OperationCancellation
 from arekit.contrib.networks.core.model import BaseTensorflowModel
 from arekit.contrib.source.rusentrel.labels_fmt import RuSentRelLabelsFormatter
-from callback_log_utils import create_verbose_eval_results_msg, create_overall_eval_results_msg
+from callback_log_utils import create_verbose_eval_results_msg, create_overall_eval_results_msg, write_config_setups
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -35,6 +35,7 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
         self.__log_dir = None
         self.__do_eval = do_eval
         self.__costs_history = None
+        self.__key_stop_training_by_cost = None
 
         self.__train_log_files = {}
         self.__eval_log_files = {}
@@ -75,6 +76,8 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
     def on_initialized(self, model):
         assert(isinstance(model, BaseTensorflowModel))
         self.__model = model
+        write_config_setups(config=model.Config,
+                            out_filepath=join(self.__log_dir, u"model_config.txt"))
 
     def on_experiment_iteration_begin(self):
         self.__costs_history = []
