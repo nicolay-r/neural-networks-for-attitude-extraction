@@ -1,4 +1,6 @@
 import logging
+
+from arekit.common.experiment.folding.types import FoldingType
 from arekit.common.experiment.scales.three import ThreeLabelScaler
 from arekit.common.experiment.scales.two import TwoLabelScaler
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
@@ -22,9 +24,16 @@ class Common:
         return RuSentRelOpinionCollectionFormatter()
 
     @staticmethod
-    def create_full_model_name(cv_count, model_name):
-        cv_prefix = Common.CV_NAME_PREFIX if cv_count > 0 else ""  # TODO. name prefixes are: cv, ds_cv, ds, ""
-        return u"{}{}".format(cv_prefix, model_name)
+    def create_full_model_name(folding_type, model_name):
+        assert(isinstance(folding_type,  FoldingType))
+
+        folding_prefix = u""
+        if folding_type == FoldingType.CrossValidation:
+            folding_prefix = Common.CV_NAME_PREFIX
+
+        return u"{folding_type}{model_name}".format(
+            folding_type=folding_prefix,
+            model_name=model_name)
 
     @staticmethod
     def create_labels_scaler(labels_count):

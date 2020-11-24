@@ -194,8 +194,10 @@ if __name__ == "__main__":
                                    experiment_io_type=CustomNetworkExperimentIO,
                                    is_training=False)
 
-    model_io = NeuralNetworkModelIO(full_model_name=Common.create_full_model_name(cv_count=cv_count,
-                                                                                  model_name=model_name),
+    full_model_name = Common.create_full_model_name(folding_type=folding_type,
+                                                    model_name=model_name)
+
+    model_io = NeuralNetworkModelIO(full_model_name=full_model_name,
                                     target_dir=experiment.ExperimentIO.get_target_dir(),
                                     source_dir=model_load_dir,
                                     embedding_filepath=embedding_filepath,
@@ -203,7 +205,7 @@ if __name__ == "__main__":
 
     # Setup logging dir.
     callback.set_log_dir(join(model_io.get_model_dir(), u"log/"))
-
+    # Setup model io.
     experiment_data.set_model_io(model_io)
 
     ###################
