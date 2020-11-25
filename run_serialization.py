@@ -3,6 +3,7 @@ import argparse
 from arekit.common.entities.formatters.factory import create_entity_formatter
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.contrib.experiments.factory import create_experiment
+from args.balance import UseBalancingArg
 from args.embedding import RusVectoresEmbeddingFilepathArg
 from args.entity_fmt import EnitityFormatterTypesArg
 from args.frames import RuSentiFramesVersionArg
@@ -36,14 +37,7 @@ if __name__ == "__main__":
     RuSentRelVersionArg.add_argument(parser)
     EnitityFormatterTypesArg.add_argument(parser)
     StemmerArg.add_argument(parser)
-
-    parser.add_argument('--no-balancing',
-                        dest='balancing_disabled',
-                        type=bool,
-                        const=True,
-                        default=False,
-                        nargs='?',
-                        help='Disable balancing for Train type during sample serialization process')
+    UseBalancingArg.add_argument(parser)
 
     # Parsing arguments.
     args = parser.parse_args()
@@ -59,7 +53,7 @@ if __name__ == "__main__":
     rusentrel_version = RuSentRelVersionArg.read_argument(args)
     entity_fmt = EnitityFormatterTypesArg.read_argument(args)
     stemmer = StemmerArg.read_argument(args)
-    balancing_disabled = args.balancing_disabled
+    use_balancing = UseBalancingArg.read_argument(args)
 
     # Preparing necessary structures for further initializations.
     experiment_data = RuSentRelExperimentSerializationData(
@@ -82,7 +76,7 @@ if __name__ == "__main__":
 
     # Performing serialization process.
     serialization_engine = NetworksExperimentInputSerializer(experiment=experiment,
-                                                             balance=not balancing_disabled,
+                                                             balance=use_balancing,
                                                              skip_folder_if_exists=True)
 
     serialization_engine.run()
