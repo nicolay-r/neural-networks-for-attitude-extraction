@@ -10,6 +10,9 @@ class UseBalancingArg(BaseArg):
 
     @staticmethod
     def read_argument(args):
+        if isinstance(args.balance_samples, bool):
+            return args.balance_samples
+
         return args.balance_samples[0]
 
     @staticmethod
