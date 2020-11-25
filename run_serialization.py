@@ -37,6 +37,14 @@ if __name__ == "__main__":
     EnitityFormatterTypesArg.add_argument(parser)
     StemmerArg.add_argument(parser)
 
+    parser.add_argument('--no-balancing',
+                        dest='balancing_disabled',
+                        type=bool,
+                        const=True,
+                        default=False,
+                        nargs='?',
+                        help='Disable balancing for Train type during sample serialization process')
+
     # Parsing arguments.
     args = parser.parse_args()
 
@@ -51,6 +59,7 @@ if __name__ == "__main__":
     rusentrel_version = RuSentRelVersionArg.read_argument(args)
     entity_fmt = EnitityFormatterTypesArg.read_argument(args)
     stemmer = StemmerArg.read_argument(args)
+    balancing_disabled = args.balancing_disabled
 
     # Preparing necessary structures for further initializations.
     experiment_data = RuSentRelExperimentSerializationData(
@@ -73,6 +82,7 @@ if __name__ == "__main__":
 
     # Performing serialization process.
     serialization_engine = NetworksExperimentInputSerializer(experiment=experiment,
+                                                             balance=not balancing_disabled,
                                                              skip_folder_if_exists=True)
 
     serialization_engine.run()
