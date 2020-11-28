@@ -39,6 +39,14 @@ if __name__ == "__main__":
     StemmerArg.add_argument(parser)
     UseBalancingArg.add_argument(parser)
 
+    parser.add_argument('--force',
+                        dest='force',
+                        type=bool,
+                        const=True,
+                        default=False,
+                        nargs='?',
+                        help='Perform forced data serialization')
+
     # Parsing arguments.
     args = parser.parse_args()
 
@@ -54,6 +62,7 @@ if __name__ == "__main__":
     entity_fmt = EnitityFormatterTypesArg.read_argument(args)
     stemmer = StemmerArg.read_argument(args)
     use_balancing = UseBalancingArg.read_argument(args)
+    forced_serialization = args.force
 
     # Preparing necessary structures for further initializations.
     experiment_data = RuSentRelExperimentSerializationData(
@@ -77,6 +86,7 @@ if __name__ == "__main__":
     # Performing serialization process.
     serialization_engine = NetworksExperimentInputSerializer(experiment=experiment,
                                                              balance=use_balancing,
+                                                             force_serialize=forced_serialization,
                                                              skip_folder_if_exists=True)
 
     serialization_engine.run()
