@@ -104,50 +104,8 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
             return True
         return avg_cost < min(self.__costs_history[:history_len - self.__costs_window])
 
-    # endregion
-
-    def on_epoch_finished(self, avg_fit_cost, avg_fit_acc, epoch_index, operation_cancel):
-        assert(isinstance(avg_fit_cost, float))
-        assert(isinstance(avg_fit_acc, float))
-        assert(isinstance(epoch_index, int))
+    def __test_and_log_results(self, operation_cancel, epoch_index, avg_fit_cost):
         assert(isinstance(operation_cancel, OperationCancellation))
-
-        message = u"{}: Epoch: {}: avg_fit_cost: {:.3f}, avg_fit_acc: {:.3f}".format(
-            str(datetime.datetime.now()),
-            epoch_index,
-            avg_fit_cost,
-            avg_fit_acc)
-
-        # Providing information into main logger.
-        logger.info(message)
-
-        # Duplicate the related information in separate log file.
-        self.__train_log_files[DataType.Train].write(u"{}\n".format(message))
-
-        if avg_fit_acc >= self.__cancellation_acc_bound:
-            logger.info(u"Stop feeding process: avg_fit_acc > {}".format(self.__cancellation_acc_bound))
-            operation_cancel.Cancel()
-
-        # Deciding whether there is a need in evaluation process organization.
-        is_need_eval = epoch_index in self.__test_on_epochs or operation_cancel.IsCancelled
-
-        # Performing evaluation process (optionally).
-        if self.__do_eval and is_need_eval:
-            self.__test(operation_cancel=operation_cancel,
-                        epoch_index=epoch_index,
-                        avg_fit_cost=avg_fit_cost)
-
-        # Check, whether there is a need to proceed with keeping hidden states or not.
-        if (epoch_index not in self.__test_on_epochs) and (not operation_cancel.IsCancelled):
-            return
-
-        # Saving model hidden values using the related numpy utils.
-        save_model_hidden_values(log_dir=self.__log_dir,
-                                 epoch_index=epoch_index,
-                                 save_hidden_parameters=self.__key_save_hidden_parameters,
-                                 model=self.__model)
-
-    def __test(self, operation_cancel, epoch_index, avg_fit_cost):
 
         # We use the latter temporary. Maybe it might be in a way
         # better to refactor this aspect.
@@ -213,6 +171,61 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
         # Separate logging information by files.
         self.__eval_log_files[data_type].write(u"{}\n".format(eval_msg))
         self.__eval_verbose_log_files[data_type].write(u"{}\n".format(eval_verbose_msg))
+
+    # endregion
+
+    def on_fit_started(self, operation_cancel):
+        if not self.__do_eval:
+            return
+
+        # Providing information into main logger.
+        message = u"{}: Initial Evaluation:".format(str(datetime.datetime.now()))
+        logger.info(message)
+
+        self.__test_and_log_results(operation_cancel=operation_cancel,
+                                    epoch_index=0,
+                                    avg_fit_cost=-1)
+
+    def on_epoch_finished(self, avg_fit_cost, avg_fit_acc, epoch_index, operation_cancel):
+        assert(isinstance(avg_fit_cost, float))
+        assert(isinstance(avg_fit_acc, float))
+        assert(isinstance(epoch_index, int))
+        assert(isinstance(operation_cancel, OperationCancellation))
+
+        message = u"{}: Epoch: {}: avg_fit_cost: {:.3f}, avg_fit_acc: {:.3f}".format(
+            str(datetime.datetime.now()),
+            epoch_index,
+            avg_fit_cost,
+            avg_fit_acc)
+
+        # Providing information into main logger.
+        logger.info(message)
+
+        # Duplicate the related information in separate log file.
+        self.__train_log_files[DataType.Train].write(u"{}\n".format(message))
+
+        if avg_fit_acc >= self.__cancellation_acc_bound:
+            logger.info(u"Stop feeding process: avg_fit_acc > {}".format(self.__cancellation_acc_bound))
+            operation_cancel.Cancel()
+
+        # Deciding whether there is a need in evaluation process organization.
+        is_need_eval = epoch_index in self.__test_on_epochs or operation_cancel.IsCancelled
+
+        # Performing evaluation process (optionally).
+        if self.__do_eval and is_need_eval:
+            self.__test_and_log_results(operation_cancel=operation_cancel,
+                                        epoch_index=epoch_index,
+                                        avg_fit_cost=avg_fit_cost)
+
+        # Check, whether there is a need to proceed with keeping hidden states or not.
+        if (epoch_index not in self.__test_on_epochs) and (not operation_cancel.IsCancelled):
+            return
+
+        # Saving model hidden values using the related numpy utils.
+        save_model_hidden_values(log_dir=self.__log_dir,
+                                 epoch_index=epoch_index,
+                                 save_hidden_parameters=self.__key_save_hidden_parameters,
+                                 model=self.__model)
 
     # region base methods
 
