@@ -104,54 +104,60 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
             return True
         return avg_cost < min(self.__costs_history[:history_len - self.__costs_window])
 
-    def __test_and_log_results(self, operation_cancel, epoch_index, avg_fit_cost):
-        assert(isinstance(operation_cancel, OperationCancellation))
-
-        # We use the latter temporary. Maybe it might be in a way
-        # better to refactor this aspect.
-        eval_label_formatter = RuSentRelLabelsFormatter()
-
-        #########################################################
-        # Train collection results evaluation.
-        #########################################################
-        result_train = evaluate_model(experiment=self.__experiment,
-                                      save_hidden_params=self.__key_save_hidden_parameters,
-                                      data_type=DataType.Train,
-                                      epoch_index=epoch_index,
-                                      model=self.__model,
-                                      labels_formatter=eval_label_formatter,
-                                      log_dir=self.__log_dir)
-
-        # Saving the obtained results.
-        self.__save_evaluation_results(result=result_train, data_type=DataType.Train, epoch_index=epoch_index)
+    def __is_cancel_needed(self, result_train, avg_fit_cost):
+        """ This method related to the main algorithm that defines
+            whether there is a need to stop training process or not.
+        """
+        msg = None
+        cancel = False
 
         f1_train = result_train.get_result_by_metric(result_train.C_F1)
         if f1_train >= self.__cancellation_f1_train_bound:
-            logger.info("Stop feeding process: F1-train ({f1_actual}) > {f1_bound}".format(
+            msg = u"Stop Training Process: F1-train ({f1_actual}) > {f1_bound}".format(
                 f1_actual=round(f1_train, 3),
-                f1_bound=self.__cancellation_f1_train_bound))
-            operation_cancel.Cancel()
-
-        #########################################################
-        # Test Collection results evaluation.
-        #########################################################
-        result_test = evaluate_model(data_type=DataType.Test,
-                                     model=self.__model,
-                                     experiment=self.__experiment,
-                                     save_hidden_params=self.__key_save_hidden_parameters,
-                                     epoch_index=epoch_index,
-                                     labels_formatter=eval_label_formatter,
-                                     log_dir=self.__log_dir)
-
-        # Saving the obtained results.
-        self.__save_evaluation_results(result=result_test, data_type=DataType.Test, epoch_index=epoch_index)
+                f1_bound=self.__cancellation_f1_train_bound)
+            cancel = True
 
         if self.__key_stop_training_by_cost:
             if not self.__check_costs_still_improving(avg_fit_cost):
-                logger.info(u"Cancelling: cost becomes greater than min value {} epochs ago.".format(
-                    self.__costs_window))
+                msg = u"Stop Training Process: cost becomes greater than min value {} epochs ago.".format(
+                    self.__costs_window)
+                cancel = True
 
-                operation_cancel.Cancel()
+        if msg is not None:
+            logger.info(msg)
+
+        return cancel
+
+    def __test_and_log_results(self, operation_cancel, epoch_index, avg_fit_cost):
+        assert(isinstance(operation_cancel, OperationCancellation))
+
+        # We use the latter temporary. Maybe it might be in a way better to refactor this aspect.
+        # For now such formatter could not be taken from the related experiment.
+        eval_label_formatter = RuSentRelLabelsFormatter()
+
+        result = {}
+
+        for data_type in self.__experiment.DocumentOperations.DataFolding.iter_supported_data_types():
+            assert(isinstance(data_type, DataType))
+            result[data_type] = evaluate_model(
+                experiment=self.__experiment,
+                save_hidden_params=self.__key_save_hidden_parameters,
+                data_type=data_type,
+                epoch_index=epoch_index,
+                model=self.__model,
+                labels_formatter=eval_label_formatter,
+                log_dir=self.__log_dir)
+
+        # Saving the obtained results.
+        for data_type, eval_result in result.iteritems():
+            self.__save_evaluation_results(result=eval_result,
+                                           data_type=data_type,
+                                           epoch_index=epoch_index)
+
+        # Check whether there is a need to stop training process.
+        if self.__is_cancel_needed(result_train=result[DataType.Train], avg_fit_cost=avg_fit_cost):
+            operation_cancel.Cancel()
 
         self.__costs_history.append(avg_fit_cost)
 
