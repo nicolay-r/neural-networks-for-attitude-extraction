@@ -171,7 +171,6 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
                                                    epoch_index=epoch_index)
 
         # Writing evaluation logging results.
-        logger.info(eval_verbose_msg)
         logger.info(eval_msg)
 
         # Separate logging information by files.
