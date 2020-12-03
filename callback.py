@@ -20,11 +20,15 @@ logger.setLevel(logging.INFO)
 
 class NeuralNetworkCustomEvaluationCallback(Callback):
 
+    __costs_window = 5
+
     __log_train_filename_template = u"cb_train_{iter}_{dtype}.log"
     __log_eval_filename_template = u"cb_eval_{iter}_{dtype}.log"
     __log_eval_verbose_filename = u"cb_eval_verbose_{iter}_{dtype}.log"
 
-    def __init__(self, do_eval):
+    def __init__(self, do_eval,
+                 cancellation_acc_bound,
+                 cancellation_f1_train_bound):
         assert(isinstance(do_eval, bool))
 
         super(NeuralNetworkCustomEvaluationCallback, self).__init__()
@@ -43,9 +47,8 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
 
         self.__key_save_hidden_parameters = True
 
-        self.__costs_window = 5
-        self.__cancellation_acc_bound = 0.99
-        self.__cancellation_f1_train_bound = 0.85
+        self.__cancellation_acc_bound = cancellation_acc_bound
+        self.__cancellation_f1_train_bound = cancellation_f1_train_bound
 
     # region properties
 
@@ -81,14 +84,6 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
 
     def on_experiment_iteration_begin(self):
         self.__costs_history = []
-
-    def set_cancellation_acc_bound(self, value):
-        assert(isinstance(value, float))
-        self.__cancellation_acc_bound = value
-
-    def set_cancellation_f1_train_bound(self, value):
-        assert(isinstance(value, float))
-        self.__cancellation_f1_train_bound = value
 
     def set_key_stop_training_by_cost(self, value):
         assert(isinstance(value, bool))

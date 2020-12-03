@@ -4,12 +4,11 @@ from os.path import join
 from arekit.common.evaluation.evaluators.two_class import TwoClassEvaluator
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.contrib.experiments.factory import create_experiment
-from arekit.contrib.experiments.types import ExperimentTypes
 from arekit.contrib.networks.context.configurations.base.base import DefaultNetworkConfig
 from arekit.contrib.networks.core.model_io import NeuralNetworkModelIO
 from arekit.contrib.networks.run_training import NetworksTrainingEngine
 from args.cv_index import CvCountArg
-from args.default import BAG_SIZE
+from args.default import BAG_SIZE, TEST_EVERY_K_EPOCH, EPOCHS_COUNT
 from args.experiment import ExperimentTypeArg
 from args.labels_count import LabelsCountArg
 from args.ra_ver import RuAttitudesVersionArg
@@ -31,11 +30,7 @@ from factory_networks import \
     compose_network_and_network_config_funcs, \
     create_bags_collection_type
 from factory_config_setups import modify_config_for_model, optionally_modify_config_for_experiment
-from rusentrel.classic.common import classic_common_callback_modification_func
-from rusentrel.callback_utils import classic_cv_common_callback_modification_func, \
-    ds_cv_common_callback_modification_func
 from rusentrel.ctx_names import ModelNames
-from rusentrel.rusentrel_ds.common import ds_common_callback_modification_func
 
 
 def supported_model_names():
@@ -52,32 +47,6 @@ def supported_model_names():
         model_names.RCNNAttZYang,
         model_names.RCNNAttPZhou
     ]
-
-
-def get_callback_func(exp_type, folding_type):
-    assert(isinstance(folding_type, FoldingType))
-
-    if exp_type == ExperimentTypes.RuSentRel:
-        if folding_type == FoldingType.Fixed:
-            return classic_common_callback_modification_func
-        elif folding_type == FoldingType.CrossValidation:
-            return classic_cv_common_callback_modification_func
-
-    if exp_type == ExperimentTypes.RuAttitudes:
-        if folding_type == FoldingType.Fixed:
-            return ds_common_callback_modification_func
-        elif folding_type == FoldingType.CrossValidation:
-            return ds_cv_common_callback_modification_func
-
-    if exp_type == ExperimentTypes.RuSentRelWithRuAttitudes:
-        if folding_type == FoldingType.Fixed:
-            return ds_common_callback_modification_func
-        elif folding_type == FoldingType.CrossValidation:
-            return ds_cv_common_callback_modification_func
-
-    raise Exception("Experiment type `{exp_type}` or folding type `{folding_type}` does not supported!".format(
-        exp_type=exp_type,
-        folding_type=folding_type))
 
 
 if __name__ == "__main__":
@@ -175,10 +144,20 @@ if __name__ == "__main__":
     #####################
     # Initialize callback
     #####################
-    callback = NeuralNetworkCustomEvaluationCallback(do_eval=do_eval)
-    callback_func = get_callback_func(exp_type=exp_type, folding_type=folding_type)
-    callback.PredictVerbosePerFileStatistic = False
-    callback_func(callback)
+    callback = NeuralNetworkCustomEvaluationCallback(
+        do_eval=do_eval,
+        # NOTE: This parameter is related to RuSentRel collection.
+        cancellation_acc_bound=0.999,
+        # NOTE: This parameter is related to RuSentRel collection.
+        cancellation_f1_train_bound=0.86)
+
+    # We keep parameters only for fixed experiment type by default.
+    callback.set_key_save_hidden_parameters(folding_type == FoldingType.Fixed)
+    # We stop training process according to the present at some prior
+    # cost values in case of experiments with cv-based doc-ids folding format.
+    callback.set_key_stop_training_by_cost(folding_type == FoldingType.CrossValidation)
+    # We use a predefined values for total amout of epochs and for evaluation iterations.
+    callback.set_test_on_epochs(range(0, EPOCHS_COUNT + 1, TEST_EVERY_K_EPOCH))
 
     # Creating experiment
     evaluator = TwoClassEvaluator()
