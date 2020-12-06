@@ -111,6 +111,13 @@ if __name__ == "__main__":
                         nargs='?',
                         help='Perform evaluation during training process')
 
+    parser.add_argument('--test-every-k-epoch',
+                        dest='test_every_k_epoch',
+                        type=int,
+                        default=TEST_EVERY_K_EPOCH,
+                        nargs='?',
+                        help='Denotes how much epochs should be skipped before every iteration')
+
     # Parsing arguments.
     args = parser.parse_args()
 
@@ -131,6 +138,7 @@ if __name__ == "__main__":
     bags_per_minibatch = BagsPerMinibatchArg.read_argument(args)
     terms_per_context = TermsPerContextArg.read_argument(args)
     learning_rate = LearningRateArg.read_argument(args)
+    test_every_k_epoch = args.test_every_k_epoch
 
     # Defining folding type
     folding_type = FoldingType.Fixed if cv_count == 1 else FoldingType.CrossValidation
@@ -157,7 +165,7 @@ if __name__ == "__main__":
     # cost values in case of experiments with cv-based doc-ids folding format.
     callback.set_key_stop_training_by_cost(folding_type == FoldingType.CrossValidation)
     # We use a predefined values for total amout of epochs and for evaluation iterations.
-    callback.set_test_on_epochs(range(0, EPOCHS_COUNT + 1, TEST_EVERY_K_EPOCH))
+    callback.set_test_on_epochs(range(0, EPOCHS_COUNT + 1, test_every_k_epoch))
 
     # Creating experiment
     evaluator = TwoClassEvaluator()
