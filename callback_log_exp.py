@@ -31,7 +31,7 @@ def create_experiment_eval_msgs(results_list_iter, iters_count):
         u"F1-last avg.: {}".format(round(f1_avg[-1], 2)),
         u"F1 per epoch avg.: {}".format([round(f1, 2) for f1 in f1_avg]),
         u"F1-best avg.: {}".format(round(f1_best_avg, 3)),
-        u"F1-best per epochs: {}".format([round(f1_best, 3) for f1_best in f1_best_list])
+        u"F1-best per iterations: {}".format([round(f1_best, 3) for f1_best in f1_best_list])
     ]
 
     return messages_list
