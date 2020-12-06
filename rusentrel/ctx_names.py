@@ -123,6 +123,8 @@ class ModelNames(object):
 
     # endregion
 
+    # TODO. Remove this property.
+    # TODO. Use prefix later, as the related parameter presented in cmd args.
     @property
     def Prefix(self):
-        return u'ctx-'
+        return u''
