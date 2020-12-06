@@ -1,7 +1,9 @@
 import logging
 import datetime
+from itertools import chain
 from os.path import join
 
+from arekit.common.evaluation.results.base import BaseEvalResult
 from arekit.common.experiment.data_type import DataType
 from arekit.common.experiment.formats.base import BaseExperiment
 from arekit.common.utils import create_dir_if_not_exists
@@ -12,7 +14,10 @@ from arekit.contrib.networks.core.callback.utils_model_eval import evaluate_mode
 from arekit.contrib.networks.core.cancellation import OperationCancellation
 from arekit.contrib.networks.core.model import BaseTensorflowModel
 from arekit.contrib.source.rusentrel.labels_fmt import RuSentRelLabelsFormatter
-from callback_log_utils import create_verbose_eval_results_msg, create_overall_eval_results_msg, write_config_setups
+
+from callback_log_cfg import write_config_setups
+from callback_log_exp import create_experiment_eval_msgs
+from callback_log_iter import create_iteration_short_eval_msg, create_iteration_verbose_eval_msg
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -23,8 +28,9 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
     __costs_window = 5
 
     __log_train_filename_template = u"cb_train_{iter}_{dtype}.log"
-    __log_eval_filename_template = u"cb_eval_{iter}_{dtype}.log"
-    __log_eval_verbose_filename = u"cb_eval_verbose_{iter}_{dtype}.log"
+    __log_eval_iter_filename_template = u"cb_eval_{iter}_{dtype}.log"
+    __log_eval_iter_verbose_filename = u"cb_eval_verbose_{iter}_{dtype}.log"
+    __log_test_eval_exp_filename = u"cb_eval_avg_test.log"
 
     def __init__(self, do_eval,
                  cancellation_acc_bound,
@@ -33,20 +39,24 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
 
         super(NeuralNetworkCustomEvaluationCallback, self).__init__()
 
-        self.__test_on_epochs = None
         self.__experiment = None
         self.__model = None
+
+        self.__test_results_exp_history = {}
+        self.__test_on_epochs = None
         self.__log_dir = None
         self.__do_eval = do_eval
-        self.__costs_history = None
         self.__key_stop_training_by_cost = None
 
-        self.__train_log_files = {}
-        self.__eval_log_files = {}
-        self.__eval_verbose_log_files = {}
+        self.__train_iter_log_files = {}
+        self.__eval_iter_log_files = {}
+        self.__eval_iter_verbose_log_files = {}
 
         self.__key_save_hidden_parameters = True
 
+        # Training cancellation related parameters.
+        # TODO. Assumes to be moved into a separated class with the related logic.
+        self.__train_iteration_costs_history = None
         self.__cancellation_acc_bound = cancellation_acc_bound
         self.__cancellation_f1_train_bound = cancellation_f1_train_bound
 
@@ -83,26 +93,55 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
                             out_filepath=join(self.__log_dir, u"model_config.txt"))
 
     def on_experiment_iteration_begin(self):
-        self.__costs_history = []
+        self.__train_iteration_costs_history = []
 
     def set_key_stop_training_by_cost(self, value):
         assert(isinstance(value, bool))
         self.__key_stop_training_by_cost = value
+
+    def on_experiment_finished(self):
+        """ Providing results aggregation across all the experiment iterations.
+        """
+
+        # Opening the related file.
+        log_eval_filepath = join(self.__log_dir, self.__log_test_eval_exp_filename)
+        create_dir_if_not_exists(log_eval_filepath)
+        with open(log_eval_filepath, u'w', buffering=0) as f:
+
+            iters_count = len(self.__test_results_exp_history)
+
+            iter_messages = chain(
+                [u"Results for model: {}".format(self.__model.IO.get_model_name())],
+                create_experiment_eval_msgs(results_list_iter=self.__test_results_exp_history.itervalues(),
+                                            iters_count=iters_count),
+                [u'--------------']
+            )
+
+            for msg in iter_messages:
+                f.write(msg)
 
     # endregion
 
     # region private methods
 
     def __check_costs_still_improving(self, avg_cost):
-        history_len = len(self.__costs_history)
+        history_len = len(self.__train_iteration_costs_history)
         if history_len <= self.__costs_window:
             return True
-        return avg_cost < min(self.__costs_history[:history_len - self.__costs_window])
+        return avg_cost < min(self.__train_iteration_costs_history[:history_len - self.__costs_window])
 
-    def __is_cancel_needed(self, result_train, avg_fit_cost):
+    def __is_cancel_needed_before_eval(self, avg_fit_acc):
+        if avg_fit_acc >= self.__cancellation_acc_bound:
+            logger.info(u"Stop feeding process: avg_fit_acc > {}".format(self.__cancellation_acc_bound))
+            return True
+        return False
+
+    def __is_cancel_needed_after_eval(self, result_train, avg_fit_cost):
         """ This method related to the main algorithm that defines
             whether there is a need to stop training process or not.
         """
+        assert(isinstance(result_train, BaseEvalResult))
+
         msg = None
         cancel = False
 
@@ -133,7 +172,7 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
 
         result = {}
 
-        for data_type in self.__experiment.DocumentOperations.DataFolding.iter_supported_data_types():
+        for data_type in self.__iter_supported_data_types():
             assert(isinstance(data_type, DataType))
             result[data_type] = evaluate_model(
                 experiment=self.__experiment,
@@ -151,17 +190,29 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
                                            epoch_index=epoch_index)
 
         # Check whether there is a need to stop training process.
-        if self.__is_cancel_needed(result_train=result[DataType.Train], avg_fit_cost=avg_fit_cost):
+        if self.__is_cancel_needed_after_eval(result_train=result[DataType.Train], avg_fit_cost=avg_fit_cost):
             operation_cancel.Cancel()
 
-        self.__costs_history.append(avg_fit_cost)
+        self.__train_iteration_costs_history.append(avg_fit_cost)
+        self.__saving_results_history_optionally(result)
+
+    def __saving_results_history_optionally(self, result):
+        supported_data_types = set(self.__iter_supported_data_types())
+
+        if DataType.Test not in supported_data_types:
+            return
+
+        iter_index = str(self.__get_iter_index())
+        if iter_index not in self.__test_results_exp_history:
+            self.__test_results_exp_history[iter_index] = []
+        self.__test_results_exp_history[iter_index].append(result[DataType.Test])
 
     def __save_evaluation_results(self, result, data_type, epoch_index):
-        eval_verbose_msg = create_verbose_eval_results_msg(eval_result=result,
-                                                           data_type=data_type,
-                                                           epoch_index=epoch_index)
+        eval_verbose_msg = create_iteration_verbose_eval_msg(eval_result=result,
+                                                             data_type=data_type,
+                                                             epoch_index=epoch_index)
 
-        eval_msg = create_overall_eval_results_msg(eval_result=result,
+        eval_msg = create_iteration_short_eval_msg(eval_result=result,
                                                    data_type=data_type,
                                                    epoch_index=epoch_index)
 
@@ -169,8 +220,14 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
         logger.info(eval_msg)
 
         # Separate logging information by files.
-        self.__eval_log_files[data_type].write(u"{}\n".format(eval_msg))
-        self.__eval_verbose_log_files[data_type].write(u"{}\n".format(eval_verbose_msg))
+        self.__eval_iter_log_files[data_type].write(u"{}\n".format(eval_msg))
+        self.__eval_iter_verbose_log_files[data_type].write(u"{}\n".format(eval_verbose_msg))
+
+    def __get_iter_index(self):
+        return self.__experiment.DocumentOperations.DataFolding.IterationIndex
+
+    def __iter_supported_data_types(self):
+        return self.__experiment.DocumentOperations.DataFolding.iter_supported_data_types()
 
     # endregion
 
@@ -202,10 +259,9 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
         logger.info(message)
 
         # Duplicate the related information in separate log file.
-        self.__train_log_files[DataType.Train].write(u"{}\n".format(message))
+        self.__train_iter_log_files[DataType.Train].write(u"{}\n".format(message))
 
-        if avg_fit_acc >= self.__cancellation_acc_bound:
-            logger.info(u"Stop feeding process: avg_fit_acc > {}".format(self.__cancellation_acc_bound))
+        if self.__is_cancel_needed_before_eval(avg_fit_acc):
             operation_cancel.Cancel()
 
         # Deciding whether there is a need in evaluation process organization.
@@ -232,32 +288,32 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
     def __enter__(self):
         assert(self.__log_dir is not None)
 
-        iter_index = str(self.__experiment.DocumentOperations.DataFolding.IterationIndex)
+        iter_index = str(self.__get_iter_index())
 
-        for d_type in self.__experiment.DocumentOperations.DataFolding.iter_supported_data_types():
+        for d_type in self.__iter_supported_data_types():
 
             train_log_filepath = join(self.__log_dir, self.__log_train_filename_template.format(iter=iter_index,
                                                                                                 dtype=d_type))
-            eval_log_filepath = join(self.__log_dir, self.__log_eval_filename_template.format(iter=iter_index,
-                                                                                              dtype=d_type))
-            eval_verbose_log_filepath = join(self.__log_dir, self.__log_eval_verbose_filename.format(iter=iter_index,
-                                                                                                     dtype=d_type))
+            eval_log_filepath = join(self.__log_dir, self.__log_eval_iter_filename_template.format(iter=iter_index,
+                                                                                                   dtype=d_type))
+            eval_verbose_log_filepath = join(self.__log_dir, self.__log_eval_iter_verbose_filename.format(iter=iter_index,
+                                                                                                          dtype=d_type))
 
             create_dir_if_not_exists(train_log_filepath)
             create_dir_if_not_exists(eval_log_filepath)
             create_dir_if_not_exists(eval_verbose_log_filepath)
 
-            self.__train_log_files[d_type] = open(train_log_filepath, u"w", buffering=0)
-            self.__eval_log_files[d_type] = open(eval_log_filepath, u"w", buffering=0)
-            self.__eval_verbose_log_files[d_type] = open(eval_verbose_log_filepath, u"w", buffering=0)
+            self.__train_iter_log_files[d_type] = open(train_log_filepath, u"w", buffering=0)
+            self.__eval_iter_log_files[d_type] = open(eval_log_filepath, u"w", buffering=0)
+            self.__eval_iter_verbose_log_files[d_type] = open(eval_verbose_log_filepath, u"w", buffering=0)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
 
-        for d_type in self.__experiment.DocumentOperations.DataFolding.iter_supported_data_types():
+        for d_type in self.__iter_supported_data_types():
 
-            self.__train_log_file = self.__eval_log_files[d_type]
-            self.__eval_log_file = self.__eval_log_files[d_type]
-            self.__eval_verbose_log_file = self.__eval_verbose_log_files[d_type]
+            self.__train_log_file = self.__eval_iter_log_files[d_type]
+            self.__eval_log_file = self.__eval_iter_log_files[d_type]
+            self.__eval_verbose_log_file = self.__eval_iter_verbose_log_files[d_type]
 
             if self.__train_log_file is not None:
                 self.__train_log_file.close()
