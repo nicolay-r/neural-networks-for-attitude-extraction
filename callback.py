@@ -115,7 +115,7 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
             )
 
             for msg in iter_messages:
-                f.write(msg)
+                f.write(u"{}\n".format(msg))
 
     # endregion
 
