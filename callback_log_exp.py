@@ -3,13 +3,23 @@ import numpy as np
 from arekit.common.evaluation.results.base import BaseEvalResult
 
 
+OUTPUT_PRECISION = 3
+
+
 def create_experiment_eval_msgs(results_per_epoch):
     assert(isinstance(results_per_epoch, dict))
 
+    if len(results_per_epoch) == 0:
+        return [u"No Iterations"]
+
+    f1_last = []
     f1_best_list = []
 
     max_epochs_count = max([len(results_list) for results_list in results_per_epoch.itervalues()])
     f1_avg = np.zeros(max_epochs_count, dtype=np.float)
+
+    if max_epochs_count == 0:
+        return [u"No Results"]
 
     for results_list in results_per_epoch.itervalues():
 
@@ -26,18 +36,20 @@ def create_experiment_eval_msgs(results_per_epoch):
         # Calculate average
         f1_avg += f1_per_epochs
 
+        # Take last
+        f1_last.append(f1_per_epochs_list[-1])
+
     f1_avg /= len(results_per_epoch)
 
     f1_best_avg = float(sum(f1_best_list)) / len(f1_best_list)
 
-    messages_list = [
-        u"F1-last avg.: {}".format(round(f1_avg[-1], 2)),
-        u"F1 per epoch avg.: {}".format([round(f1, 2) for f1 in f1_avg]),
-        u"F1-best avg.: {}".format(round(f1_best_avg, 3)),
-        u"F1-best per iterations: {}".format([round(f1_best, 3) for f1_best in f1_best_list])
+    return [
+        u"F1-last avg.: {}".format(round(np.mean(f1_last), OUTPUT_PRECISION)),
+        u"F1-last per iterations: {}".format([round(f1, OUTPUT_PRECISION) for f1 in f1_last]),
+        u"F1-avg. per epoch: {}".format([round(f1, OUTPUT_PRECISION) for f1 in f1_avg]),
+        u"F1-best avg.: {}".format(round(f1_best_avg, OUTPUT_PRECISION)),
+        u"F1-best per iterations: {}".format([round(f1_best, OUTPUT_PRECISION) for f1_best in f1_best_list])
     ]
-
-    return messages_list
 
 
 def __iter_f1_results(results_list):

@@ -103,6 +103,10 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
         """ Providing results aggregation across all the experiment iterations.
         """
 
+        # Considering that we perform evaluations per every iteration.
+        if not self.__do_eval:
+            return
+
         # Opening the related file.
         log_eval_filepath = join(self.__log_dir, self.__log_test_eval_exp_filename)
         create_dir_if_not_exists(log_eval_filepath)
