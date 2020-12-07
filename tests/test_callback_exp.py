@@ -20,13 +20,11 @@ class TestCallbackExperimentEvaluationOutput(unittest.TestCase):
 
         data = {
             0: [CustomEvalResult(0.1), CustomEvalResult(0.2), CustomEvalResult(0.3)],
-            1: [CustomEvalResult(0.8), CustomEvalResult(0.1), CustomEvalResult(0.3)],
+            1: [CustomEvalResult(0.8), CustomEvalResult(0.2), CustomEvalResult(0.3), CustomEvalResult(0.3)],
             2: [CustomEvalResult(0.5), CustomEvalResult(0.2), CustomEvalResult(0.4)]
         }
 
-        messages = create_experiment_eval_msgs(
-            results_list_iter=data.itervalues(),
-            iters_count=len(data))
+        messages = create_experiment_eval_msgs(data)
 
         for msg in messages:
             print msg

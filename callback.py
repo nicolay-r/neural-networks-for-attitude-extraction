@@ -108,12 +108,9 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
         create_dir_if_not_exists(log_eval_filepath)
         with open(log_eval_filepath, u'w', buffering=0) as f:
 
-            iters_count = len(self.__test_results_exp_history)
-
             iter_messages = chain(
                 [u"Results for model: {}".format(self.__model.IO.get_model_name())],
-                create_experiment_eval_msgs(results_list_iter=self.__test_results_exp_history.itervalues(),
-                                            iters_count=iters_count),
+                create_experiment_eval_msgs(self.__test_results_exp_history),
                 [u'--------------']
             )
 

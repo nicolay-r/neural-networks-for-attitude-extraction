@@ -1,29 +1,32 @@
-import collections
-
 import numpy as np
 
 from arekit.common.evaluation.results.base import BaseEvalResult
 
 
-def create_experiment_eval_msgs(results_list_iter, iters_count):
-    assert(isinstance(results_list_iter, collections.Iterable))
+def create_experiment_eval_msgs(results_per_epoch):
+    assert(isinstance(results_per_epoch, dict))
 
     f1_best_list = []
-    f1_avg = None
 
-    for results_list in results_list_iter:
+    max_epochs_count = max([len(results_list) for results_list in results_per_epoch.itervalues()])
+    f1_avg = np.zeros(max_epochs_count, dtype=np.float)
 
-        f1_per_epochs = np.array(list(__iter_f1_results(results_list)), dtype=np.float)
+    for results_list in results_per_epoch.itervalues():
+
+        # Compose and proceed the further epochs with the last known result.
+        f1_per_epochs_list = list(__iter_f1_results(results_list))
+        while len(f1_per_epochs_list) < max_epochs_count:
+            f1_per_epochs_list.append(f1_per_epochs_list[-1])
+
+        f1_per_epochs = np.array(f1_per_epochs_list, dtype=np.float)
 
         # Calculate best withing every iteration.
         f1_best_list.append(max(f1_per_epochs))
 
         # Calculate average
-        if f1_avg is None:
-            f1_avg = np.zeros(f1_per_epochs.size, dtype=np.float)
         f1_avg += f1_per_epochs
 
-    f1_avg /= iters_count
+    f1_avg /= len(results_per_epoch)
 
     f1_best_avg = float(sum(f1_best_list)) / len(f1_best_list)
 
