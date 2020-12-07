@@ -19,6 +19,7 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
                  labels_scaler,
                  stemmer,
                  embedding,
+                 dist_in_terms_between_att_ends,
                  terms_per_context,
                  frames_version,
                  str_entity_formatter,
@@ -30,7 +31,11 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
         assert(isinstance(frames_version, RuSentiFramesVersions))
         assert(isinstance(str_entity_formatter, StringEntitiesFormatter))
         assert(isinstance(opinion_formatter, OpinionCollectionsFormatter))
+        assert(isinstance(dist_in_terms_between_att_ends, int) or dist_in_terms_between_att_ends is None)
         assert(isinstance(terms_per_context, int))
+
+        self.__dist_in_terms_between_att_ends = dist_in_terms_between_att_ends
+
         super(RuSentRelExperimentSerializationData, self).__init__(labels_scaler=labels_scaler,
                                                                    stemmer=stemmer)
 
@@ -49,7 +54,7 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
 
     @property
     def DistanceInTermsBetweenOpinionEndsBound(self):
-        return 10
+        return self.__dist_in_terms_between_att_ends
 
     @property
     def StringEntityFormatter(self):

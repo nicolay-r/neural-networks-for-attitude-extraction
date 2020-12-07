@@ -4,6 +4,7 @@ from arekit.common.entities.formatters.factory import create_entity_formatter
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.contrib.experiments.factory import create_experiment
 from args.balance import UseBalancingArg
+from args.dist_in_terms_between_ends import DistanceInTermsBetweenAttitudeEndsArg
 from args.embedding import RusVectoresEmbeddingFilepathArg
 from args.entity_fmt import EnitityFormatterTypesArg
 from args.frames import RuSentiFramesVersionArg
@@ -38,6 +39,8 @@ if __name__ == "__main__":
     EnitityFormatterTypesArg.add_argument(parser)
     StemmerArg.add_argument(parser)
     UseBalancingArg.add_argument(parser)
+    DistanceInTermsBetweenAttitudeEndsArg.add_argument(parser)
+
 
     parser.add_argument('--force',
                         dest='force',
@@ -63,6 +66,7 @@ if __name__ == "__main__":
     stemmer = StemmerArg.read_argument(args)
     use_balancing = UseBalancingArg.read_argument(args)
     forced_serialization = args.force
+    dist_in_terms_between_attitude_ends = DistanceInTermsBetweenAttitudeEndsArg.read_argument(args)
 
     # Preparing necessary structures for further initializations.
     experiment_data = RuSentRelExperimentSerializationData(
@@ -73,6 +77,7 @@ if __name__ == "__main__":
         rusentrel_version=rusentrel_version,
         str_entity_formatter=create_entity_formatter(entity_fmt),
         stemmer=stemmer,
+        dist_in_terms_between_att_ends=dist_in_terms_between_attitude_ends,
         opinion_formatter=Common.create_opinion_collection_formatter())
 
     experiment = create_experiment(exp_type=exp_type,
