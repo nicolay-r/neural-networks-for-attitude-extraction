@@ -91,7 +91,7 @@ if __name__ == "__main__":
                                    ruattitudes_version=ra_version,
                                    experiment_io_type=CustomNetworkExperimentIO,
                                    extra_name_suffix=extra_name_suffix,
-                                   is_training=True)
+                                   load_ruattitude_docs=True)
 
     # Performing serialization process.
     serialization_engine = NetworksExperimentInputSerializer(experiment=experiment,

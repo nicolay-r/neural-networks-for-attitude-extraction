@@ -201,7 +201,7 @@ if __name__ == "__main__":
                                    ruattitudes_version=ra_version,
                                    experiment_io_type=CustomNetworkExperimentIO,
                                    extra_name_suffix=extra_name_suffix,
-                                   is_training=False)
+                                   load_ruattitude_docs=False)
 
     full_model_name = Common.create_full_model_name(folding_type=folding_type,
                                                     model_name=model_name)
