@@ -36,15 +36,22 @@ class Common:
             model_name=model_name)
 
     @staticmethod
-    def create_exp_name_suffix(use_balancing):
+    def create_exp_name_suffix(use_balancing, terms_per_context, dist_in_terms_between_att_ends):
         """ Provides an external parameters that assumes to be synchronized both
             by serialization and training experiment stages.
         """
+        assert(isinstance(use_balancing, bool))
+        assert(isinstance(terms_per_context, int))
+        assert(isinstance(dist_in_terms_between_att_ends, int) or dist_in_terms_between_att_ends is None)
 
         # You may provide your own parameters out there
         params = [
-            u"balanced" if use_balancing else u"nobalance"
+            u"balanced" if use_balancing else u"nobalance",
+            u"tpc{}".format(terms_per_context)
         ]
+
+        if dist_in_terms_between_att_ends is not None:
+            params.append(u"dbe{}".format(dist_in_terms_between_att_ends))
 
         return u'-'.join(params)
 

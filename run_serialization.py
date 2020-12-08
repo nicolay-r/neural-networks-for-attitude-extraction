@@ -79,13 +79,18 @@ if __name__ == "__main__":
         dist_in_terms_between_att_ends=dist_in_terms_between_attitude_ends,
         opinion_formatter=Common.create_opinion_collection_formatter())
 
+    extra_name_suffix = Common.create_exp_name_suffix(
+        use_balancing=use_balancing,
+        terms_per_context=terms_per_context,
+        dist_in_terms_between_att_ends=dist_in_terms_between_attitude_ends)
+
     experiment = create_experiment(exp_type=exp_type,
                                    experiment_data=experiment_data,
                                    folding_type=FoldingType.Fixed if cv_count == 1 else FoldingType.CrossValidation,
                                    rusentrel_version=RuSentRelVersions.V11,
                                    ruattitudes_version=ra_version,
                                    experiment_io_type=CustomNetworkExperimentIO,
-                                   extra_name_suffix=Common.create_exp_name_suffix(use_balancing),
+                                   extra_name_suffix=extra_name_suffix,
                                    is_training=True)
 
     # Performing serialization process.
