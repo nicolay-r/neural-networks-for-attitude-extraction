@@ -123,7 +123,7 @@ if __name__ == "__main__":
                         help='Denotes how much epochs should be skipped before every iteration')
 
     parser.add_argument('--balanced-input',
-                        dest='balanced-input',
+                        dest='balanced_input',
                         type=bool,
                         default=UseBalancingArg.get_default(),
                         nargs=1,
