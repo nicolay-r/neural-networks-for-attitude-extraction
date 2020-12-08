@@ -1,5 +1,6 @@
 import logging
 import datetime
+from collections import OrderedDict
 from itertools import chain
 from os.path import join
 
@@ -42,7 +43,7 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
         self.__experiment = None
         self.__model = None
 
-        self.__test_results_exp_history = {}
+        self.__test_results_exp_history = OrderedDict()
         self.__test_on_epochs = None
         self.__log_dir = None
         self.__do_eval = do_eval
