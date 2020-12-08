@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import numpy as np
 
 from arekit.common.evaluation.results.base import BaseEvalResult
@@ -7,7 +9,7 @@ OUTPUT_PRECISION = 3
 
 
 def create_experiment_eval_msgs(results_per_epoch):
-    assert(isinstance(results_per_epoch, dict))
+    assert(isinstance(results_per_epoch, OrderedDict))
 
     if len(results_per_epoch) == 0:
         return [u"No Iterations"]

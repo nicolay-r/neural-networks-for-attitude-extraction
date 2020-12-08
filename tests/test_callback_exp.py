@@ -1,4 +1,5 @@
 import unittest
+from collections import OrderedDict
 
 from arekit.common.evaluation.results.base import BaseEvalResult
 from callback_log_exp import create_experiment_eval_msgs
@@ -17,20 +18,20 @@ class CustomEvalResult(BaseEvalResult):
 class TestCallbackExperimentEvaluationOutput(unittest.TestCase):
 
     def test_empty_data(self):
-        for msg in create_experiment_eval_msgs({}):
+        for msg in create_experiment_eval_msgs(OrderedDict()):
             print msg
 
     def test_empty_iteration_results(self):
-        for msg in create_experiment_eval_msgs({0: [], 1: []}):
+        for msg in create_experiment_eval_msgs(OrderedDict({0: [], 1: []})):
             print msg
 
     def test_var_length(self):
 
-        data = {
+        data = OrderedDict({
             0: [CustomEvalResult(0.112), CustomEvalResult(0.212), CustomEvalResult(0.333)],
             1: [CustomEvalResult(0.811), CustomEvalResult(0.210), CustomEvalResult(0.333), CustomEvalResult(0.3)],
             2: [CustomEvalResult(0.511), CustomEvalResult(0.210), CustomEvalResult(0.433)]
-        }
+        })
 
         for msg in create_experiment_eval_msgs(data):
             print msg
