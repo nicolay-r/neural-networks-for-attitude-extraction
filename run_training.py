@@ -16,8 +16,10 @@ from args.labels_count import LabelsCountArg
 from args.ra_ver import RuAttitudesVersionArg
 from args.rusentrel import RuSentRelVersionArg
 from args.stemmer import StemmerArg
+from args.train_acc_limit import TrainAccuracyLimitArg
 from args.train_bags_per_minibatch import BagsPerMinibatchArg
 from args.train_dropout_keep_prob import DropoutKeepProbArg
+from args.train_f1_limit import TrainF1LimitArg
 from args.train_learning_rate import LearningRateArg
 from args.train_terms_per_context import TermsPerContextArg
 from callback import NeuralNetworkCustomEvaluationCallback
@@ -67,6 +69,7 @@ if __name__ == "__main__":
     TermsPerContextArg.add_argument(parser)
     LearningRateArg.add_argument(parser)
     DistanceInTermsBetweenAttitudeEndsArg.add_argument(parser)
+    TrainAccuracyLimitArg.add_argument(parser)
 
     parser.add_argument('--model-input-type',
                         dest='model_input_type',
@@ -150,6 +153,8 @@ if __name__ == "__main__":
     test_every_k_epoch = args.test_every_k_epoch
     balanced_input = args.balanced_input
     dist_in_terms_between_attitude_ends = DistanceInTermsBetweenAttitudeEndsArg.read_argument(args)
+    train_acc_limit = TrainAccuracyLimitArg.read_argument(args)
+    train_f1_limit = TrainF1LimitArg.read_argument(args)
 
     # Defining folding type
     folding_type = FoldingType.Fixed if cv_count == 1 else FoldingType.CrossValidation
@@ -163,19 +168,16 @@ if __name__ == "__main__":
     #####################
     # Initialize callback
     #####################
-    callback = NeuralNetworkCustomEvaluationCallback(
-        do_eval=do_eval,
-        # NOTE: This parameter is related to RuSentRel collection.
-        cancellation_acc_bound=0.999,
-        # NOTE: This parameter is related to RuSentRel collection.
-        cancellation_f1_train_bound=0.86)
+    callback = NeuralNetworkCustomEvaluationCallback(do_eval=do_eval,
+                                                     train_acc_limit=train_acc_limit,
+                                                     train_f1_limit=train_f1_limit)
 
     # We keep parameters only for fixed experiment type by default.
     callback.set_key_save_hidden_parameters(folding_type == FoldingType.Fixed)
     # We stop training process according to the present at some prior
     # cost values in case of experiments with cv-based doc-ids folding format.
     callback.set_key_stop_training_by_cost(folding_type == FoldingType.CrossValidation)
-    # We use a predefined values for total amout of epochs and for evaluation iterations.
+    # We use a predefined value for total amount of epochs and for evaluation iterations.
     callback.set_test_on_epochs(range(0, EPOCHS_COUNT + 1, test_every_k_epoch))
 
     # Creating experiment

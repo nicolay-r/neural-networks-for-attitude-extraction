@@ -34,8 +34,10 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
     __log_test_eval_exp_filename = u"cb_eval_avg_test.log"
 
     def __init__(self, do_eval,
-                 cancellation_acc_bound,
-                 cancellation_f1_train_bound):
+                 train_acc_limit,
+                 train_f1_limit):
+        assert(isinstance(train_acc_limit, float) or train_acc_limit is None)
+        assert(isinstance(train_f1_limit, float) or train_f1_limit is None)
         assert(isinstance(do_eval, bool))
 
         super(NeuralNetworkCustomEvaluationCallback, self).__init__()
@@ -58,8 +60,8 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
         # Training cancellation related parameters.
         # TODO. Assumes to be moved into a separated class with the related logic.
         self.__train_iteration_costs_history = None
-        self.__cancellation_acc_bound = cancellation_acc_bound
-        self.__cancellation_f1_train_bound = cancellation_f1_train_bound
+        self.__train_acc_limit = train_acc_limit
+        self.__train_f1_limit = train_f1_limit
 
     # region properties
 
@@ -133,8 +135,8 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
         return avg_cost < min(self.__train_iteration_costs_history[:history_len - self.__costs_window])
 
     def __is_cancel_needed_before_eval(self, avg_fit_acc):
-        if avg_fit_acc >= self.__cancellation_acc_bound:
-            logger.info(u"Stop feeding process: avg_fit_acc > {}".format(self.__cancellation_acc_bound))
+        if self.__train_acc_limit is not None and avg_fit_acc >= self.__train_acc_limit:
+            logger.info(u"Stop feeding process: avg_fit_acc > {}".format(self.__train_acc_limit))
             return True
         return False
 
@@ -148,10 +150,10 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
         cancel = False
 
         f1_train = result_train.get_result_by_metric(result_train.C_F1)
-        if f1_train >= self.__cancellation_f1_train_bound:
+        if self.__train_f1_limit is not None and f1_train >= self.__train_f1_limit:
             msg = u"Stop Training Process: F1-train ({f1_actual}) > {f1_bound}".format(
                 f1_actual=round(f1_train, 3),
-                f1_bound=self.__cancellation_f1_train_bound)
+                f1_bound=self.__train_f1_limit)
             cancel = True
 
         if self.__key_stop_training_by_cost:
