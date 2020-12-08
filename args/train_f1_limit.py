@@ -18,6 +18,6 @@ class TrainF1LimitArg(BaseArg):
         parser.add_argument('--train-f1-limit',
                             dest='train_f1_limit',
                             type=float,
-                            default=TRAIN_F1_LIMIT.default,
+                            default=TrainF1LimitArg.default,
                             nargs='?',
                             help="Train Accuracy Limit (Default: {})".format(TrainF1LimitArg.default))
