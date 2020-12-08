@@ -127,7 +127,7 @@ if __name__ == "__main__":
                         dest='balanced_input',
                         type=bool,
                         default=UseBalancingArg.get_default(),
-                        nargs=1,
+                        nargs='?',
                         help='Balanced input of the Train set"'
                              '"(Default: {})'.format(UseBalancingArg.get_default()))
 
