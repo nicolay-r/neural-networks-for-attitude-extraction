@@ -70,6 +70,7 @@ if __name__ == "__main__":
     LearningRateArg.add_argument(parser)
     DistanceInTermsBetweenAttitudeEndsArg.add_argument(parser)
     TrainAccuracyLimitArg.add_argument(parser)
+    TrainF1LimitArg.add_argument(parser)
 
     parser.add_argument('--model-input-type',
                         dest='model_input_type',
