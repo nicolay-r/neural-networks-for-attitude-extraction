@@ -7,6 +7,7 @@ from arekit.contrib.experiments.factory import create_experiment
 from arekit.contrib.networks.context.configurations.base.base import DefaultNetworkConfig
 from arekit.contrib.networks.core.model_io import NeuralNetworkModelIO
 from arekit.contrib.networks.run_training import NetworksTrainingEngine
+from args.balance import UseBalancingArg
 from args.cv_index import CvCountArg
 from args.default import BAG_SIZE, TEST_EVERY_K_EPOCH, EPOCHS_COUNT
 from args.experiment import ExperimentTypeArg
@@ -65,8 +66,6 @@ if __name__ == "__main__":
     TermsPerContextArg.add_argument(parser)
     LearningRateArg.add_argument(parser)
 
-    # TODO. Provide other training parameters.
-
     parser.add_argument('--model-input-type',
                         dest='model_input_type',
                         type=unicode,
@@ -118,6 +117,14 @@ if __name__ == "__main__":
                         nargs='?',
                         help='Denotes how much epochs should be skipped before every iteration')
 
+    parser.add_argument('--balanced-input',
+                        dest='balanced-input',
+                        type=bool,
+                        default=UseBalancingArg.get_default(),
+                        nargs=1,
+                        help='Balanced input of the Train set"'
+                             '"(Default: {})'.format(UseBalancingArg.get_default()))
+
     # Parsing arguments.
     args = parser.parse_args()
 
@@ -139,6 +146,7 @@ if __name__ == "__main__":
     terms_per_context = TermsPerContextArg.read_argument(args)
     learning_rate = LearningRateArg.read_argument(args)
     test_every_k_epoch = args.test_every_k_epoch
+    balanced_input = args.balanced_input
 
     # Defining folding type
     folding_type = FoldingType.Fixed if cv_count == 1 else FoldingType.CrossValidation
@@ -182,6 +190,7 @@ if __name__ == "__main__":
                                    rusentrel_version=rusentrel_version,
                                    ruattitudes_version=ra_version,
                                    experiment_io_type=CustomNetworkExperimentIO,
+                                   extra_name_suffix=Common.create_exp_name_suffix(balanced_input),
                                    is_training=False)
 
     full_model_name = Common.create_full_model_name(folding_type=folding_type,

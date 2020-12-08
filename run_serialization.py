@@ -41,7 +41,6 @@ if __name__ == "__main__":
     UseBalancingArg.add_argument(parser)
     DistanceInTermsBetweenAttitudeEndsArg.add_argument(parser)
 
-
     parser.add_argument('--force',
                         dest='force',
                         type=bool,
@@ -86,6 +85,7 @@ if __name__ == "__main__":
                                    rusentrel_version=RuSentRelVersions.V11,
                                    ruattitudes_version=ra_version,
                                    experiment_io_type=CustomNetworkExperimentIO,
+                                   extra_name_suffix=Common.create_exp_name_suffix(use_balancing),
                                    is_training=True)
 
     # Performing serialization process.

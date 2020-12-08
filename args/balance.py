@@ -9,6 +9,10 @@ class UseBalancingArg(BaseArg):
         pass
 
     @staticmethod
+    def get_default():
+        return UseBalancingArg.__default
+
+    @staticmethod
     def read_argument(args):
         if isinstance(args.balance_samples, bool):
             return args.balance_samples

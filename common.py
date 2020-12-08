@@ -36,6 +36,19 @@ class Common:
             model_name=model_name)
 
     @staticmethod
+    def create_exp_name_suffix(use_balancing):
+        """ Provides an external parameters that assumes to be synchronized both
+            by serialization and training experiment stages.
+        """
+
+        # You may provide your own parameters out there
+        params = [
+            u"balanced" if use_balancing else u"nobalance"
+        ]
+
+        return u'-'.join(params)
+
+    @staticmethod
     def create_labels_scaler(labels_count):
         assert(isinstance(labels_count, int))
 
