@@ -4,6 +4,8 @@ from arekit.common.experiment.folding.types import FoldingType
 from arekit.common.experiment.scales.three import ThreeLabelScaler
 from arekit.common.experiment.scales.two import TwoLabelScaler
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
+from arekit.processing.lemmatization.mystem import MystemWrapper
+from arekit.processing.pos.mystem_wrap import POSMystemWrapper
 from embeddings.rusvectores import RusvectoresEmbedding
 
 
@@ -13,6 +15,10 @@ logger = logging.getLogger(__name__)
 class Common:
 
     CV_NAME_PREFIX = u'cv_'
+
+    @staticmethod
+    def create_pos_tagger():
+        return
 
     @staticmethod
     def load_rusvectores_word_embedding(filepath):

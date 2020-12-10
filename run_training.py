@@ -3,6 +3,7 @@ from os.path import join
 
 from arekit.common.evaluation.evaluators.two_class import TwoClassEvaluator
 from arekit.common.experiment.folding.types import FoldingType
+from arekit.common.languages.ru.pos_service import PartOfSpeechTypesService
 from arekit.contrib.experiments.factory import create_experiment
 from arekit.contrib.networks.context.configurations.base.base import DefaultNetworkConfig
 from arekit.contrib.networks.core.model_io import NeuralNetworkModelIO
@@ -235,6 +236,7 @@ if __name__ == "__main__":
     config.modify_embedding_dropout_keep_prob(1.0)
     config.modify_terms_per_context(terms_per_context)
     config.modify_use_entity_types_in_embedding(False)
+    config.set_pos_count(PartOfSpeechTypesService.get_mystem_pos_count())
 
     # Modify config parameters. This may affect
     # the settings, already applied above!

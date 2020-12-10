@@ -9,6 +9,7 @@ from arekit.contrib.source.rusentiframes.types import RuSentiFramesVersions
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from arekit.contrib.source.rusentiframes.collection import RuSentiFramesCollection
 from arekit.processing.lemmatization.base import Stemmer
+from arekit.processing.pos.base import POSTagger
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
     def __init__(self,
                  labels_scaler,
                  stemmer,
+                 pos_tagger,
                  embedding,
                  dist_in_terms_between_att_ends,
                  terms_per_context,
@@ -27,6 +29,7 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
                  rusentrel_version):
         assert(isinstance(embedding, Embedding))
         assert(isinstance(stemmer, Stemmer))
+        assert(isinstance(pos_tagger, POSTagger))
         assert(isinstance(rusentrel_version, RuSentRelVersions))
         assert(isinstance(frames_version, RuSentiFramesVersions))
         assert(isinstance(str_entity_formatter, StringEntitiesFormatter))
@@ -39,6 +42,7 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
         super(RuSentRelExperimentSerializationData, self).__init__(labels_scaler=labels_scaler,
                                                                    stemmer=stemmer)
 
+        self.__pos_tagger = pos_tagger
         self.__terms_per_context = terms_per_context
         self.__rusentrel_version = rusentrel_version
         self.__str_entity_formatter = str_entity_formatter
@@ -51,6 +55,10 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
             stemmer=self.Stemmer)
 
     # region public properties
+
+    @property
+    def PosTagger(self):
+        return self.__pos_tagger
 
     @property
     def DistanceInTermsBetweenOpinionEndsBound(self):

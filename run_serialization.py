@@ -3,6 +3,8 @@ import argparse
 from arekit.common.entities.formatters.factory import create_entity_formatter
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.contrib.experiments.factory import create_experiment
+from arekit.processing.lemmatization.mystem import MystemWrapper
+from arekit.processing.pos.mystem_wrap import POSMystemWrapper
 from args.balance import UseBalancingArg
 from args.dist_in_terms_between_ends import DistanceInTermsBetweenAttitudeEndsArg
 from args.embedding import RusVectoresEmbeddingFilepathArg
@@ -66,6 +68,7 @@ if __name__ == "__main__":
     use_balancing = UseBalancingArg.read_argument(args)
     forced_serialization = args.force
     dist_in_terms_between_attitude_ends = DistanceInTermsBetweenAttitudeEndsArg.read_argument(args)
+    pos_tagger = POSMystemWrapper(MystemWrapper().MystemInstance)
 
     # Preparing necessary structures for further initializations.
     experiment_data = RuSentRelExperimentSerializationData(
@@ -76,6 +79,7 @@ if __name__ == "__main__":
         rusentrel_version=rusentrel_version,
         str_entity_formatter=create_entity_formatter(entity_fmt),
         stemmer=stemmer,
+        pos_tagger=pos_tagger,
         dist_in_terms_between_att_ends=dist_in_terms_between_attitude_ends,
         opinion_formatter=Common.create_opinion_collection_formatter())
 
