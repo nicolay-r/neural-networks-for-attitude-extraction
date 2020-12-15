@@ -25,6 +25,7 @@ from args.ra_ver import RuAttitudesVersionArg
 from data_serializing import RuSentRelExperimentSerializationData
 from experiment_io import CustomNetworkExperimentIO
 
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Data serializer (train/test) for RuSentRel-based experiments organization")

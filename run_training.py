@@ -8,7 +8,6 @@ from arekit.contrib.experiments.factory import create_experiment
 from arekit.contrib.networks.context.configurations.base.base import DefaultNetworkConfig
 from arekit.contrib.networks.core.model_io import NeuralNetworkModelIO
 from arekit.contrib.networks.run_training import NetworksTrainingEngine
-from args.balance import UseBalancingArg
 from args.cv_index import CvCountArg
 from args.default import BAG_SIZE, TEST_EVERY_K_EPOCH, EPOCHS_COUNT
 from args.dist_in_terms_between_ends import DistanceInTermsBetweenAttitudeEndsArg
@@ -126,11 +125,9 @@ if __name__ == "__main__":
 
     parser.add_argument('--balanced-input',
                         dest='balanced_input',
-                        type=bool,
-                        default=UseBalancingArg.get_default(),
-                        nargs='?',
-                        help='Balanced input of the Train set"'
-                             '"(Default: {})'.format(UseBalancingArg.get_default()))
+                        type=lambda x: (str(x).lower() == 'true'),
+                        nargs=1,
+                        help='Balanced input of the Train set"')
 
     parser.add_argument('--save-hidden-params',
                         dest='save_hidden_params',
