@@ -14,9 +14,6 @@ class UseBalancingArg(BaseArg):
 
     @staticmethod
     def read_argument(args):
-        if isinstance(args.balance_samples, bool):
-            return args.balance_samples
-
         return args.balance_samples[0]
 
     @staticmethod
@@ -24,7 +21,6 @@ class UseBalancingArg(BaseArg):
         parser.add_argument('--balance-samples',
                             dest='balance_samples',
                             type=bool,
-                            default=UseBalancingArg.__default,
                             nargs=1,
                             help='Use balancing for Train type during sample serialization process "'
                                  '"(Default: {})'.format(UseBalancingArg.__default))
