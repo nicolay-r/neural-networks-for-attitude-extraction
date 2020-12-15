@@ -132,6 +132,14 @@ if __name__ == "__main__":
                         help='Balanced input of the Train set"'
                              '"(Default: {})'.format(UseBalancingArg.get_default()))
 
+    parser.add_argument('--save-hidden-params',
+                        dest='save_hidden_params',
+                        type=bool,
+                        const=True,
+                        default=False,
+                        nargs='?',
+                        help='Save neural network hidden parameters during training process"')
+
     # Parsing arguments.
     args = parser.parse_args()
 
@@ -157,6 +165,7 @@ if __name__ == "__main__":
     dist_in_terms_between_attitude_ends = DistanceInTermsBetweenAttitudeEndsArg.read_argument(args)
     train_acc_limit = TrainAccuracyLimitArg.read_argument(args)
     train_f1_limit = TrainF1LimitArg.read_argument(args)
+    save_hidden_params = args.save_hidden_params
 
     # Defining folding type
     folding_type = FoldingType.Fixed if cv_count == 1 else FoldingType.CrossValidation
@@ -175,7 +184,7 @@ if __name__ == "__main__":
                                                      train_f1_limit=train_f1_limit)
 
     # We keep parameters only for fixed experiment type by default.
-    callback.set_key_save_hidden_parameters(folding_type == FoldingType.Fixed)
+    callback.set_key_save_hidden_parameters(save_hidden_params)
     # We stop training process according to the present at some prior
     # cost values in case of experiments with cv-based doc-ids folding format.
     callback.set_key_stop_training_by_cost(folding_type == FoldingType.CrossValidation)
