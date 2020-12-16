@@ -158,7 +158,7 @@ if __name__ == "__main__":
     terms_per_context = TermsPerContextArg.read_argument(args)
     learning_rate = LearningRateArg.read_argument(args)
     test_every_k_epoch = args.test_every_k_epoch
-    balanced_input = args.balanced_input
+    balanced_input = args.balanced_input[0]
     dist_in_terms_between_attitude_ends = DistanceInTermsBetweenAttitudeEndsArg.read_argument(args)
     train_acc_limit = TrainAccuracyLimitArg.read_argument(args)
     train_f1_limit = TrainF1LimitArg.read_argument(args)
