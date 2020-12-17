@@ -140,6 +140,9 @@ if __name__ == "__main__":
     # Parsing arguments.
     args = parser.parse_args()
 
+    # Logging all the read arguments.
+    Common.log_args(args)
+
     # Reading arguments.
     exp_type = ExperimentTypeArg.read_argument(args)
     labels_count = LabelsCountArg.read_argument(args)

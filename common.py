@@ -1,3 +1,4 @@
+import argparse
 import logging
 
 from arekit.common.experiment.folding.types import FoldingType
@@ -8,6 +9,7 @@ from embeddings.rusvectores import RusvectoresEmbedding
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class Common:
@@ -15,8 +17,12 @@ class Common:
     CV_NAME_PREFIX = u'cv_'
 
     @staticmethod
-    def create_pos_tagger():
-        return
+    def log_args(args):
+        assert(isinstance(args, argparse.Namespace))
+        logger.info("============")
+        for arg in vars(args):
+            print u"{}: {}".format(arg, getattr(args, arg))
+        logger.info("============")
 
     @staticmethod
     def load_rusvectores_word_embedding(filepath):

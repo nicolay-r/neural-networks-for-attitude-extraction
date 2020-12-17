@@ -55,6 +55,9 @@ if __name__ == "__main__":
     # Parsing arguments.
     args = parser.parse_args()
 
+    # Logging all the read arguments.
+    Common.log_args(args)
+
     # Reading arguments.
     exp_type = ExperimentTypeArg.read_argument(args)
     ra_version = RuAttitudesVersionArg.read_argument(args)
