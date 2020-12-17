@@ -21,7 +21,7 @@ class Common:
         assert(isinstance(args, argparse.Namespace))
         logger.info("============")
         for arg in vars(args):
-            print u"{}: {}".format(arg, getattr(args, arg))
+            logger.info(u"{}: {}".format(arg, getattr(args, arg)))
         logger.info("============")
 
     @staticmethod
