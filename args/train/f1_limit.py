@@ -1,5 +1,5 @@
 from args.base import BaseArg
-from default import TRAIN_F1_LIMIT
+from args.default import TRAIN_F1_LIMIT
 
 
 class TrainF1LimitArg(BaseArg):

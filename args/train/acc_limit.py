@@ -1,5 +1,5 @@
 from args.base import BaseArg
-from default import TRAIN_ACC_LIMIT
+from args.default import TRAIN_ACC_LIMIT
 
 
 class TrainAccuracyLimitArg(BaseArg):

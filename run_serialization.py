@@ -12,7 +12,7 @@ from args.entity_fmt import EnitityFormatterTypesArg
 from args.frames import RuSentiFramesVersionArg
 from args.rusentrel import RuSentRelVersionArg
 from args.stemmer import StemmerArg
-from args.train_terms_per_context import TermsPerContextArg
+from args.terms_per_context import TermsPerContextArg
 from common import Common
 
 from arekit.contrib.networks.run_serializer import NetworksExperimentInputSerializer

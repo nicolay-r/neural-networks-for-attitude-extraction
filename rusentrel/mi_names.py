@@ -1,4 +1,4 @@
-from rusentrel.ctx_names import ModelNames
+from args.train.model_name import ModelNames
 
 
 class MaxPoolingModelNames(ModelNames):

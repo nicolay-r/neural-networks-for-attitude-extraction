@@ -16,41 +16,23 @@ from args.labels_count import LabelsCountArg
 from args.ra_ver import RuAttitudesVersionArg
 from args.rusentrel import RuSentRelVersionArg
 from args.stemmer import StemmerArg
-from args.train_acc_limit import TrainAccuracyLimitArg
-from args.train_bags_per_minibatch import BagsPerMinibatchArg
-from args.train_dropout_keep_prob import DropoutKeepProbArg
-from args.train_f1_limit import TrainF1LimitArg
-from args.train_learning_rate import LearningRateArg
-from args.train_terms_per_context import TermsPerContextArg
+from args.terms_per_context import TermsPerContextArg
+from args.train.acc_limit import TrainAccuracyLimitArg
+from args.train.bags_per_minibatch import BagsPerMinibatchArg
+from args.train.dropout_keep_prob import DropoutKeepProbArg
+from args.train.f1_limit import TrainF1LimitArg
+from args.train.learning_rate import LearningRateArg
+from args.train.model_input_type import ModelInputTypeArg
+from args.train.model_name import ModelNameArg
 from callback import NeuralNetworkCustomEvaluationCallback
 from common import Common
 # TODO. Move this parameters into args/input_format.py
 from data_training import RuSentRelTrainingData
 from experiment_io import CustomNetworkExperimentIO
 from factory_networks import \
-    INPUT_TYPE_SINGLE_INSTANCE, \
-    INPUT_TYPE_MULTI_INSTANCE, \
-    INPUT_TYPE_MULTI_INSTANCE_WITH_ATTENTION, \
     compose_network_and_network_config_funcs, \
     create_bags_collection_type
 from factory_config_setups import modify_config_for_model, optionally_modify_config_for_experiment
-from rusentrel.ctx_names import ModelNames
-
-
-def supported_model_names():
-    model_names = ModelNames()
-    return [
-        model_names.SelfAttentionBiLSTM,
-        model_names.AttSelfPZhouBiLSTM,
-        model_names.AttSelfZYangBiLSTM,
-        model_names.BiLSTM,
-        model_names.CNN,
-        model_names.LSTM,
-        model_names.PCNN,
-        model_names.RCNN,
-        model_names.RCNNAttZYang,
-        model_names.RCNNAttPZhou
-    ]
 
 
 if __name__ == "__main__":
@@ -71,23 +53,8 @@ if __name__ == "__main__":
     DistanceInTermsBetweenAttitudeEndsArg.add_argument(parser)
     TrainAccuracyLimitArg.add_argument(parser)
     TrainF1LimitArg.add_argument(parser)
-
-    parser.add_argument('--model-input-type',
-                        dest='model_input_type',
-                        type=unicode,
-                        choices=[INPUT_TYPE_SINGLE_INSTANCE,
-                                 INPUT_TYPE_MULTI_INSTANCE,
-                                 INPUT_TYPE_MULTI_INSTANCE_WITH_ATTENTION],
-                        default='ctx',
-                        nargs='?',
-                        help='Input format type')
-
-    parser.add_argument('--model-name',
-                        dest='model_name',
-                        type=unicode,
-                        choices=supported_model_names(),
-                        nargs=1,
-                        help='Name of a model to be utilized in experiment')
+    ModelInputTypeArg.add_argument(parser)
+    ModelNameArg.add_argument(parser)
 
     parser.add_argument('--model-state-dir',
                         dest='model_load_dir',
@@ -150,9 +117,9 @@ if __name__ == "__main__":
     cv_count = CvCountArg.read_argument(args)
     ra_version = RuAttitudesVersionArg.read_argument(args)
     stemmer = StemmerArg.read_argument(args)
-    model_input_type = args.model_input_type
+    model_input_type = ModelInputTypeArg.read_argument(args)
     model_load_dir = args.model_load_dir
-    model_name = unicode(args.model_name[0])
+    model_name = ModelNameArg.read_argument(args)
     embedding_filepath = args.embedding_filepath
     vocab_filepath = args.vocab_filepath
     do_eval = args.do_eval

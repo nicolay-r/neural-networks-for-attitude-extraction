@@ -1,3 +1,40 @@
+from args.base import BaseArg
+
+
+def supported_model_names():
+    model_names = ModelNames()
+    return [
+        model_names.SelfAttentionBiLSTM,
+        model_names.AttSelfPZhouBiLSTM,
+        model_names.AttSelfZYangBiLSTM,
+        model_names.BiLSTM,
+        model_names.CNN,
+        model_names.LSTM,
+        model_names.PCNN,
+        model_names.RCNN,
+        model_names.RCNNAttZYang,
+        model_names.RCNNAttPZhou
+    ]
+
+
+class ModelNameArg(BaseArg):
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def read_argument(args):
+        return unicode(args.model_name[0])
+
+    @staticmethod
+    def add_argument(parser):
+        parser.add_argument('--model-name',
+                            dest='model_name',
+                            type=unicode,
+                            choices=supported_model_names(),
+                            nargs=1,
+                            help='Name of a model to be utilized in experiment')
+
 
 class ModelNames(object):
 

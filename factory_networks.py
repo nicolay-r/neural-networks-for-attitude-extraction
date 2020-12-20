@@ -23,20 +23,17 @@ from arekit.contrib.networks.multi.architectures.max_pooling import MaxPoolingOv
 from arekit.contrib.networks.multi.configurations.att_self import AttSelfOverSentencesConfig
 from arekit.contrib.networks.multi.configurations.base import BaseMultiInstanceConfig
 from arekit.contrib.networks.multi.configurations.max_pooling import MaxPoolingOverSentencesConfig
-from rusentrel.ctx_names import ModelNames
-
-INPUT_TYPE_SINGLE_INSTANCE = u'ctx'
-INPUT_TYPE_MULTI_INSTANCE = u'mi'
-INPUT_TYPE_MULTI_INSTANCE_WITH_ATTENTION = u'mi-att'
+from args.train.model_input_type import ModelInputType
+from args.train.model_name import ModelNames
 
 
 def compose_network_and_network_config_funcs(model_name, model_input_type):
     assert(isinstance(model_name, unicode))
-    assert(isinstance(model_input_type, unicode))
+    assert(isinstance(model_input_type, ModelInputType))
 
     ctx_network_func, ctx_config_func = __get_network_with_config_types(model_name)
 
-    if model_input_type == INPUT_TYPE_SINGLE_INSTANCE:
+    if model_input_type == ModelInputType.SingleInstance:
         # In case of a single instance model, there is no need to perform extra wrapping
         # since all the base models assumes to work with a single context (input).
         return ctx_network_func, ctx_config_func
@@ -53,9 +50,11 @@ def compose_network_and_network_config_funcs(model_name, model_input_type):
 # region private functions
 
 def __get_mi_network_with_config(model_input_type):
-    if model_input_type == INPUT_TYPE_MULTI_INSTANCE:
+    assert(isinstance(model_input_type, ModelInputType))
+
+    if model_input_type == ModelInputType.MultiInstance:
         return MaxPoolingOverSentences, MaxPoolingOverSentencesConfig
-    if model_input_type == INPUT_TYPE_MULTI_INSTANCE_WITH_ATTENTION:
+    if model_input_type == ModelInputType.MultiInstanceWithAttention:
         return AttSelfOverSentences, AttSelfOverSentencesConfig
 
 
@@ -86,12 +85,13 @@ def __get_network_with_config_types(model_name):
 
 # endregion
 
-def create_bags_collection_type(model_input_type):
-    assert(isinstance(model_input_type, unicode))
 
-    if model_input_type == INPUT_TYPE_SINGLE_INSTANCE:
+def create_bags_collection_type(model_input_type):
+    assert(isinstance(model_input_type, ModelInputType))
+
+    if model_input_type == ModelInputType.SingleInstance:
         return SingleBagsCollection
-    if model_input_type == INPUT_TYPE_SINGLE_INSTANCE:
+    if model_input_type == ModelInputType.MultiInstance:
         return MultiInstanceBagsCollection
-    if model_input_type == INPUT_TYPE_MULTI_INSTANCE_WITH_ATTENTION:
+    if model_input_type == ModelInputType.MultiInstanceWithAttention:
         return MultiInstanceBagsCollection
