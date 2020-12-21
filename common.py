@@ -20,7 +20,7 @@ class Common:
     def log_args(args):
         assert(isinstance(args, argparse.Namespace))
         logger.info("============")
-        for arg in vars(args):
+        for arg in sorted(vars(args)):
             logger.info(u"{}: {}".format(arg, getattr(args, arg)))
         logger.info("============")
 
