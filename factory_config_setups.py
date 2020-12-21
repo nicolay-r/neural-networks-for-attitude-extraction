@@ -1,4 +1,6 @@
 from arekit.contrib.experiments.types import ExperimentTypes
+from arekit.contrib.networks.context.configurations.base.base import DefaultNetworkConfig
+from arekit.contrib.networks.multi.configurations.base import BaseMultiInstanceConfig
 from args.train.model_input_type import ModelInputType
 from rusentrel.classic.common import apply_classic_mi_settings
 from rusentrel.classic.ctx.att_self_bilstm import ctx_self_att_bilstm_custom_config
@@ -18,6 +20,7 @@ from rusentrel.rusentrel_ds.common import apply_ds_mi_settings
 def modify_config_for_model(model_name, model_input_type, config):
     assert(isinstance(model_name, unicode))
     assert(isinstance(model_input_type, ModelInputType))
+    assert (isinstance(config, DefaultNetworkConfig))
 
     model_names = ModelNames()
 
@@ -45,15 +48,18 @@ def modify_config_for_model(model_name, model_input_type, config):
 
         return
 
-    if model_input_type == ModelInputType.MultiInstance:
+    if model_input_type == ModelInputType.MultiInstanceMaxPooling or \
+       model_input_type == ModelInputType.MultiInstanceWithSelfAttention:
+        assert(isinstance(config, BaseMultiInstanceConfig))
+
         # We assign all the settings related to the case of
-        # single instance model.
+        # single instance model, for the related ContextConfig.
         modify_config_for_model(model_name=model_name,
                                 model_input_type=ModelInputType.SingleInstance,
-                                config=config)
+                                config=config.ContextConfig)
+
         # We apply modification of some parameters
         config.fix_context_parameters()
-
         return
 
     raise NotImplementedError(u"Model input type {input_type} is not supported".format(
@@ -64,7 +70,7 @@ def optionally_modify_config_for_experiment(config, exp_type, model_input_type):
     assert(isinstance(exp_type, ExperimentTypes))
     assert(isinstance(model_input_type, ModelInputType))
 
-    if model_input_type == ModelInputType.MultiInstance:
+    if model_input_type == ModelInputType.MultiInstanceMaxPooling:
         if exp_type == ExperimentTypes.RuSentRel:
             apply_classic_mi_settings(config)
         if exp_type == ExperimentTypes.RuAttitudes or exp_type == ExperimentTypes.RuSentRelWithRuAttitudes:

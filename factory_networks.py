@@ -52,9 +52,9 @@ def compose_network_and_network_config_funcs(model_name, model_input_type):
 def __get_mi_network_with_config(model_input_type):
     assert(isinstance(model_input_type, ModelInputType))
 
-    if model_input_type == ModelInputType.MultiInstance:
+    if model_input_type == ModelInputType.MultiInstanceMaxPooling:
         return MaxPoolingOverSentences, MaxPoolingOverSentencesConfig
-    if model_input_type == ModelInputType.MultiInstanceWithAttention:
+    if model_input_type == ModelInputType.MultiInstanceWithSelfAttention:
         return AttSelfOverSentences, AttSelfOverSentencesConfig
 
 
@@ -91,7 +91,7 @@ def create_bags_collection_type(model_input_type):
 
     if model_input_type == ModelInputType.SingleInstance:
         return SingleBagsCollection
-    if model_input_type == ModelInputType.MultiInstance:
+    if model_input_type == ModelInputType.MultiInstanceMaxPooling:
         return MultiInstanceBagsCollection
-    if model_input_type == ModelInputType.MultiInstanceWithAttention:
+    if model_input_type == ModelInputType.MultiInstanceWithSelfAttention:
         return MultiInstanceBagsCollection

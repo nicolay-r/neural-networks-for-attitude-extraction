@@ -4,16 +4,16 @@ from args.base import BaseArg
 
 class ModelInputType(Enum):
     SingleInstance = 0
-    MultiInstance = 1
-    MultiInstanceWithAttention = 2
+    MultiInstanceMaxPooling = 1
+    MultiInstanceWithSelfAttention = 2
 
 
 class ModelInputTypeService(object):
 
     __names = {
         u"ctx": ModelInputType.SingleInstance,
-        u'mi': ModelInputType.MultiInstance,
-        u'mi-att': ModelInputType.MultiInstanceWithAttention
+        u'mi-mp': ModelInputType.MultiInstanceMaxPooling,
+        u'mi-self-att': ModelInputType.MultiInstanceWithSelfAttention
     }
 
     @staticmethod
