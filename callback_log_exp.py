@@ -32,7 +32,7 @@ def create_experiment_eval_msgs(results_per_epoch):
 
         f1_per_epochs = np.array(f1_per_epochs_list, dtype=np.float)
 
-        # Calculate best withing every iteration.
+        # Calculate best within every iteration.
         f1_best_list.append(max(f1_per_epochs))
 
         # Calculate average
