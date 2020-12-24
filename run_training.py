@@ -1,6 +1,7 @@
 import argparse
 from os.path import join
 
+from arekit.common.evaluation.evaluators.modes import EvaluationModes
 from arekit.common.evaluation.evaluators.two_class import TwoClassEvaluator
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.common.languages.ru.pos_service import PartOfSpeechTypesService
@@ -158,8 +159,11 @@ if __name__ == "__main__":
     # We use a predefined value for total amount of epochs and for evaluation iterations.
     callback.set_test_on_epochs(range(0, EPOCHS_COUNT + 1, test_every_k_epoch))
 
+    # Setup evaluation mode.
+    eval_mode = EvaluationModes.Extraction if labels_count == 3 else EvaluationModes.Classification
+
     # Creating experiment
-    evaluator = TwoClassEvaluator()
+    evaluator = TwoClassEvaluator(eval_mode)
     experiment_data = RuSentRelTrainingData(
         labels_scaler=Common.create_labels_scaler(labels_count),
         stemmer=stemmer,
