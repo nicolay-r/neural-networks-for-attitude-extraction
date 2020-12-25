@@ -25,6 +25,7 @@ from args.train.f1_limit import TrainF1LimitArg
 from args.train.learning_rate import LearningRateArg
 from args.train.model_input_type import ModelInputTypeArg
 from args.train.model_name import ModelNameArg
+from args.train.model_name_tag import ModelNameTagArg
 from callback import NeuralNetworkCustomEvaluationCallback
 from common import Common
 # TODO. Move this parameters into args/input_format.py
@@ -56,6 +57,7 @@ if __name__ == "__main__":
     TrainF1LimitArg.add_argument(parser)
     ModelInputTypeArg.add_argument(parser)
     ModelNameArg.add_argument(parser)
+    ModelNameTagArg.add_argument(parser)
 
     parser.add_argument('--model-state-dir',
                         dest='model_load_dir',
@@ -134,6 +136,7 @@ if __name__ == "__main__":
     train_acc_limit = TrainAccuracyLimitArg.read_argument(args)
     train_f1_limit = TrainF1LimitArg.read_argument(args)
     save_hidden_params = args.save_hidden_params
+    model_name_tag = ModelNameTagArg.read_argument(args)
 
     # Defining folding type
     folding_type = FoldingType.Fixed if cv_count == 1 else FoldingType.CrossValidation
@@ -192,7 +195,8 @@ if __name__ == "__main__":
                                     target_dir=experiment.ExperimentIO.get_target_dir(),
                                     source_dir=model_load_dir,
                                     embedding_filepath=embedding_filepath,
-                                    vocab_filepath=vocab_filepath)
+                                    vocab_filepath=vocab_filepath,
+                                    model_name_tag=model_name_tag)
 
     # Setup logging dir.
     callback.set_log_dir(join(model_io.get_model_dir(), u"log/"))
