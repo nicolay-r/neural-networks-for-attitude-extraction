@@ -1,41 +1,5 @@
-from enum import Enum
 from args.base import BaseArg
-
-
-class ModelInputType(Enum):
-    SingleInstance = 0
-    MultiInstanceMaxPooling = 1
-    MultiInstanceWithSelfAttention = 2
-
-
-class ModelInputTypeService(object):
-
-    __names = {
-        u"ctx": ModelInputType.SingleInstance,
-        u'mi-mp': ModelInputType.MultiInstanceMaxPooling,
-        u'mi-self-att': ModelInputType.MultiInstanceWithSelfAttention
-    }
-
-    @staticmethod
-    def __iter_supported_names():
-        return iter(ModelInputTypeService.__names.keys())
-
-    @staticmethod
-    def get_type_by_name(name):
-        return ModelInputTypeService.__names[name]
-
-    @staticmethod
-    def find_name_by_type(input_type):
-        assert(isinstance(input_type, ModelInputType))
-
-        for name in ModelInputTypeService.__iter_supported_names():
-            related_type = ModelInputTypeService.__names[name]
-            if related_type == input_type:
-                return name
-
-    @staticmethod
-    def iter_supported_names():
-        return ModelInputTypeService.__iter_supported_names()
+from arekit.contrib.networks.enum_input_types import ModelInputType, ModelInputTypeService
 
 
 class ModelInputTypeArg(BaseArg):
