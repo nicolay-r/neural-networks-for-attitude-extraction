@@ -1,5 +1,6 @@
 from arekit.contrib.experiments.types import ExperimentTypes
 from arekit.contrib.networks.context.configurations.base.base import DefaultNetworkConfig
+from arekit.contrib.networks.enum_name_types import ModelNames
 from arekit.contrib.networks.multi.configurations.base import BaseMultiInstanceConfig
 from args.train.model_input_type import ModelInputType
 from rusentrel.classic.common import apply_classic_mi_settings
@@ -13,37 +14,34 @@ from rusentrel.classic.ctx.pcnn import ctx_pcnn_custom_config
 from rusentrel.classic.ctx.rcnn import ctx_rcnn_custom_config
 from rusentrel.classic.ctx.rcnn_att_p_zhou import ctx_rcnn_p_zhou_custom_config
 from rusentrel.classic.ctx.rcnn_att_z_yang import ctx_rcnn_z_yang_custom_config
-from args.train.model_name import ModelNames
 from rusentrel.rusentrel_ds.common import apply_ds_mi_settings
 
 
 def modify_config_for_model(model_name, model_input_type, config):
-    assert(isinstance(model_name, unicode))
+    assert(isinstance(model_name, ModelNames))
     assert(isinstance(model_input_type, ModelInputType))
     assert (isinstance(config, DefaultNetworkConfig))
 
-    model_names = ModelNames()
-
     if model_input_type == ModelInputType.SingleInstance:
-        if model_name == model_names.SelfAttentionBiLSTM:
+        if model_name == ModelNames.SelfAttentionBiLSTM:
             ctx_self_att_bilstm_custom_config(config)
-        if model_name == model_names.AttSelfPZhouBiLSTM:
+        if model_name == ModelNames.AttSelfPZhouBiLSTM:
             ctx_att_bilstm_p_zhou_custom_config(config)
-        if model_name == model_names.AttSelfZYangBiLSTM:
+        if model_name == ModelNames.AttSelfZYangBiLSTM:
             ctx_att_bilstm_z_yang_custom_config(config)
-        if model_name == model_names.BiLSTM:
+        if model_name == ModelNames.BiLSTM:
             ctx_bilstm_custom_config(config)
-        if model_name == model_names.CNN:
+        if model_name == ModelNames.CNN:
             ctx_cnn_custom_config(config)
-        if model_name == model_names.LSTM:
+        if model_name == ModelNames.LSTM:
             ctx_lstm_custom_config(config)
-        if model_name == model_names.PCNN:
+        if model_name == ModelNames.PCNN:
             ctx_pcnn_custom_config(config)
-        if model_name == model_names.RCNN:
+        if model_name == ModelNames.RCNN:
             ctx_rcnn_custom_config(config)
-        if model_name == model_names.RCNNAttZYang:
+        if model_name == ModelNames.RCNNAttZYang:
             ctx_rcnn_z_yang_custom_config(config)
-        if model_name == model_names.RCNNAttPZhou:
+        if model_name == ModelNames.RCNNAttPZhou:
             ctx_rcnn_p_zhou_custom_config(config)
 
         return

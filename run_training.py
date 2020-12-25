@@ -189,7 +189,8 @@ if __name__ == "__main__":
                                    load_ruattitude_docs=False)
 
     full_model_name = Common.create_full_model_name(folding_type=folding_type,
-                                                    model_name=model_name)
+                                                    model_name=model_name,
+                                                    input_type=model_input_type)
 
     model_io = NeuralNetworkModelIO(full_model_name=full_model_name,
                                     target_dir=experiment.ExperimentIO.get_target_dir(),

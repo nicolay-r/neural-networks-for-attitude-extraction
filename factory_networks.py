@@ -17,6 +17,7 @@ from arekit.contrib.networks.context.configurations.rnn import RNNConfig
 from arekit.contrib.networks.context.configurations.self_att_bilstm import SelfAttentionBiLSTMConfig
 from arekit.contrib.networks.core.feeding.bags.collection.multi import MultiInstanceBagsCollection
 from arekit.contrib.networks.core.feeding.bags.collection.single import SingleBagsCollection
+from arekit.contrib.networks.enum_name_types import ModelNames
 from arekit.contrib.networks.multi.architectures.att_self import AttSelfOverSentences
 from arekit.contrib.networks.multi.architectures.base.base import BaseMultiInstanceNeuralNetwork
 from arekit.contrib.networks.multi.architectures.max_pooling import MaxPoolingOverSentences
@@ -24,11 +25,10 @@ from arekit.contrib.networks.multi.configurations.att_self import AttSelfOverSen
 from arekit.contrib.networks.multi.configurations.base import BaseMultiInstanceConfig
 from arekit.contrib.networks.multi.configurations.max_pooling import MaxPoolingOverSentencesConfig
 from args.train.model_input_type import ModelInputType
-from args.train.model_name import ModelNames
 
 
 def compose_network_and_network_config_funcs(model_name, model_input_type):
-    assert(isinstance(model_name, unicode))
+    assert(isinstance(model_name, ModelNames))
     assert(isinstance(model_input_type, ModelInputType))
 
     ctx_network_func, ctx_config_func = __get_network_with_config_types(model_name)
@@ -59,29 +59,29 @@ def __get_mi_network_with_config(model_input_type):
 
 
 def __get_network_with_config_types(model_name):
-    assert(isinstance(model_name, unicode))
+    assert(isinstance(model_name, ModelNames))
 
-    model_names = ModelNames()
-    if model_name == model_names.SelfAttentionBiLSTM:
+    if model_name == ModelNames.SelfAttentionBiLSTM:
         return SelfAttentionBiLSTM, SelfAttentionBiLSTMConfig
-    if model_name == model_names.AttSelfPZhouBiLSTM:
+    if model_name == ModelNames.AttSelfPZhouBiLSTM:
         return AttentionSelfPZhouBiLSTM, AttentionSelfPZhouBiLSTMConfig
-    if model_name == model_names.AttSelfZYangBiLSTM:
+    if model_name == ModelNames.AttSelfZYangBiLSTM:
         return AttentionSelfZYangBiLSTM, AttentionSelfZYangBiLSTMConfig
-    if model_name == model_names.BiLSTM:
+    if model_name == ModelNames.BiLSTM:
         return BiLSTM, BiLSTMConfig
-    if model_name == model_names.CNN:
+    if model_name == ModelNames.CNN:
         return VanillaCNN, CNNConfig
-    if model_name == model_names.LSTM:
+    if model_name == ModelNames.LSTM:
         return RNN, RNNConfig
-    if model_name == model_names.PCNN:
+    if model_name == ModelNames.PCNN:
         return PiecewiseCNN, CNNConfig
-    if model_name == model_names.RCNN:
+    if model_name == ModelNames.RCNN:
         return RCNN, RCNNConfig
-    if model_name == model_names.RCNNAttZYang:
+    if model_name == ModelNames.RCNNAttZYang:
         return AttentionSelfZYangRCNN, RCNNConfig
-    if model_name == model_names.RCNNAttPZhou:
+    if model_name == ModelNames.RCNNAttPZhou:
         return AttentionSelfPZhouRCNN, RCNNConfig
+    raise NotImplementedError(u"config was not implemented for `{}` model name".format(model_name))
 
 # endregion
 

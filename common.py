@@ -4,6 +4,8 @@ import logging
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.common.experiment.scales.three import ThreeLabelScaler
 from arekit.common.experiment.scales.two import TwoLabelScaler
+from arekit.contrib.networks.enum_input_types import ModelInputType
+from arekit.contrib.networks.enum_name_types import ModelNames
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
 from embeddings.rusvectores import RusvectoresEmbedding
 
@@ -14,7 +16,27 @@ logger.setLevel(logging.INFO)
 
 class Common:
 
-    CV_NAME_PREFIX = u'cv_'
+    @staticmethod
+    def __create_folding_type_prefix(folding_type):
+        assert(isinstance(folding_type,  FoldingType))
+        if folding_type == FoldingType.Fixed:
+            return u'fx'
+        elif folding_type == FoldingType.CrossValidation:
+            return u'cv'
+        else:
+            raise NotImplementedError(u"Folding type `{}` was not declared".format(folding_type))
+
+    @staticmethod
+    def __create_input_type_prefix(input_type):
+        assert(isinstance(input_type, ModelInputType))
+        if input_type == ModelInputType.SingleInstance:
+            return u'ctx'
+        elif input_type == ModelInputType.MultiInstanceMaxPooling:
+            return u'mi-mp'
+        elif input_type == ModelInputType.MultiInstanceWithSelfAttention:
+            return u'mi-sa'
+        else:
+            raise NotImplementedError(u"Input type `{}` was not declared".format(input_type))
 
     @staticmethod
     def log_args(args):
@@ -34,16 +56,11 @@ class Common:
         return RuSentRelOpinionCollectionFormatter()
 
     @staticmethod
-    def create_full_model_name(folding_type, model_name):
-        assert(isinstance(folding_type,  FoldingType))
-
-        folding_prefix = u""
-        if folding_type == FoldingType.CrossValidation:
-            folding_prefix = Common.CV_NAME_PREFIX
-
-        return u"{folding_type}{model_name}".format(
-            folding_type=folding_prefix,
-            model_name=model_name)
+    def create_full_model_name(folding_type, model_name, input_type):
+        assert(isinstance(model_name, ModelNames))
+        return u'_'.join([Common.__create_folding_type_prefix(folding_type),
+                          Common.__create_input_type_prefix(input_type),
+                          model_name.value])
 
     @staticmethod
     def create_exp_name_suffix(use_balancing, terms_per_context, dist_in_terms_between_att_ends):
