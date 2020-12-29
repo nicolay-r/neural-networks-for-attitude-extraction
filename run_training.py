@@ -168,7 +168,7 @@ if __name__ == "__main__":
     last_epoch = epochs_count-1
     if test_epochs_range[-1] != last_epoch:
         test_epochs_range.append(last_epoch)
-    callback.set_test_on_epochs(test_epochs_range)
+    callback.set_eval_on_epochs(test_epochs_range)
 
     # Setup evaluation mode.
     eval_mode = EvaluationModes.Extraction if labels_count == 3 else EvaluationModes.Classification

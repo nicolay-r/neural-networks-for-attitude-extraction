@@ -46,7 +46,7 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
         self.__model = None
 
         self.__test_results_exp_history = OrderedDict()
-        self.__test_on_epochs = None
+        self.__eval_on_epochs = None
         self.__log_dir = None
         self.__do_eval = do_eval
         self.__key_stop_training_by_cost = None
@@ -67,7 +67,7 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
 
     @property
     def Epochs(self):
-        return max(self.__test_on_epochs)
+        return max(self.__eval_on_epochs) + 1
 
     # endregion
 
@@ -77,9 +77,9 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
         assert(isinstance(experiment, BaseExperiment))
         self.__experiment = experiment
 
-    def set_test_on_epochs(self, value):
+    def set_eval_on_epochs(self, value):
         assert(isinstance(value, list))
-        self.__test_on_epochs = value
+        self.__eval_on_epochs = value
 
     def set_log_dir(self, log_dir):
         assert(isinstance(log_dir, unicode))
@@ -167,7 +167,7 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
 
         return cancel
 
-    def __test_and_log_results(self, operation_cancel, epoch_index, avg_fit_cost):
+    def __eval_and_log_results(self, operation_cancel, epoch_index, avg_fit_cost):
         assert(isinstance(operation_cancel, OperationCancellation))
 
         # We use the latter temporary. Maybe it might be in a way better to refactor this aspect.
@@ -243,7 +243,7 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
         message = u"{}: Initial Evaluation:".format(str(datetime.datetime.now()))
         logger.info(message)
 
-        self.__test_and_log_results(operation_cancel=operation_cancel,
+        self.__eval_and_log_results(operation_cancel=operation_cancel,
                                     epoch_index=0,
                                     avg_fit_cost=-1)
 
@@ -269,16 +269,16 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
             operation_cancel.Cancel()
 
         # Deciding whether there is a need in evaluation process organization.
-        is_need_eval = epoch_index in self.__test_on_epochs or operation_cancel.IsCancelled
+        is_need_eval = epoch_index in self.__eval_on_epochs or operation_cancel.IsCancelled
 
         # Performing evaluation process (optionally).
         if self.__do_eval and is_need_eval:
-            self.__test_and_log_results(operation_cancel=operation_cancel,
+            self.__eval_and_log_results(operation_cancel=operation_cancel,
                                         epoch_index=epoch_index,
                                         avg_fit_cost=avg_fit_cost)
 
         # Check, whether there is a need to proceed with keeping hidden states or not.
-        if (epoch_index not in self.__test_on_epochs) and (not operation_cancel.IsCancelled):
+        if (epoch_index not in self.__eval_on_epochs) and (not operation_cancel.IsCancelled):
             return
 
         # Saving model hidden values using the related numpy utils.
