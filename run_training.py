@@ -10,7 +10,7 @@ from arekit.contrib.networks.context.configurations.base.base import DefaultNetw
 from arekit.contrib.networks.core.model_io import NeuralNetworkModelIO
 from arekit.contrib.networks.run_training import NetworksTrainingEngine
 from args.cv_index import CvCountArg
-from args.default import BAG_SIZE, TEST_EVERY_K_EPOCH, EPOCHS_COUNT
+from args.default import BAG_SIZE, TEST_EVERY_K_EPOCH
 from args.dist_in_terms_between_ends import DistanceInTermsBetweenAttitudeEndsArg
 from args.experiment import ExperimentTypeArg
 from args.labels_count import LabelsCountArg
@@ -21,6 +21,7 @@ from args.terms_per_context import TermsPerContextArg
 from args.train.acc_limit import TrainAccuracyLimitArg
 from args.train.bags_per_minibatch import BagsPerMinibatchArg
 from args.train.dropout_keep_prob import DropoutKeepProbArg
+from args.train.epochs_count import EpochsCountArg
 from args.train.f1_limit import TrainF1LimitArg
 from args.train.learning_rate import LearningRateArg
 from args.train.model_input_type import ModelInputTypeArg
@@ -58,6 +59,7 @@ if __name__ == "__main__":
     ModelInputTypeArg.add_argument(parser)
     ModelNameArg.add_argument(parser)
     ModelNameTagArg.add_argument(parser)
+    EpochsCountArg.add_argument(parser)
 
     parser.add_argument('--model-state-dir',
                         dest='model_load_dir',
@@ -137,6 +139,7 @@ if __name__ == "__main__":
     train_f1_limit = TrainF1LimitArg.read_argument(args)
     save_hidden_params = args.save_hidden_params
     model_name_tag = ModelNameTagArg.read_argument(args)
+    epochs_count = EpochsCountArg.read_argument(args)
 
     # Defining folding type
     folding_type = FoldingType.Fixed if cv_count == 1 else FoldingType.CrossValidation
@@ -159,8 +162,13 @@ if __name__ == "__main__":
     # We stop training process according to the present at some prior
     # cost values in case of experiments with cv-based doc-ids folding format.
     callback.set_key_stop_training_by_cost(folding_type == FoldingType.CrossValidation)
+
     # We use a predefined value for total amount of epochs and for evaluation iterations.
-    callback.set_test_on_epochs(range(0, EPOCHS_COUNT + 1, test_every_k_epoch))
+    test_epochs_range = range(0, epochs_count, test_every_k_epoch)
+    last_epoch = epochs_count-1
+    if test_epochs_range[-1] != last_epoch:
+        test_epochs_range.append(last_epoch)
+    callback.set_test_on_epochs(test_epochs_range)
 
     # Setup evaluation mode.
     eval_mode = EvaluationModes.Extraction if labels_count == 3 else EvaluationModes.Classification
