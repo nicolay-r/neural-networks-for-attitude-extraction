@@ -1,17 +1,23 @@
+from arekit.contrib.networks.context.architectures.att_ends_cnn import AttentionEndsCNN
+from arekit.contrib.networks.context.architectures.att_ends_pcnn import AttentionEndsPCNN
 from arekit.contrib.networks.context.architectures.att_self_p_zhou_bilstm import AttentionSelfPZhouBiLSTM
 from arekit.contrib.networks.context.architectures.att_self_p_zhou_rcnn import AttentionSelfPZhouRCNN
 from arekit.contrib.networks.context.architectures.att_self_z_yang_bilstm import AttentionSelfZYangBiLSTM
 from arekit.contrib.networks.context.architectures.att_self_z_yang_rcnn import AttentionSelfZYangRCNN
 from arekit.contrib.networks.context.architectures.bilstm import BiLSTM
 from arekit.contrib.networks.context.architectures.cnn import VanillaCNN
+from arekit.contrib.networks.context.architectures.ian_ends import IANEndsBased
 from arekit.contrib.networks.context.architectures.pcnn import PiecewiseCNN
 from arekit.contrib.networks.context.architectures.rcnn import RCNN
 from arekit.contrib.networks.context.architectures.rnn import RNN
 from arekit.contrib.networks.context.architectures.self_att_bilstm import SelfAttentionBiLSTM
+from arekit.contrib.networks.context.configurations.att_ends_cnn import AttentionEndsCNNConfig
+from arekit.contrib.networks.context.configurations.att_ends_pcnn import AttentionEndsPCNNConfig
 from arekit.contrib.networks.context.configurations.att_self_p_zhou_bilstm import AttentionSelfPZhouBiLSTMConfig
 from arekit.contrib.networks.context.configurations.att_self_z_yang_bilstm import AttentionSelfZYangBiLSTMConfig
 from arekit.contrib.networks.context.configurations.bilstm import BiLSTMConfig
 from arekit.contrib.networks.context.configurations.cnn import CNNConfig
+from arekit.contrib.networks.context.configurations.ian_ends import IANEndsBasedConfig
 from arekit.contrib.networks.context.configurations.rcnn import RCNNConfig
 from arekit.contrib.networks.context.configurations.rnn import RNNConfig
 from arekit.contrib.networks.context.configurations.self_att_bilstm import SelfAttentionBiLSTMConfig
@@ -81,6 +87,12 @@ def __get_network_with_config_types(model_name):
         return AttentionSelfZYangRCNN, RCNNConfig
     if model_name == ModelNames.RCNNAttPZhou:
         return AttentionSelfPZhouRCNN, RCNNConfig
+    if model_name == ModelNames.IANEnds:
+        return IANEndsBased, IANEndsBasedConfig
+    if model_name == ModelNames.AttEndsPCNN:
+        return AttentionEndsPCNN, AttentionEndsPCNNConfig
+    if model_name == ModelNames.AttEndsCNN:
+        return AttentionEndsCNN, AttentionEndsCNNConfig
     raise NotImplementedError(u"config was not implemented for `{}` model name".format(model_name))
 
 # endregion
