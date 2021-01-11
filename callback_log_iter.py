@@ -13,6 +13,6 @@ def create_iteration_short_eval_msg(eval_result, data_type, epoch_index):
     assert (isinstance(eval_result, TwoClassEvalResult))
     title = u"Stat for '[{dtype}]', e={epoch}".format(dtype=data_type, epoch=epoch_index)
     params = [u"{}: {}".format(metric_name, round(value, 2))
-              for metric_name, value in eval_result.iter_results()]
+              for metric_name, value in eval_result.iter_total_by_param_results()]
     contents = u"; ".join(params)
     return u'\n'.join([title, contents])
