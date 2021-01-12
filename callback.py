@@ -5,6 +5,7 @@ from itertools import chain
 from os.path import join
 
 from arekit.common.evaluation.results.base import BaseEvalResult
+from arekit.common.evaluation.results.two_class import TwoClassEvalResult
 from arekit.common.experiment.data_type import DataType
 from arekit.common.experiment.formats.base import BaseExperiment
 from arekit.common.utils import create_dir_if_not_exists
@@ -144,7 +145,7 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
         """ This method related to the main algorithm that defines
             whether there is a need to stop training process or not.
         """
-        assert(isinstance(result_train, BaseEvalResult))
+        assert(isinstance(result_train, TwoClassEvalResult))
 
         msg = None
         cancel = False
