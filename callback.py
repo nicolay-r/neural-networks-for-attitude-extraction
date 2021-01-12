@@ -4,7 +4,6 @@ from collections import OrderedDict
 from itertools import chain
 from os.path import join
 
-from arekit.common.evaluation.results.base import BaseEvalResult
 from arekit.common.evaluation.results.two_class import TwoClassEvalResult
 from arekit.common.experiment.data_type import DataType
 from arekit.common.experiment.formats.base import BaseExperiment
