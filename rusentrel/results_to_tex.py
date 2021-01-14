@@ -90,7 +90,7 @@ class ResultsTable:
 
         # IMPORTANT:
         # This allows us to combine neut with non-neut (for 2-scale).
-        ds_col_type = exp_type.replace(u'-neut', '')
+        ds_col_type = exp_type.replace(u'_neut', '')
 
         model_dir = self.model_name_template.format(folding_str=folding_str,
                                                     input_type=input_type,
