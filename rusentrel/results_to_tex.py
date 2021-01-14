@@ -38,8 +38,9 @@ class ResultsTable:
         self.__output_dir = output_dir
 
     def save(self):
+        self.__df = self.__df.sort_values(by=[self.MODEL_NAME_COL])
         print self.__df
-        self.__df.to_latex("results.tex")
+        self.__df.to_latex("results.tex", na_rep='', index=False)
 
     @staticmethod
     def __parse_result(filepath):
