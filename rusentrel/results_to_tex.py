@@ -41,7 +41,6 @@ class ResultsTable:
         self.__output_dir = output_dir
 
     def save(self):
-        self.__df = self.__df.sort_values(by=[self.MODEL_NAME_COL])
         self.__df.to_latex("results-{input_type}.tex".format(input_type=self.__input_type),
                            na_rep='',
                            index=False)
@@ -103,7 +102,6 @@ class ResultsTable:
         # if the latter results are not presented
         # then we just reject the related line from the results.
         target_file = join(self.__output_dir, experiment_dir, model_dir, results_filepath)
-        # print '{}'.format(target_file)
         if not exists(target_file):
             return
 
@@ -161,9 +159,9 @@ class ResultsTable:
                               experiment_dir=exp_dir)
 
     def fill(self):
-        # for 3-scale
         for model_name in ModelNames:
             for folding_type in FoldingType:
+                # for 3-scale
                 for ra_version in [RuAttitudesVersions.V20LargeNeut,
                                    RuAttitudesVersions.V20BaseNeut,
                                    RuAttitudesVersions.V12,
@@ -173,9 +171,7 @@ class ResultsTable:
                                      labels_count=3,
                                      ra_version=ra_version)
 
-        # for 2-scale
-        for model_name in ModelNames:
-            for folding_type in FoldingType:
+                # for 2-scale
                 for ra_version in [RuAttitudesVersions.V20Large,
                                    RuAttitudesVersions.V20Base,
                                    RuAttitudesVersions.V12,
