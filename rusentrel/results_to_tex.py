@@ -5,13 +5,14 @@ import numpy as np
 import pandas as pd
 from os.path import join, exists
 
+
 sys.path.append('../')
 
 from arekit.common.experiment.folding.types import FoldingType
+from arekit.contrib.networks.enum_input_types import ModelInputType
 from arekit.contrib.networks.enum_name_types import ModelNames
 from arekit.contrib.source.ruattitudes.io_utils import RuAttitudesVersions
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
-
 
 
 class ResultsTable:
@@ -23,7 +24,8 @@ class ResultsTable:
     sl_ds_template = u"rsr-{rsr_version}-ra-{ra_version}-{folding_str}-balanced-tpc50_{labels_count}l"
     model_name_template = u"{folding_str}_{input_type}_{model_name}"
 
-    def __init__(self, output_dir):
+    def __init__(self, input_type, output_dir):
+        assert(isinstance(input_type, unicode))
         assert(isinstance(output_dir, unicode))
 
         # Composing table for results using dataframe.
@@ -35,6 +37,7 @@ class ResultsTable:
                        ('f1_3_test', float)]
         np_data = np.empty(0, dtype=np.dtype(dtypes_list))
         self.__df = pd.DataFrame(np_data)
+        self.__input_type = input_type
         self.__output_dir = output_dir
 
     def save(self):
@@ -79,22 +82,21 @@ class ResultsTable:
             assert(col_name in self.__df.columns)
             self.__df.set_value(row_ind, col_name, cv_value)
 
-    def __for_experiment(self, model_name, folding_type, experiment_dir, exp_type, labels_count):
+    def __for_experiment(self, model_name, folding_type, experiment_dir, exp_type_name, labels_count):
         assert(isinstance(model_name, ModelNames))
         assert(isinstance(folding_type, FoldingType))
-        assert(isinstance(exp_type, unicode))
+        assert(isinstance(exp_type_name, unicode))
 
-        input_type = u'ctx'
         folding_str = u"cv" if folding_type == FoldingType.CrossValidation else u"fx"
         results_filepath = u"log/cb_eval_avg_test.log"
         model_str = model_name.value
 
         # IMPORTANT:
         # This allows us to combine neut with non-neut (for 2-scale).
-        ds_col_type = exp_type.replace(u'_neut', '')
+        ds_col_type = exp_type_name.replace(u'_neut', '')
 
         model_dir = self.model_name_template.format(folding_str=folding_str,
-                                                    input_type=input_type,
+                                                    input_type=self.__input_type,
                                                     model_name=model_str)
 
         # if the latter results are not presented
@@ -128,56 +130,59 @@ class ResultsTable:
                             row_ind=row_ind,
                             labels_count=labels_count)
 
-    def __for_model(self, model_name, folding_type, labels_count, ra_versions):
+    def __for_model(self, model_name, folding_type, labels_count, ra_version):
         assert(isinstance(model_name, ModelNames))
         assert(isinstance(folding_type, FoldingType))
+        assert(isinstance(ra_version, RuAttitudesVersions) or ra_version is None)
         assert(labels_count == 2 or labels_count == 3)
 
         folding_str = u"cv3" if folding_type == FoldingType.CrossValidation else u"fixed"
+        rsr_version = RuSentRelVersions.V11
 
-        # sl template
-        for enum_type in RuSentRelVersions:
-            self.__for_experiment(model_name=model_name,
-                                  folding_type=folding_type,
-                                  exp_type=u'-',
-                                  labels_count=labels_count,
-                                  experiment_dir=self.sl_template.format(rsr_version=enum_type.value,
-                                                                         folding_str=folding_str,
-                                                                         labels_count=str(labels_count)))
+        if ra_version is None:
+            # Using supervised learning only
+            exp_type_name = u'-'
+            exp_dir = self.sl_template.format(rsr_version=rsr_version.value,
+                                              folding_str=folding_str,
+                                              labels_count=str(labels_count))
+        else:
+            # Using distant supervision in combination with supervised learning.
+            exp_type_name = ra_version.value
+            exp_dir = self.sl_ds_template.format(rsr_version=rsr_version.value,
+                                                 ra_version=ra_version.value,
+                                                 folding_str=folding_str,
+                                                 labels_count=str(labels_count))
 
-            # sl-ds template
-            for ra_version in ra_versions:
-                assert(isinstance(ra_version, RuAttitudesVersions))
-                ra_name = ra_version.value
-                self. __for_experiment(model_name=model_name,
-                                       folding_type=folding_type,
-                                       exp_type=ra_name,
-                                       labels_count=labels_count,
-                                       experiment_dir=self.sl_ds_template.format(rsr_version=enum_type.value,
-                                                                                 ra_version=ra_name,
-                                                                                 folding_str=folding_str,
-                                                                                 labels_count=str(labels_count)))
+        self.__for_experiment(model_name=model_name,
+                              folding_type=folding_type,
+                              exp_type_name=exp_type_name,
+                              labels_count=labels_count,
+                              experiment_dir=exp_dir)
 
     def fill(self):
         # for 3-scale
         for model_name in ModelNames:
             for folding_type in FoldingType:
-                self.__for_model(model_name=model_name,
-                                 folding_type=folding_type,
-                                 labels_count=3,
-                                 ra_versions=[RuAttitudesVersions.V12,
-                                              RuAttitudesVersions.V20BaseNeut,
-                                              RuAttitudesVersions.V20LargeNeut])
+                for ra_version in [RuAttitudesVersions.V20LargeNeut,
+                                   RuAttitudesVersions.V20BaseNeut,
+                                   RuAttitudesVersions.V12,
+                                   None]:
+                    self.__for_model(model_name=model_name,
+                                     folding_type=folding_type,
+                                     labels_count=3,
+                                     ra_version=ra_version)
 
         # for 2-scale
         for model_name in ModelNames:
             for folding_type in FoldingType:
-                self.__for_model(model_name=model_name,
-                                 folding_type=folding_type,
-                                 labels_count=2,
-                                 ra_versions=[RuAttitudesVersions.V12,
-                                              RuAttitudesVersions.V20Base,
-                                              RuAttitudesVersions.V20Large])
+                for ra_version in [RuAttitudesVersions.V20Large,
+                                   RuAttitudesVersions.V20Base,
+                                   RuAttitudesVersions.V12,
+                                   None]:
+                    self.__for_model(model_name=model_name,
+                                     folding_type=folding_type,
+                                     labels_count=2,
+                                     ra_version=ra_version)
 
 
 if __name__ == "__main__":
@@ -191,12 +196,23 @@ if __name__ == "__main__":
                         default=None,
                         help='Results dir')
 
+    parser.add_argument('--input-type',
+                        dest='input_type',
+                        type=unicode,
+                        nargs='?',
+                        default=ModelInputType.SingleInstance.value,
+                        choices=[ModelInputType.SingleInstance.value,
+                                 ModelInputType.MultiInstanceMaxPooling.value,
+                                 ModelInputType.MultiInstanceWithSelfAttention.value],
+                        help='input type format')
+
     args = parser.parse_args()
 
     # fp = "output/rsr-v1_1-cv3-balanced-tpc50_3l/cv_ctx_cnn/log/cb_eval_avg_test.log"
     # iters, last = __parse_and(filepath=fp)
     # print iters, last
 
-    rt = ResultsTable(args.output_dir)
+    rt = ResultsTable(output_dir=args.output_dir,
+                      input_type=args.input_type)
     rt.fill()
     rt.save()
