@@ -3,6 +3,7 @@ import argparse
 import numpy as np
 import pandas as pd
 from os.path import join, exists
+from enum import Enum
 
 from args.train.model_input_type import ModelInputTypeArg
 from callback import NeuralNetworkCustomEvaluationCallback
@@ -11,7 +12,22 @@ from arekit.contrib.networks.enum_input_types import ModelInputType
 from arekit.contrib.networks.enum_name_types import ModelNames
 from arekit.contrib.source.ruattitudes.io_utils import RuAttitudesVersions, RuAttitudesVersionsService
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
+from callback_log_exp import parse_avg_and_last_epoch_results
 from common import Common
+from experiment_io import CustomNetworkExperimentIO
+
+
+class ResultType(Enum):
+
+    F1 = u'f1'
+
+    TrainingTime = u'train-time'
+
+    @staticmethod
+    def from_str(value):
+        for t in ResultType:
+            if t.value == value:
+                return t
 
 
 class ResultsTable(object):
@@ -22,9 +38,10 @@ class ResultsTable(object):
     sl_template = u"rsr-{rsr_version}-{folding_str}-balanced-tpc50_{labels_count}l"
     sl_ds_template = u"rsr-{rsr_version}-ra-{ra_version}-{folding_str}-balanced-tpc50_{labels_count}l"
 
-    def __init__(self, input_type, output_dir):
+    def __init__(self, input_type, output_dir, result_type):
         assert(isinstance(input_type, ModelInputType))
         assert(isinstance(output_dir, unicode))
+        assert(isinstance(result_type, ResultType))
 
         # Composing table for results using dataframe.
         dtypes_list = [(self.MODEL_NAME_COL, unicode),
@@ -34,9 +51,11 @@ class ResultsTable(object):
                        ('f1_3_avg', float), ('f1_3_cv1', float), ('f1_3_cv2', float), ('f1_3_cv3', float),
                        ('f1_3_test', float)]
         np_data = np.empty(0, dtype=np.dtype(dtypes_list))
+
         self.__df = pd.DataFrame(np_data)
         self.__input_type = input_type
         self.__output_dir = output_dir
+        self.__result_type = result_type
 
     def _create_output_basename(self):
         return "results-{input_type}".format(input_type=self.__input_type.value)
@@ -44,25 +63,6 @@ class ResultsTable(object):
     def save(self):
         basename = self._create_output_basename()
         self.__df.to_latex(basename + '.tex', na_rep='', index=False)
-
-    @staticmethod
-    def __parse_result(filepath):
-        # Example to parse:
-        # F1-last avg.: 0.287
-        # F1-last per iterations: [0.32, 0.229, 0.311]
-
-        f1_last = 0
-        iters = None
-        with open(filepath) as f:
-            for line in f.readlines():
-                if u'last avg' in line:
-                    f1_last = float(line.split(':')[1])
-                if u'last per iterations' in line:
-                    arr = line.split(':')[1].strip()
-                    vals = arr[1:-1]
-                    iters = [float(v) for v in vals.split(',')]
-
-        return iters, f1_last
 
     def __save_results(self, it_results, avg_res, labels_count, folding_type, row_ind):
 
@@ -87,13 +87,33 @@ class ResultsTable(object):
                                              input_type=self.__input_type,
                                              model_name=model_name)
 
+    def __model_stat_filepath(self):
+        if self.__result_type == ResultType.F1:
+            return join(u'log', NeuralNetworkCustomEvaluationCallback.log_test_eval_exp_filename)
+        elif self.__result_type == ResultType.TrainingTime:
+            # TODO. Provide filepath.
+            raise NotImplementedError()
+        else:
+            raise NotImplementedError("Not supported type: {}".format(self.__result_type))
+
+    def __parse_iter_and_avg_result(self, target_file):
+        # parsing results in order to organize the result table.
+        if self.__result_type == ResultType.F1:
+            it_results, avg_res = parse_avg_and_last_epoch_results(target_file)
+        elif self.__result_type == ResultType.TrainingTime:
+            # TODO. Provide time evaluation (parse function).
+            raise NotImplementedError()
+        else:
+            raise NotImplementedError("Not supported type: {}". format(self.__result_type))
+
+        return it_results, avg_res
+
     def _for_experiment(self, model_name, folding_type, experiment_dir, ra_type, labels_count):
         assert(isinstance(model_name, ModelNames))
         assert(isinstance(folding_type, FoldingType))
         assert(isinstance(ra_type, RuAttitudesVersions) or ra_type is None)
 
         exp_type_name = ra_type.value if isinstance(ra_type, RuAttitudesVersions) else u'-'
-        results_filepath = join(u'log', NeuralNetworkCustomEvaluationCallback.log_test_eval_exp_filename)
         model_dir = self._create_model_dir(folding_type=folding_type,
                                            model_name=model_name,
                                            exp_type_name=exp_type_name)
@@ -107,7 +127,8 @@ class ResultsTable(object):
 
         # if the latter results are not presented
         # then we just reject the related line from the results.
-        target_file = join(self.__output_dir, experiment_dir, model_dir, results_filepath)
+        stat_filepath = self.__model_stat_filepath()
+        target_file = join(self.__output_dir, experiment_dir, model_dir, stat_filepath)
         if not exists(target_file):
             return
 
@@ -125,8 +146,7 @@ class ResultsTable(object):
         else:
             row_ind = row_ids[0]
 
-        # parsing results in order to organize the result table.
-        it_results, avg_res = self.__parse_result(target_file)
+        it_results, avg_res = self.__parse_iter_and_avg_result(target_file=target_file)
 
         # saving results.
         self.__save_results(it_results=it_results,
@@ -255,8 +275,17 @@ if __name__ == "__main__":
                         dest='output_dir',
                         type=unicode,
                         nargs='?',
-                        default=None,
+                        default=CustomNetworkExperimentIO.default_sources_dir,
                         help='Results dir')
+
+    parser.add_argument('--result-type',
+                        dest='result_type',
+                        type=unicode,
+                        nargs='?',
+                        default=ResultType.F1.value,
+                        choices=[ResultType.F1.value,
+                                 ResultType.TrainingTime.value],
+                        help="Metric selection which will be used for table cell values")
 
     parser.add_argument('--training-type',
                         dest='training_type',
@@ -270,21 +299,23 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    training_type = args.training_type[0]
+    # Reading arguments.
+    training_type = args.training_type
+    result_type = ResultType.from_str(args.result_type)
     model_input_type = ModelInputTypeArg.read_argument(args)
 
     rt = None
     if training_type == u'single':
         # Single training format.
         rt = ResultsTable(output_dir=args.output_dir,
-                          input_type=model_input_type)
+                          input_type=model_input_type,
+                          result_type=result_type)
         fill_single(rt)
     elif training_type == u'ft':
         # Fine-tuned results format.
         rt = FineTunedResultsProvider(output_dir=args.output_dir,
-                                      input_type=model_input_type)
+                                      input_type=model_input_type,
+                                      result_type=result_type)
         fill_finetunned(rt)
-    else:
-        raise NotImplementedError()
 
     rt.save()
