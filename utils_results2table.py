@@ -1,18 +1,17 @@
 import argparse
-import sys
 
 import numpy as np
 import pandas as pd
 from os.path import join, exists
 
-
-sys.path.append('../')
-
+from args.train.model_input_type import ModelInputTypeArg
+from callback import NeuralNetworkCustomEvaluationCallback
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.contrib.networks.enum_input_types import ModelInputType
 from arekit.contrib.networks.enum_name_types import ModelNames
 from arekit.contrib.source.ruattitudes.io_utils import RuAttitudesVersions, RuAttitudesVersionsService
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
+from common import Common
 
 
 class ResultsTable(object):
@@ -22,10 +21,9 @@ class ResultsTable(object):
 
     sl_template = u"rsr-{rsr_version}-{folding_str}-balanced-tpc50_{labels_count}l"
     sl_ds_template = u"rsr-{rsr_version}-ra-{ra_version}-{folding_str}-balanced-tpc50_{labels_count}l"
-    __model_name_template = u"{folding_str}_{input_type}_{model_name}"
 
     def __init__(self, input_type, output_dir):
-        assert(isinstance(input_type, unicode))
+        assert(isinstance(input_type, ModelInputType))
         assert(isinstance(output_dir, unicode))
 
         # Composing table for results using dataframe.
@@ -41,7 +39,7 @@ class ResultsTable(object):
         self.__output_dir = output_dir
 
     def _create_output_basename(self):
-        return "results-{input_type}".format(input_type=self.__input_type)
+        return "results-{input_type}".format(input_type=self.__input_type.value)
 
     def save(self):
         basename = self._create_output_basename()
@@ -84,10 +82,10 @@ class ResultsTable(object):
             assert(col_name in self.__df.columns)
             self.__df.set_value(row_ind, col_name, cv_value)
 
-    def _create_model_dir(self, folding_str, model_str, exp_type_name):
-        return self.__model_name_template.format(folding_str=folding_str,
-                                                 input_type=self.__input_type,
-                                                 model_name=model_str)
+    def _create_model_dir(self, folding_type, model_name, exp_type_name):
+        return Common.create_full_model_name(folding_type=folding_type,
+                                             input_type=self.__input_type,
+                                             model_name=model_name)
 
     def _for_experiment(self, model_name, folding_type, experiment_dir, ra_type, labels_count):
         assert(isinstance(model_name, ModelNames))
@@ -95,17 +93,17 @@ class ResultsTable(object):
         assert(isinstance(ra_type, RuAttitudesVersions) or ra_type is None)
 
         exp_type_name = ra_type.value if isinstance(ra_type, RuAttitudesVersions) else u'-'
-        folding_str = u"cv" if folding_type == FoldingType.CrossValidation else u"fx"
-        results_filepath = u"log/cb_eval_avg_test.log"
-        model_str = model_name.value
+        results_filepath = join(u'log', NeuralNetworkCustomEvaluationCallback.log_test_eval_exp_filename)
+        model_dir = self._create_model_dir(folding_type=folding_type,
+                                           model_name=model_name,
+                                           exp_type_name=exp_type_name)
 
         # IMPORTANT:
         # This allows us to combine neut with non-neut (for 2-scale).
-        ds_col_type = exp_type_name.replace(u'_neut', '')
-
-        model_dir = self._create_model_dir(folding_str=folding_str,
-                                           model_str=model_str,
-                                           exp_type_name=exp_type_name)
+        ds_type_name = exp_type_name.replace(u'_neut', '')
+        # IMPORTANT:
+        # Removing first (folding-type) prefix
+        model_str = model_dir[model_dir.index(u'_')+1:]
 
         # if the latter results are not presented
         # then we just reject the related line from the results.
@@ -115,13 +113,13 @@ class ResultsTable(object):
 
         # finding the related row index in a df table.
         row_ids = self.__df.index[(self.__df[self.MODEL_NAME_COL] == model_str) &
-                                  (self.__df[self.DS_TYPE_COL] == ds_col_type)].tolist()
+                                  (self.__df[self.DS_TYPE_COL] == ds_type_name)].tolist()
 
         # Providing new row if the latter does not exist.
         if len(row_ids) == 0:
             self.__df = self.__df.append({
                 self.MODEL_NAME_COL: model_str,
-                self.DS_TYPE_COL: ds_col_type,
+                self.DS_TYPE_COL: ds_type_name,
             }, ignore_index=True)
             row_ind = len(self.__df) - 1
         else:
@@ -188,11 +186,10 @@ class FineTunedResultsProvider(ResultsTable):
         assert(isinstance(ra_version, RuAttitudesVersions))
         return FineTunedResultsProvider.__tags[ra_version]
 
-    def _create_model_dir(self, folding_str, model_str, exp_type_name):
-        origin_name = super(FineTunedResultsProvider, self)._create_model_dir(
-            folding_str=folding_str,
-            model_str=model_str,
-            exp_type_name=exp_type_name)
+    def _create_model_dir(self, folding_type, model_name, exp_type_name):
+        origin_name = super(FineTunedResultsProvider, self)._create_model_dir(folding_type=folding_type,
+                                                                              model_name=model_name,
+                                                                              exp_type_name=exp_type_name)
 
         ra_version = RuAttitudesVersionsService.find_by_name(exp_type_name)
         updated_name = self.__fine_tuned_suffix.format(model_name=origin_name,
@@ -261,16 +258,6 @@ if __name__ == "__main__":
                         default=None,
                         help='Results dir')
 
-    parser.add_argument('--input-type',
-                        dest='input_type',
-                        type=unicode,
-                        nargs='?',
-                        default=ModelInputType.SingleInstance.value,
-                        choices=[ModelInputType.SingleInstance.value,
-                                 ModelInputType.MultiInstanceMaxPooling.value,
-                                 ModelInputType.MultiInstanceWithSelfAttention.value],
-                        help='input type format')
-
     parser.add_argument('--training-type',
                         dest='training_type',
                         type=unicode,
@@ -279,20 +266,23 @@ if __name__ == "__main__":
                         choices=[u'single', u'ft'],
                         help='Training format used for results gathering')
 
+    ModelInputTypeArg.add_argument(parser)
+
     args = parser.parse_args()
 
     training_type = args.training_type[0]
+    model_input_type = ModelInputTypeArg.read_argument(args)
 
     rt = None
     if training_type == u'single':
         # Single training format.
         rt = ResultsTable(output_dir=args.output_dir,
-                          input_type=args.input_type)
+                          input_type=model_input_type)
         fill_single(rt)
     elif training_type == u'ft':
         # Fine-tuned results format.
         rt = FineTunedResultsProvider(output_dir=args.output_dir,
-                                      input_type=args.input_type)
+                                      input_type=model_input_type)
         fill_finetunned(rt)
     else:
         raise NotImplementedError()

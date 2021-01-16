@@ -31,7 +31,7 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
     __log_train_filename_template = u"cb_train_{iter}_{dtype}.log"
     __log_eval_iter_filename_template = u"cb_eval_{iter}_{dtype}.log"
     __log_eval_iter_verbose_filename = u"cb_eval_verbose_{iter}_{dtype}.log"
-    __log_test_eval_exp_filename = u"cb_eval_avg_test.log"
+    log_test_eval_exp_filename = u"cb_eval_avg_test.log"
 
     def __init__(self, do_eval,
                  train_acc_limit,
@@ -111,7 +111,7 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
             return
 
         # Opening the related file.
-        log_eval_filepath = join(self.__log_dir, self.__log_test_eval_exp_filename)
+        log_eval_filepath = join(self.__log_dir, self.log_test_eval_exp_filename)
         create_dir_if_not_exists(log_eval_filepath)
         with open(log_eval_filepath, u'w', buffering=0) as f:
 
