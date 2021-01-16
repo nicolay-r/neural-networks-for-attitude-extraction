@@ -5,14 +5,15 @@ import pandas as pd
 from os.path import join, exists
 from enum import Enum
 
+from arekit.common.experiment.data_type import DataType
 from args.train.model_input_type import ModelInputTypeArg
-from callback import NeuralNetworkCustomEvaluationCallback
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.contrib.networks.enum_input_types import ModelInputType
 from arekit.contrib.networks.enum_name_types import ModelNames
 from arekit.contrib.source.ruattitudes.io_utils import RuAttitudesVersions, RuAttitudesVersionsService
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from callback_log_exp import parse_avg_and_last_epoch_results
+from callback_log_training import extract_avg_epoch_time_from_training_log
 from common import Common
 from experiment_io import CustomNetworkExperimentIO
 
@@ -58,7 +59,9 @@ class ResultsTable(object):
         self.__result_type = result_type
 
     def _create_output_basename(self):
-        return "results-{input_type}".format(input_type=self.__input_type.value)
+        return u"results-{input_type}-{result_type}".format(
+            input_type=self.__input_type.value,
+            result_type=self.__result_type.value)
 
     def save(self):
         basename = self._create_output_basename()
@@ -76,6 +79,7 @@ class ResultsTable(object):
         if folding_type != FoldingType.CrossValidation:
             return
 
+        # setup cv values.
         for cv_index, cv_value in enumerate(it_results):
             col_name = u"f1_{labels_count}_cv{it}".format(labels_count=labels_count,
                                                           it=cv_index+1)
@@ -89,10 +93,12 @@ class ResultsTable(object):
 
     def __model_stat_filepath(self):
         if self.__result_type == ResultType.F1:
-            return join(u'log', NeuralNetworkCustomEvaluationCallback.log_test_eval_exp_filename)
+            return join(Common.log_dir, Common.log_test_eval_exp_filename)
         elif self.__result_type == ResultType.TrainingTime:
-            # TODO. Provide filepath.
-            raise NotImplementedError()
+            # NOTE: we support only single iter_index and hence
+            # the latter works only with the case of fixed separation.
+            return join(Common.log_dir, Common.create_log_train_filename(data_type=DataType.Train,
+                                                                 iter_index=0))
         else:
             raise NotImplementedError("Not supported type: {}".format(self.__result_type))
 
@@ -101,8 +107,8 @@ class ResultsTable(object):
         if self.__result_type == ResultType.F1:
             it_results, avg_res = parse_avg_and_last_epoch_results(target_file)
         elif self.__result_type == ResultType.TrainingTime:
-            # TODO. Provide time evaluation (parse function).
-            raise NotImplementedError()
+            avg_res = extract_avg_epoch_time_from_training_log(target_file)
+            return [], avg_res
         else:
             raise NotImplementedError("Not supported type: {}". format(self.__result_type))
 
@@ -290,7 +296,7 @@ if __name__ == "__main__":
     parser.add_argument('--training-type',
                         dest='training_type',
                         type=unicode,
-                        nargs=1,
+                        nargs='?',
                         default=u'single',
                         choices=[u'single', u'ft'],
                         help='Training format used for results gathering')

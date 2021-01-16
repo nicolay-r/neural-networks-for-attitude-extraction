@@ -19,6 +19,8 @@ from arekit.contrib.source.rusentrel.labels_fmt import RuSentRelLabelsFormatter
 from callback_log_cfg import write_config_setups
 from callback_log_exp import create_experiment_eval_msgs
 from callback_log_iter import create_iteration_short_eval_msg, create_iteration_verbose_eval_msg
+from callback_log_training import get_message
+from common import Common
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -28,10 +30,8 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
 
     __costs_window = 5
 
-    __log_train_filename_template = u"cb_train_{iter}_{dtype}.log"
     __log_eval_iter_filename_template = u"cb_eval_{iter}_{dtype}.log"
     __log_eval_iter_verbose_filename = u"cb_eval_verbose_{iter}_{dtype}.log"
-    log_test_eval_exp_filename = u"cb_eval_avg_test.log"
 
     def __init__(self, do_eval,
                  train_acc_limit,
@@ -111,7 +111,7 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
             return
 
         # Opening the related file.
-        log_eval_filepath = join(self.__log_dir, self.log_test_eval_exp_filename)
+        log_eval_filepath = join(self.__log_dir, Common.log_test_eval_exp_filename)
         create_dir_if_not_exists(log_eval_filepath)
         with open(log_eval_filepath, u'w', buffering=0) as f:
 
@@ -253,11 +253,9 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
         assert(isinstance(epoch_index, int))
         assert(isinstance(operation_cancel, OperationCancellation))
 
-        message = u"{}: Epoch: {}: avg_fit_cost: {:.3f}, avg_fit_acc: {:.3f}".format(
-            str(datetime.datetime.now()),
-            epoch_index,
-            avg_fit_cost,
-            avg_fit_acc)
+        message = get_message(epoch_index=epoch_index,
+                              avg_fit_cost=avg_fit_cost,
+                              avg_fit_acc=avg_fit_acc)
 
         # Providing information into main logger.
         logger.info(message)
@@ -296,8 +294,8 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
 
         for d_type in self.__iter_supported_data_types():
 
-            train_log_filepath = join(self.__log_dir, self.__log_train_filename_template.format(iter=iter_index,
-                                                                                                dtype=d_type))
+            train_log_filepath = join(self.__log_dir, Common.create_log_train_filename(iter_index=iter_index,
+                                                                                       data_type=d_type))
             eval_log_filepath = join(self.__log_dir, self.__log_eval_iter_filename_template.format(iter=iter_index,
                                                                                                    dtype=d_type))
             eval_verbose_log_filepath = join(self.__log_dir, self.__log_eval_iter_verbose_filename.format(iter=iter_index,

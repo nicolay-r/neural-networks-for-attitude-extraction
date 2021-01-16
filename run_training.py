@@ -208,7 +208,7 @@ if __name__ == "__main__":
                                     model_name_tag=model_name_tag)
 
     # Setup logging dir.
-    callback.set_log_dir(join(model_io.get_model_dir(), u"log/"))
+    callback.set_log_dir(join(model_io.get_model_dir(), Common.log_dir))
     # Setup model io.
     experiment_data.set_model_io(model_io)
 

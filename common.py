@@ -1,6 +1,7 @@
 import argparse
 import logging
 
+from arekit.common.experiment.data_type import DataType
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.common.experiment.scales.three import ThreeLabelScaler
 from arekit.common.experiment.scales.two import TwoLabelScaler
@@ -15,6 +16,16 @@ logger.setLevel(logging.INFO)
 
 
 class Common:
+
+    log_dir = u"log/"
+    log_test_eval_exp_filename = u"cb_eval_avg_test.log"
+    __log_train_filename_template = u"cb_train_{iter}_{dtype}.log"
+
+    @staticmethod
+    def create_log_train_filename(iter_index, data_type):
+        assert(isinstance(iter_index, int))
+        assert(isinstance(data_type, DataType))
+        return Common.__log_train_filename_template.format(iter=iter_index, dtype=data_type)
 
     @staticmethod
     def __create_folding_type_prefix(folding_type):
