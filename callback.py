@@ -290,11 +290,12 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
     def __enter__(self):
         assert(self.__log_dir is not None)
 
-        iter_index = str(self.__get_iter_index())
+        iter_index_int = self.__get_iter_index()
+        iter_index = str(iter_index_int)
 
         for d_type in self.__iter_supported_data_types():
 
-            train_log_filepath = join(self.__log_dir, Common.create_log_train_filename(iter_index=iter_index,
+            train_log_filepath = join(self.__log_dir, Common.create_log_train_filename(iter_index=iter_index_int,
                                                                                        data_type=d_type))
             eval_log_filepath = join(self.__log_dir, self.__log_eval_iter_filename_template.format(iter=iter_index,
                                                                                                    dtype=d_type))
