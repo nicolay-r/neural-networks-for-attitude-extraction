@@ -13,7 +13,7 @@ from arekit.contrib.networks.enum_input_types import ModelInputType
 from arekit.contrib.networks.enum_name_types import ModelNames
 from arekit.contrib.source.ruattitudes.io_utils import RuAttitudesVersions, RuAttitudesVersionsService
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
-from callback_log_exp import parse_avg_and_last_epoch_results
+from callback_log_exp import parse_last_epoch_results
 from callback_log_training import extract_avg_epoch_time_from_training_log, extract_last_acc_from_training_log
 from common import Common
 from experiment_io import CustomNetworkExperimentIO
@@ -100,6 +100,7 @@ class ResultsTable(object):
                                              model_name=model_name)
 
     def __save_results(self, it_results, avg_res, labels_count, folding_type, row_ind):
+        assert(isinstance(it_results, list))
 
         # set avg. result.
         col_name_avg = self.__rcol_agg(labels_count=labels_count,
@@ -118,32 +119,39 @@ class ResultsTable(object):
                 continue
             self.__df.set_value(row_ind, col_name, cv_value)
 
-    def __model_stat_filepath(self):
+    def __iter_files_per_iteration(self, folding_type):
+        assert(isinstance(folding_type, FoldingType))
+
+        iters = self.__cv_count if folding_type == FoldingType.CrossValidation else 1
+
         if self.__result_type == ResultType.F1:
-            return join(Common.log_dir, Common.log_test_eval_exp_filename)
+            yield join(Common.log_dir, Common.log_test_eval_exp_filename)
         elif self.__result_type == ResultType.TrainingTime or \
                 self.__result_type == ResultType.TrainingAccuracy:
-            # NOTE: we support only single iter_index and hence
-            # the latter works only with the case of fixed separation.
-            return join(Common.log_dir, Common.create_log_train_filename(data_type=DataType.Train,
-                                                                         iter_index=0))
+            for it_index in range(iters):
+                yield join(Common.log_dir, Common.create_log_train_filename(data_type=DataType.Train,
+                                                                            iter_index=it_index))
         else:
             raise NotImplementedError("Not supported type: {}".format(self.__result_type))
 
-    def __parse_iter_and_avg_result(self, target_file):
+    def __parse_iter_and_avg_result(self, files_per_iter):
+        assert(isinstance(files_per_iter, list))
         # parsing results in order to organize the result table.
         if self.__result_type == ResultType.F1:
-            it_results, avg_res = parse_avg_and_last_epoch_results(target_file)
+            # This is a single file which gathers
+            # information across all the iterations.
+            assert(len(files_per_iter) == 1)
+            return parse_last_epoch_results(files_per_iter[0])
         elif self.__result_type == ResultType.TrainingTime:
-            avg_res = extract_last_acc_from_training_log(target_file)
-            return [], avg_res
+            return [extract_avg_epoch_time_from_training_log(fp) for fp in files_per_iter]
         elif self.__result_type == ResultType.TrainingAccuracy:
-            avg_res = extract_avg_epoch_time_from_training_log(target_file)
-            return [], avg_res
+            return [extract_last_acc_from_training_log(fp) for fp in files_per_iter]
         else:
             raise NotImplementedError("Not supported type: {}". format(self.__result_type))
 
-        return it_results, avg_res
+    @staticmethod
+    def __calc_avg_it_res(it_results):
+        return np.mean(it_results)
 
     def __add_row(self, exp_type_name, model_dir):
         # IMPORTANT:
@@ -181,19 +189,21 @@ class ResultsTable(object):
 
         # if the latter results are not presented
         # then we just reject the related line from the results.
-        stat_filepath = self.__model_stat_filepath()
-        target_file = join(self.__output_dir, experiment_dir, model_dir, stat_filepath)
-        if not exists(target_file):
-            return
+        files_per_iter = [join(self.__output_dir, experiment_dir, model_dir, target) for
+                          target in self.__iter_files_per_iteration(folding_type)]
 
-        it_results, avg_res = self.__parse_iter_and_avg_result(target_file=target_file)
+        # Check files existance.
+        for target_file in files_per_iter:
+            if not exists(target_file):
+                return
 
+        it_results = self.__parse_iter_and_avg_result(files_per_iter=files_per_iter)
         row_ind = self.__add_row(exp_type_name=exp_type_name,
                                  model_dir=model_dir)
 
         # saving results.
         self.__save_results(it_results=it_results,
-                            avg_res=avg_res,
+                            avg_res=self.__calc_avg_it_res(it_results),
                             folding_type=folding_type,
                             row_ind=row_ind,
                             labels_count=labels_count)
@@ -349,7 +359,7 @@ if __name__ == "__main__":
     training_type = args.training_type
     result_type = ResultType.from_str(args.result_type)
     model_input_type = ModelInputTypeArg.read_argument(args)
-    provide_cv_columns = result_type == ResultType.F1
+    provide_cv_columns = result_type != ResultType.TrainingTime
     labels = [2, 3]
     cv_count = DEFAULT_CV_COUNT
 

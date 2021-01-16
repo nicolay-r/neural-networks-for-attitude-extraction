@@ -54,25 +54,21 @@ def create_experiment_eval_msgs(results_per_epoch):
     ]
 
 
-def parse_avg_and_last_epoch_results(filepath):
+def parse_last_epoch_results(filepath):
     """ Perform results reading from the related filepath
     """
     # Example to parse:
-    # F1-last avg.: 0.287
     # F1-last per iterations: [0.32, 0.229, 0.311]
 
-    f1_last = 0
     iters = None
     with open(filepath) as f:
         for line in f.readlines():
-            if u'last avg' in line:
-                f1_last = float(line.split(':')[1])
             if u'last per iterations' in line:
                 arr = line.split(':')[1].strip()
                 vals = arr[1:-1]
                 iters = [float(v) for v in vals.split(',')]
 
-    return iters, f1_last
+    return iters
 
 
 def __iter_f1_results(results_list):
