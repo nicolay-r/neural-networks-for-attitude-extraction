@@ -14,7 +14,7 @@ from arekit.contrib.networks.enum_name_types import ModelNames
 from arekit.contrib.source.ruattitudes.io_utils import RuAttitudesVersions, RuAttitudesVersionsService
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from callback_log_exp import parse_avg_and_last_epoch_results
-from callback_log_training import extract_avg_epoch_time_from_training_log
+from callback_log_training import extract_avg_epoch_time_from_training_log, extract_last_acc_from_training_log
 from common import Common
 from experiment_io import CustomNetworkExperimentIO
 
@@ -41,8 +41,7 @@ class ResultsTable(object):
     sl_template = u"rsr-{rsr_version}-{folding_str}-balanced-tpc50_{labels_count}l"
     sl_ds_template = u"rsr-{rsr_version}-ra-{ra_version}-{folding_str}-balanced-tpc50_{labels_count}l"
 
-    def __init__(self, input_type, output_dir, result_type, labels,
-                 cv_count,
+    def __init__(self, input_type, output_dir, result_type, labels, cv_count,
                  provide_cv_columns=True,
                  provide_fx_column=True):
         assert(isinstance(input_type, ModelInputType))
@@ -77,6 +76,7 @@ class ResultsTable(object):
         self.__input_type = input_type
         self.__output_dir = output_dir
         self.__result_type = result_type
+        self.__cv_count = cv_count
 
     @staticmethod
     def __rcol_agg(labels_count, folding_type):
@@ -94,9 +94,10 @@ class ResultsTable(object):
             input_type=self.__input_type.value,
             result_type=self.__result_type.value)
 
-    def save(self):
-        basename = self._create_output_basename()
-        self.__df.to_latex(basename + '.tex', na_rep='', index=False)
+    def _create_model_dir(self, folding_type, model_name, exp_type_name):
+        return Common.create_full_model_name(folding_type=folding_type,
+                                             input_type=self.__input_type,
+                                             model_name=model_name)
 
     def __save_results(self, it_results, avg_res, labels_count, folding_type, row_ind):
 
@@ -117,11 +118,6 @@ class ResultsTable(object):
                 continue
             self.__df.set_value(row_ind, col_name, cv_value)
 
-    def _create_model_dir(self, folding_type, model_name, exp_type_name):
-        return Common.create_full_model_name(folding_type=folding_type,
-                                             input_type=self.__input_type,
-                                             model_name=model_name)
-
     def __model_stat_filepath(self):
         if self.__result_type == ResultType.F1:
             return join(Common.log_dir, Common.log_test_eval_exp_filename)
@@ -139,7 +135,7 @@ class ResultsTable(object):
         if self.__result_type == ResultType.F1:
             it_results, avg_res = parse_avg_and_last_epoch_results(target_file)
         elif self.__result_type == ResultType.TrainingTime:
-            avg_res = extract_avg_epoch_time_from_training_log(target_file)
+            avg_res = extract_last_acc_from_training_log(target_file)
             return [], avg_res
         elif self.__result_type == ResultType.TrainingAccuracy:
             avg_res = extract_avg_epoch_time_from_training_log(target_file)
@@ -149,29 +145,13 @@ class ResultsTable(object):
 
         return it_results, avg_res
 
-    def _for_experiment(self, model_name, folding_type, experiment_dir, ra_type, labels_count):
-        assert(isinstance(model_name, ModelNames))
-        assert(isinstance(folding_type, FoldingType))
-        assert(isinstance(ra_type, RuAttitudesVersions) or ra_type is None)
-
-        exp_type_name = ra_type.value if isinstance(ra_type, RuAttitudesVersions) else u'-'
-        model_dir = self._create_model_dir(folding_type=folding_type,
-                                           model_name=model_name,
-                                           exp_type_name=exp_type_name)
-
+    def __add_row(self, exp_type_name, model_dir):
         # IMPORTANT:
         # This allows us to combine neut with non-neut (for 2-scale).
         ds_type_name = exp_type_name.replace(u'_neut', '')
         # IMPORTANT:
         # Removing first (folding-type) prefix
         model_str = model_dir[model_dir.index(u'_')+1:]
-
-        # if the latter results are not presented
-        # then we just reject the related line from the results.
-        stat_filepath = self.__model_stat_filepath()
-        target_file = join(self.__output_dir, experiment_dir, model_dir, stat_filepath)
-        if not exists(target_file):
-            return
 
         # finding the related row index in a df table.
         row_ids = self.__df.index[(self.__df[self.MODEL_NAME_COL] == model_str) &
@@ -187,7 +167,29 @@ class ResultsTable(object):
         else:
             row_ind = row_ids[0]
 
+        return row_ind
+
+    def _for_experiment(self, model_name, folding_type, experiment_dir, ra_type, labels_count):
+        assert(isinstance(model_name, ModelNames))
+        assert(isinstance(folding_type, FoldingType))
+        assert(isinstance(ra_type, RuAttitudesVersions) or ra_type is None)
+
+        exp_type_name = ra_type.value if isinstance(ra_type, RuAttitudesVersions) else u'-'
+        model_dir = self._create_model_dir(folding_type=folding_type,
+                                           model_name=model_name,
+                                           exp_type_name=exp_type_name)
+
+        # if the latter results are not presented
+        # then we just reject the related line from the results.
+        stat_filepath = self.__model_stat_filepath()
+        target_file = join(self.__output_dir, experiment_dir, model_dir, stat_filepath)
+        if not exists(target_file):
+            return
+
         it_results, avg_res = self.__parse_iter_and_avg_result(target_file=target_file)
+
+        row_ind = self.__add_row(exp_type_name=exp_type_name,
+                                 model_dir=model_dir)
 
         # saving results.
         self.__save_results(it_results=it_results,
@@ -196,13 +198,17 @@ class ResultsTable(object):
                             row_ind=row_ind,
                             labels_count=labels_count)
 
+    def save(self):
+        basename = self._create_output_basename()
+        self.__df.to_latex(basename + '.tex', na_rep='', index=False)
+
     def register(self, model_name, folding_type, labels_count, ra_version):
         assert(isinstance(model_name, ModelNames))
         assert(isinstance(folding_type, FoldingType))
         assert(isinstance(ra_version, RuAttitudesVersions) or ra_version is None)
-        assert(labels_count == 2 or labels_count == 3)
 
-        folding_str = u"cv3" if folding_type == FoldingType.CrossValidation else u"fixed"
+        folding_str = u"cv{}".format(self.__cv_count) \
+            if folding_type == FoldingType.CrossValidation else u"fixed"
         rsr_version = RuSentRelVersions.V11
 
         if ra_version is None:
