@@ -6,6 +6,7 @@ from os.path import join, exists
 from enum import Enum
 
 from arekit.common.experiment.data_type import DataType
+from arekit.contrib.experiments.rusentrel.folding import DEFAULT_CV_COUNT
 from args.train.model_input_type import ModelInputTypeArg
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.contrib.networks.enum_input_types import ModelInputType
@@ -35,28 +36,58 @@ class ResultsTable(object):
 
     MODEL_NAME_COL = u'model_name'
     DS_TYPE_COL = u'ds_type'
+    RESULT_COL = u'{result_type}_{labels_count}_{type}'
 
     sl_template = u"rsr-{rsr_version}-{folding_str}-balanced-tpc50_{labels_count}l"
     sl_ds_template = u"rsr-{rsr_version}-ra-{ra_version}-{folding_str}-balanced-tpc50_{labels_count}l"
 
-    def __init__(self, input_type, output_dir, result_type):
+    def __init__(self, input_type, output_dir, result_type, labels,
+                 cv_count,
+                 provide_cv_columns=True,
+                 provide_fx_column=True):
         assert(isinstance(input_type, ModelInputType))
         assert(isinstance(output_dir, unicode))
         assert(isinstance(result_type, ResultType))
+        assert(isinstance(labels, list))
+        assert(isinstance(cv_count, int))
+
+        def __it_columns():
+            # Providing extra columns for results.
+            for label in labels:
+                if provide_cv_columns:
+                    # cv-based results columns.
+                    yield (self.__rcol_agg(label, FoldingType.CrossValidation), float)
+                    for cv_index in range(cv_count):
+                        yield (self.__rcol_it(label, cv_index), float)
+                if provide_fx_column:
+                    # fx-based result columns.
+                    yield (self.__rcol_agg(label, FoldingType.Fixed), float)
 
         # Composing table for results using dataframe.
         dtypes_list = [(self.MODEL_NAME_COL, unicode),
-                       (self.DS_TYPE_COL, unicode),
-                       ('f1_2_avg', float), ('f1_2_cv1', float), ('f1_2_cv2', float), ('f1_2_cv3', float),
-                       ('f1_2_test', float),
-                       ('f1_3_avg', float), ('f1_3_cv1', float), ('f1_3_cv2', float), ('f1_3_cv3', float),
-                       ('f1_3_test', float)]
+                       (self.DS_TYPE_COL, unicode)]
+
+        # Providing result columns.
+        for col in __it_columns():
+            dtypes_list.append(col)
+
         np_data = np.empty(0, dtype=np.dtype(dtypes_list))
 
         self.__df = pd.DataFrame(np_data)
         self.__input_type = input_type
         self.__output_dir = output_dir
         self.__result_type = result_type
+
+    @staticmethod
+    def __rcol_agg(labels_count, folding_type):
+        assert(isinstance(folding_type, FoldingType))
+        return u"r_{labels_count}_{folding}".format(
+            labels_count=labels_count,
+            folding=u'avg' if folding_type == FoldingType.CrossValidation else u'test')
+
+    @staticmethod
+    def __rcol_it(labels_count, it):
+        return u"r_{labels_count}_cv{it}".format(labels_count=labels_count, it=it)
 
     def _create_output_basename(self):
         return u"results-{input_type}-{result_type}".format(
@@ -70,10 +101,10 @@ class ResultsTable(object):
     def __save_results(self, it_results, avg_res, labels_count, folding_type, row_ind):
 
         # set avg. result.
-        col_name_avg = u"f1_{labels_count}_{folding}".format(
-            labels_count=labels_count,
-            folding=u'avg' if folding_type == FoldingType.CrossValidation else u'test')
-        self.__df.set_value(row_ind, col_name_avg, avg_res)
+        col_name_avg = self.__rcol_agg(labels_count=labels_count,
+                                       folding_type=folding_type)
+        if col_name_avg in self.__df.columns:
+            self.__df.set_value(row_ind, col_name_avg, avg_res)
 
         # setting up it_results
         if folding_type != FoldingType.CrossValidation:
@@ -81,9 +112,9 @@ class ResultsTable(object):
 
         # setup cv values.
         for cv_index, cv_value in enumerate(it_results):
-            col_name = u"f1_{labels_count}_cv{it}".format(labels_count=labels_count,
-                                                          it=cv_index+1)
-            assert(col_name in self.__df.columns)
+            col_name = self.__rcol_it(labels_count=labels_count, it=cv_index)
+            if col_name not in self.__df.columns:
+                continue
             self.__df.set_value(row_ind, col_name, cv_value)
 
     def _create_model_dir(self, folding_type, model_name, exp_type_name):
@@ -309,19 +340,28 @@ if __name__ == "__main__":
     training_type = args.training_type
     result_type = ResultType.from_str(args.result_type)
     model_input_type = ModelInputTypeArg.read_argument(args)
+    provide_cv_columns = result_type == ResultType.F1
+    labels = [2, 3]
+    cv_count = DEFAULT_CV_COUNT
 
     rt = None
     if training_type == u'single':
         # Single training format.
         rt = ResultsTable(output_dir=args.output_dir,
                           input_type=model_input_type,
-                          result_type=result_type)
+                          result_type=result_type,
+                          labels=labels,
+                          cv_count=cv_count,
+                          provide_cv_columns=provide_cv_columns)
         fill_single(rt)
     elif training_type == u'ft':
         # Fine-tuned results format.
         rt = FineTunedResultsProvider(output_dir=args.output_dir,
                                       input_type=model_input_type,
-                                      result_type=result_type)
+                                      result_type=result_type,
+                                      labels=labels,
+                                      cv_count=cv_count,
+                                      provide_cv_columns=provide_cv_columns)
         fill_finetunned(rt)
 
     rt.save()
