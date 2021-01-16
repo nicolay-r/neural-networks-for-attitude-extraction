@@ -12,6 +12,15 @@ def get_message(epoch_index, avg_fit_cost, avg_fit_acc):
         avg_fit_acc)
 
 
+def extract_last_acc_from_training_log(filepath):
+    acc = 0
+    with open(filepath, 'r') as f:
+        for line in f.readlines():
+            acc = float(line.split(u'avg_fit_acc: ')[-1])
+
+    return acc
+
+
 def extract_avg_epoch_time_from_training_log(filepath):
     times = []
     with open(filepath, 'r') as f:

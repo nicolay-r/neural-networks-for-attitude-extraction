@@ -22,8 +22,8 @@ from experiment_io import CustomNetworkExperimentIO
 class ResultType(Enum):
 
     F1 = u'f1'
-
     TrainingTime = u'train-time'
+    TrainingAccuracy = u'train-acc'
 
     @staticmethod
     def from_str(value):
@@ -125,11 +125,12 @@ class ResultsTable(object):
     def __model_stat_filepath(self):
         if self.__result_type == ResultType.F1:
             return join(Common.log_dir, Common.log_test_eval_exp_filename)
-        elif self.__result_type == ResultType.TrainingTime:
+        elif self.__result_type == ResultType.TrainingTime or \
+                self.__result_type == ResultType.TrainingAccuracy:
             # NOTE: we support only single iter_index and hence
             # the latter works only with the case of fixed separation.
             return join(Common.log_dir, Common.create_log_train_filename(data_type=DataType.Train,
-                                                                 iter_index=0))
+                                                                         iter_index=0))
         else:
             raise NotImplementedError("Not supported type: {}".format(self.__result_type))
 
@@ -138,6 +139,9 @@ class ResultsTable(object):
         if self.__result_type == ResultType.F1:
             it_results, avg_res = parse_avg_and_last_epoch_results(target_file)
         elif self.__result_type == ResultType.TrainingTime:
+            avg_res = extract_avg_epoch_time_from_training_log(target_file)
+            return [], avg_res
+        elif self.__result_type == ResultType.TrainingAccuracy:
             avg_res = extract_avg_epoch_time_from_training_log(target_file)
             return [], avg_res
         else:
@@ -320,8 +324,7 @@ if __name__ == "__main__":
                         type=unicode,
                         nargs='?',
                         default=ResultType.F1.value,
-                        choices=[ResultType.F1.value,
-                                 ResultType.TrainingTime.value],
+                        choices=[rt.value for rt in ResultType],
                         help="Metric selection which will be used for table cell values")
 
     parser.add_argument('--training-type',
