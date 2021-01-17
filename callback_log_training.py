@@ -22,6 +22,10 @@ def extract_last_acc_from_training_log(filepath):
 
 
 def extract_avg_epoch_time_from_training_log(filepath):
+
+    def chop_microseconds(delta):
+            return delta - datetime.timedelta(microseconds=delta.microseconds)
+
     times = []
     with open(filepath, 'r') as f:
         for line in f.readlines():
@@ -37,7 +41,8 @@ def extract_avg_epoch_time_from_training_log(filepath):
         # computations of other operations therefore
         # we cannot gauaratee the correctness.
         # Hence we providing the minimal time.
-        return sorted(deltas)[0]
+        return chop_microseconds(sorted(deltas)[0])
     else:
         # Providing 0 by default otherwise.
         return datetime.timedelta()
+
