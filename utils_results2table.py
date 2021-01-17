@@ -153,7 +153,15 @@ class ResultsTable(object):
 
     @staticmethod
     def __calc_avg_it_res(it_results):
-        return np.mean(it_results)
+        if len(it_results) == 0:
+            return 0
+
+        # These complex implementation due to datetime results
+        # the latter won't work with np.mean.
+        total_result = it_results[0]
+        for ind in range(1, len(it_results)):
+            total_result += it_results[ind]
+        return total_result / len(it_results)
 
     def __add_row(self, exp_type_name, model_dir):
         # IMPORTANT:
