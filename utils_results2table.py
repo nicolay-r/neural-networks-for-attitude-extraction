@@ -6,6 +6,7 @@ import pandas as pd
 from os.path import join, exists
 from enum import Enum
 
+from arekit.common.evaluation.results.two_class import TwoClassEvalResult
 from arekit.common.experiment.data_type import DataType
 from arekit.contrib.experiments.rusentrel.folding import DEFAULT_CV_COUNT
 from args.train.model_input_type import ModelInputTypeArg
@@ -15,6 +16,7 @@ from arekit.contrib.networks.enum_name_types import ModelNames
 from arekit.contrib.source.ruattitudes.io_utils import RuAttitudesVersions, RuAttitudesVersionsService
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from callback_log_exp import parse_last_epoch_results
+from callback_log_iter import parse_last
 from callback_log_training import extract_avg_epoch_time_from_training_log, extract_last_acc_from_training_log, \
     chop_microseconds
 from common import Common
@@ -26,6 +28,7 @@ class ResultType(Enum):
     F1 = u'f1'
     TrainingTime = u'train-time'
     TrainingAccuracy = u'train-acc'
+    F1Train = u'f1-last-train'
 
     @staticmethod
     def from_str(value):
@@ -134,6 +137,10 @@ class ResultsTable(object):
             for it_index in range(iters):
                 yield join(Common.log_dir, Common.create_log_train_filename(data_type=DataType.Train,
                                                                             iter_index=it_index))
+        elif self.__result_type == ResultType.F1Train:
+            for it_index in range(iters):
+                yield join(Common.log_dir, Common.create_log_eval_filename(data_type=DataType.Train,
+                                                                           iter_index=it_index))
         else:
             raise NotImplementedError("Not supported type: {}".format(self.__result_type))
 
@@ -149,6 +156,8 @@ class ResultsTable(object):
             return [extract_avg_epoch_time_from_training_log(fp) for fp in files_per_iter]
         elif self.__result_type == ResultType.TrainingAccuracy:
             return [extract_last_acc_from_training_log(fp) for fp in files_per_iter]
+        elif self.__result_type == ResultType.F1Train:
+            return [parse_last(filepath=fp, col=TwoClassEvalResult.C_F1) for fp in files_per_iter]
         else:
             raise NotImplementedError("Not supported type: {}". format(self.__result_type))
 

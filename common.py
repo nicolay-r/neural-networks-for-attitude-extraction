@@ -20,6 +20,13 @@ class Common:
     log_dir = u"log/"
     log_test_eval_exp_filename = u"cb_eval_avg_test.log"
     __log_train_filename_template = u"cb_train_{iter}_{dtype}.log"
+    __log_eval_iter_filename_template = u"cb_eval_{iter}_{dtype}.log"
+
+    @staticmethod
+    def create_log_eval_filename(iter_index, data_type):
+        assert(isinstance(iter_index, int))
+        assert(isinstance(data_type, DataType))
+        return Common.__log_eval_iter_filename_template.format(iter=iter_index, dtype=data_type)
 
     @staticmethod
     def create_log_train_filename(iter_index, data_type):

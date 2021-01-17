@@ -30,7 +30,6 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
 
     __costs_window = 5
 
-    __log_eval_iter_filename_template = u"cb_eval_{iter}_{dtype}.log"
     __log_eval_iter_verbose_filename = u"cb_eval_verbose_{iter}_{dtype}.log"
 
     def __init__(self, do_eval,
@@ -297,8 +296,8 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
 
             train_log_filepath = join(self.__log_dir, Common.create_log_train_filename(iter_index=iter_index_int,
                                                                                        data_type=d_type))
-            eval_log_filepath = join(self.__log_dir, self.__log_eval_iter_filename_template.format(iter=iter_index,
-                                                                                                   dtype=d_type))
+            eval_log_filepath = join(self.__log_dir, Common.create_log_eval_filename(iter_index=iter_index_int,
+                                                                                     data_type=d_type))
             eval_verbose_log_filepath = join(self.__log_dir, self.__log_eval_iter_verbose_filename.format(iter=iter_index,
                                                                                                           dtype=d_type))
 
