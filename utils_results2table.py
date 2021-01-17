@@ -1,4 +1,5 @@
 import argparse
+from tabulate import tabulate
 
 import numpy as np
 import pandas as pd
@@ -220,6 +221,8 @@ class ResultsTable(object):
         print "Saving: {}".format(filepath)
 
         rounded_df.to_latex(filepath, na_rep='', index=False)
+
+        print tabulate(rounded_df, headers='keys', tablefmt='psql')
 
     def register(self, model_name, folding_type, labels_count, ra_version):
         assert(isinstance(model_name, ModelNames))
