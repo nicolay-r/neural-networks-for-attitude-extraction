@@ -164,8 +164,7 @@ class ResultsTable(object):
         elif self.__result_type == ResultType.F1Train:
             return [parse_last(filepath=fp, col=TwoClassEvalResult.C_F1) for fp in files_per_iter]
         elif self.__result_type == ResultType.LearningRate:
-            assert(len(files_per_iter) == 1)
-            return [parse_float_network_parameter(files_per_iter[0], u'learning_rate')]
+            return [parse_float_network_parameter(fp, u'learning_rate') for fp in files_per_iter]
         else:
             raise NotImplementedError("Not supported type: {}". format(self.__result_type))
 
