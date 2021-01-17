@@ -8,7 +8,8 @@ BAG_SIZE = 1
 
 # Considering to forcely terminate training process in case when
 # training accuracy becomes greater than the limit value.
-TRAIN_ACC_LIMIT = 0.98
+# By default we have no limits
+TRAIN_ACC_LIMIT = 1.0
 
 # Specific of the particular experiment, therefore
 # we disable such limitation by default.
