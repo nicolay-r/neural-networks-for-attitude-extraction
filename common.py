@@ -19,6 +19,7 @@ class Common:
 
     log_dir = u"log/"
     log_test_eval_exp_filename = u"cb_eval_avg_test.log"
+    model_config_name = u"model_config.txt"
     __log_train_filename_template = u"cb_train_{iter}_{dtype}.log"
     __log_eval_iter_filename_template = u"cb_eval_{iter}_{dtype}.log"
 

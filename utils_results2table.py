@@ -18,7 +18,7 @@ from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from callback_log_exp import parse_last_epoch_results
 from callback_log_iter import parse_last
 from callback_log_training import extract_avg_epoch_time_from_training_log, extract_last_acc_from_training_log, \
-    chop_microseconds
+    chop_microseconds, parse_float_network_parameter
 from common import Common
 from experiment_io import CustomNetworkExperimentIO
 
@@ -29,6 +29,8 @@ class ResultType(Enum):
     TrainingTime = u'train-time'
     TrainingAccuracy = u'train-acc'
     F1Train = u'f1-last-train'
+
+    LearningRate = u'train-lr'
 
     @staticmethod
     def from_str(value):
@@ -141,6 +143,8 @@ class ResultsTable(object):
             for it_index in range(iters):
                 yield join(Common.log_dir, Common.create_log_eval_filename(data_type=DataType.Train,
                                                                            iter_index=it_index))
+        elif self.__result_type == ResultType.LearningRate:
+            yield join(Common.log_dir, Common.model_config_name)
         else:
             raise NotImplementedError("Not supported type: {}".format(self.__result_type))
 
@@ -158,6 +162,9 @@ class ResultsTable(object):
             return [extract_last_acc_from_training_log(fp) for fp in files_per_iter]
         elif self.__result_type == ResultType.F1Train:
             return [parse_last(filepath=fp, col=TwoClassEvalResult.C_F1) for fp in files_per_iter]
+        elif self.__result_type == ResultType.LearningRate:
+            assert(len(files_per_iter) == 1)
+            return [parse_float_network_parameter(files_per_iter[0], u'learning_rate')]
         else:
             raise NotImplementedError("Not supported type: {}". format(self.__result_type))
 

@@ -46,3 +46,27 @@ def extract_avg_epoch_time_from_training_log(filepath):
         # Providing 0 by default otherwise.
         return datetime.timedelta()
 
+
+def parse_float_network_parameter(filepath, param_name):
+    # ['base:current_time', datetime.datetime(2020, 12, 30, 9, 30, 6, 531903)]
+    # ['base:use_class_weights', True]
+    # ['base:dropout (keep prob)', 0.8]
+    # ['base:classes_count', 3]
+    # ['base:class_weights', [33.333333333333336, 33.333333333333336, 33.333333333333336]]
+    # ['base:terms_per_context', 50]
+
+    value = 0
+    with open(filepath, 'r') as f:
+        for line in f.readlines():
+            if param_name not in line:
+                continue
+
+            # removing brackets
+            line = line.strip()
+            line = line[1:-1]
+            # extracting value
+            value = float(line.split(',')[-1])
+
+    return value
+
+

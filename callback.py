@@ -92,7 +92,7 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
         assert(isinstance(model, BaseTensorflowModel))
         self.__model = model
         write_config_setups(config=model.Config,
-                            out_filepath=join(self.__log_dir, u"model_config.txt"))
+                            out_filepath=join(self.__log_dir, Common.model_config_name))
 
     def on_experiment_iteration_begin(self):
         self.__train_iteration_costs_history = []
