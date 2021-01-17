@@ -36,19 +36,17 @@ class ResultsTable(object):
 
     MODEL_NAME_COL = u'model_name'
     DS_TYPE_COL = u'ds_type'
-    RESULT_COL = u'{result_type}_{labels_count}_{type}'
 
     sl_template = u"rsr-{rsr_version}-{folding_str}-balanced-tpc50_{labels_count}l"
     sl_ds_template = u"rsr-{rsr_version}-ra-{ra_version}-{folding_str}-balanced-tpc50_{labels_count}l"
 
-    def __init__(self, input_type, output_dir, result_type, labels, cv_count,
-                 provide_cv_columns=True,
-                 provide_fx_column=True):
+    def __init__(self, input_type, output_dir, result_type, labels, cv_count, foldings):
         assert(isinstance(input_type, ModelInputType))
         assert(isinstance(output_dir, unicode))
         assert(isinstance(result_type, ResultType))
-        assert(isinstance(labels, list))
         assert(isinstance(cv_count, int))
+        assert(isinstance(labels, list))
+        assert(isinstance(foldings, list))
 
         def __it_columns():
             # Providing extra columns for results.
@@ -58,9 +56,12 @@ class ResultsTable(object):
                     yield (self.__rcol_agg(label, FoldingType.CrossValidation), float)
                     for cv_index in range(cv_count):
                         yield (self.__rcol_it(label, cv_index), float)
-                if provide_fx_column:
+                if provide_fx_columns:
                     # fx-based result columns.
                     yield (self.__rcol_agg(label, FoldingType.Fixed), float)
+
+        provide_cv_columns = FoldingType.CrossValidation in foldings
+        provide_fx_columns = FoldingType.Fixed in foldings
 
         # Composing table for results using dataframe.
         dtypes_list = [(self.MODEL_NAME_COL, unicode),
@@ -208,9 +209,17 @@ class ResultsTable(object):
                             row_ind=row_ind,
                             labels_count=labels_count)
 
-    def save(self):
+    def save(self, round_decimals):
+
+        # Perform rounding.
+        rounded_df = self.__df.round(decimals=round_decimals)
+
+        # composing output filepath.
         basename = self._create_output_basename()
-        self.__df.to_latex(basename + '.tex', na_rep='', index=False)
+        filepath = basename + '.tex'
+        print "Saving: {}".format(filepath)
+
+        rounded_df.to_latex(filepath, na_rep='', index=False)
 
     def register(self, model_name, folding_type, labels_count, ra_version):
         assert(isinstance(model_name, ModelNames))
@@ -288,7 +297,7 @@ class FineTunedResultsProvider(ResultsTable):
                 labels_count=labels_count)
 
 
-def fill_single(res):
+def fill_single23(res):
     assert(isinstance(res, ResultsTable))
     for model_name in ModelNames:
         for folding_type in FoldingType:
@@ -313,14 +322,14 @@ def fill_single(res):
                              ra_version=ra_version)
 
 
-def fill_finetunned(res):
+def fill_finetunned(res, labels):
     assert(isinstance(res, FineTunedResultsProvider))
     for model_name in ModelNames:
         for folding_type in FoldingType:
-            for labels in [2, 3]:
+            for l in labels:
                 res.register(model_name=model_name,
                              folding_type=folding_type,
-                             labels_count=labels,
+                             labels_count=l,
                              ra_version=None)
 
 
@@ -351,6 +360,27 @@ if __name__ == "__main__":
                         choices=[u'single', u'ft'],
                         help='Training format used for results gathering')
 
+    parser.add_argument('--labels',
+                        dest='labels',
+                        type=int,
+                        nargs='*',
+                        default=[2, 3],
+                        help='Used labels')
+
+    parser.add_argument('--foldings',
+                        dest='foldings',
+                        type=unicode,
+                        nargs='*',
+                        default=[f.value for f in FoldingType],
+                        help="Used foldings")
+
+    parser.add_argument('--round',
+                        dest='round',
+                        type=int,
+                        nargs='?',
+                        default=3,
+                        help='Decimals rounding for float values')
+
     ModelInputTypeArg.add_argument(parser)
 
     args = parser.parse_args()
@@ -360,27 +390,29 @@ if __name__ == "__main__":
     result_type = ResultType.from_str(args.result_type)
     model_input_type = ModelInputTypeArg.read_argument(args)
     provide_cv_columns = result_type != ResultType.TrainingTime
-    labels = [2, 3]
+    foldings = [FoldingType.from_str(v) for v in args.foldings]
+    labels = args.labels
     cv_count = DEFAULT_CV_COUNT
 
-    rt = None
-    if training_type == u'single':
-        # Single training format.
-        rt = ResultsTable(output_dir=args.output_dir,
-                          input_type=model_input_type,
-                          result_type=result_type,
-                          labels=labels,
-                          cv_count=cv_count,
-                          provide_cv_columns=provide_cv_columns)
-        fill_single(rt)
-    elif training_type == u'ft':
-        # Fine-tuned results format.
-        rt = FineTunedResultsProvider(output_dir=args.output_dir,
-                                      input_type=model_input_type,
-                                      result_type=result_type,
-                                      labels=labels,
-                                      cv_count=cv_count,
-                                      provide_cv_columns=provide_cv_columns)
-        fill_finetunned(rt)
+    results_types = {
+        u'single': ResultsTable,
+        u'ft': FineTunedResultsProvider
+    }
 
-    rt.save()
+    class_type = results_types[training_type]
+
+    # Single training format.
+    rt = class_type(output_dir=args.output_dir,
+                    input_type=model_input_type,
+                    result_type=result_type,
+                    labels=labels,
+                    cv_count=cv_count,
+                    foldings=foldings)
+
+    # Filling
+    if training_type == u'single':
+        fill_single23(rt)
+    if training_type == u'ft':
+        fill_finetunned(rt, labels=labels)
+
+    rt.save(args.round)
