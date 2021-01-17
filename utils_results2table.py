@@ -144,7 +144,8 @@ class ResultsTable(object):
                 yield join(Common.log_dir, Common.create_log_eval_filename(data_type=DataType.Train,
                                                                            iter_index=it_index))
         elif self.__result_type == ResultType.LearningRate:
-            yield join(Common.log_dir, Common.model_config_name)
+            for it_index in range(iters):
+                yield join(Common.log_dir, Common.model_config_name)
         else:
             raise NotImplementedError("Not supported type: {}".format(self.__result_type))
 
