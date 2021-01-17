@@ -21,11 +21,11 @@ def extract_last_acc_from_training_log(filepath):
     return acc
 
 
+def chop_microseconds(delta):
+    return delta - datetime.timedelta(microseconds=delta.microseconds)
+
+
 def extract_avg_epoch_time_from_training_log(filepath):
-
-    def chop_microseconds(delta):
-            return delta - datetime.timedelta(microseconds=delta.microseconds)
-
     times = []
     with open(filepath, 'r') as f:
         for line in f.readlines():

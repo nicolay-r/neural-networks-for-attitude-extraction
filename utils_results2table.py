@@ -15,7 +15,8 @@ from arekit.contrib.networks.enum_name_types import ModelNames
 from arekit.contrib.source.ruattitudes.io_utils import RuAttitudesVersions, RuAttitudesVersionsService
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from callback_log_exp import parse_last_epoch_results
-from callback_log_training import extract_avg_epoch_time_from_training_log, extract_last_acc_from_training_log
+from callback_log_training import extract_avg_epoch_time_from_training_log, extract_last_acc_from_training_log, \
+    chop_microseconds
 from common import Common
 from experiment_io import CustomNetworkExperimentIO
 
@@ -151,17 +152,19 @@ class ResultsTable(object):
         else:
             raise NotImplementedError("Not supported type: {}". format(self.__result_type))
 
-    @staticmethod
-    def __calc_avg_it_res(it_results):
+    def __calc_avg_it_res(self, it_results):
         if len(it_results) == 0:
             return 0
 
-        # These complex implementation due to datetime results
-        # the latter won't work with np.mean.
-        total_result = it_results[0]
-        for ind in range(1, len(it_results)):
-            total_result += it_results[ind]
-        return total_result / len(it_results)
+        if self.__result_type == ResultType.TrainingTime:
+            # These complex implementation due to datetime results
+            # the latter won't work with np.mean.
+            total_result = it_results[0]
+            for ind in range(1, len(it_results)):
+                total_result += it_results[ind]
+            return chop_microseconds(total_result / len(it_results))
+        else:
+            return np.mean(it_results)
 
     def __add_row(self, exp_type_name, model_dir):
         # IMPORTANT:
