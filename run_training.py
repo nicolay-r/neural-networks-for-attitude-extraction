@@ -159,8 +159,6 @@ if __name__ == "__main__":
 
     # We keep parameters only for fixed experiment type by default.
     callback.set_key_save_hidden_parameters(save_hidden_params)
-    # We stop training process according to the present at some prior
-    # cost values in case of experiments with cv-based doc-ids folding format.
     callback.set_key_stop_training_by_cost(False)
 
     # We use a predefined value for total amount of epochs and for evaluation iterations.
