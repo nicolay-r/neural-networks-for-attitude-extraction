@@ -161,7 +161,7 @@ if __name__ == "__main__":
     callback.set_key_save_hidden_parameters(save_hidden_params)
     # We stop training process according to the present at some prior
     # cost values in case of experiments with cv-based doc-ids folding format.
-    callback.set_key_stop_training_by_cost(folding_type == FoldingType.CrossValidation)
+    callback.set_key_stop_training_by_cost(False)
 
     # We use a predefined value for total amount of epochs and for evaluation iterations.
     test_epochs_range = range(0, epochs_count, test_every_k_epoch)
