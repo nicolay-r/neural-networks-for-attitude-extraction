@@ -17,8 +17,8 @@ from arekit.contrib.source.ruattitudes.io_utils import RuAttitudesVersions, RuAt
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from callback_log_exp import parse_last_epoch_results
 from callback_log_iter import parse_last
-from callback_log_training import extract_avg_epoch_time_from_training_log, extract_last_acc_from_training_log, \
-    chop_microseconds, parse_float_network_parameter
+from callback_log_training import extract_avg_epoch_time_from_training_log, extract_last_param_value_from_training_log, \
+    chop_microseconds, parse_float_network_parameter, AVG_FIT_ACC_ARGUMENT, EPOCH_ARGUMENT
 from common import Common
 from experiment_io import CustomNetworkExperimentIO
 
@@ -29,6 +29,7 @@ class ResultType(Enum):
     TrainingTime = u'train-time'
     TrainingAccuracy = u'train-acc'
     F1Train = u'f1-last-train'
+    EpochsCount = u'epochs'
 
     LearningRate = u'train-lr'
 
@@ -135,7 +136,8 @@ class ResultsTable(object):
         if self.__result_type == ResultType.F1:
             yield join(Common.log_dir, Common.log_test_eval_exp_filename)
         elif self.__result_type == ResultType.TrainingTime or \
-                self.__result_type == ResultType.TrainingAccuracy:
+                self.__result_type == ResultType.TrainingAccuracy or \
+                self.__result_type == ResultType.EpochsCount:
             for it_index in range(iters):
                 yield join(Common.log_dir, Common.create_log_train_filename(data_type=DataType.Train,
                                                                             iter_index=it_index))
@@ -160,9 +162,11 @@ class ResultsTable(object):
         elif self.__result_type == ResultType.TrainingTime:
             return [extract_avg_epoch_time_from_training_log(fp) for fp in files_per_iter]
         elif self.__result_type == ResultType.TrainingAccuracy:
-            return [extract_last_acc_from_training_log(fp) for fp in files_per_iter]
+            return [extract_last_param_value_from_training_log(fp, key=AVG_FIT_ACC_ARGUMENT) for fp in files_per_iter]
         elif self.__result_type == ResultType.F1Train:
             return [parse_last(filepath=fp, col=TwoClassEvalResult.C_F1) for fp in files_per_iter]
+        elif self.__result_type == ResultType.EpochsCount:
+            return [extract_last_param_value_from_training_log(fp, key=EPOCH_ARGUMENT) for fp in files_per_iter]
         elif self.__result_type == ResultType.LearningRate:
             return [parse_float_network_parameter(fp, u'learning_rate') for fp in files_per_iter]
         else:

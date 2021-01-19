@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 from arekit.common.evaluation.results.base import BaseEvalResult
 from callback_log_exp import create_experiment_eval_msgs
+from callback_log_training import get_message
 
 
 class CustomEvalResult(BaseEvalResult):
@@ -24,6 +25,9 @@ class TestCallbackExperimentEvaluationOutput(unittest.TestCase):
     def test_empty_iteration_results(self):
         for msg in create_experiment_eval_msgs(OrderedDict({0: [], 1: []})):
             print msg
+
+    def test_get_msg(self):
+        print get_message(epoch_index=0, avg_fit_acc=1, avg_fit_cost=0.5)
 
     def test_var_length(self):
 

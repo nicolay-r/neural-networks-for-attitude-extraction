@@ -2,23 +2,38 @@ import datetime
 from dateutil import parser
 
 
+EPOCH_ARGUMENT = u"Epoch"
+AVG_FIT_COST_ARGUMENT = u"avg_fit_cost"
+AVG_FIT_ACC_ARGUMENT = u"avg_fit_acc"
+
+
 def get_message(epoch_index, avg_fit_cost, avg_fit_acc):
     """ Providing logging message
     """
-    return u"{}: Epoch: {}: avg_fit_cost: {:.3f}, avg_fit_acc: {:.3f}".format(
-        str(datetime.datetime.now()),
-        epoch_index,
-        avg_fit_cost,
-        avg_fit_acc)
+    key_value_fmt = u"{k}: {v}"
+    time = str(datetime.datetime.now())
+    epochs = key_value_fmt.format(k=EPOCH_ARGUMENT, v=format(epoch_index))
+    avg_fc = key_value_fmt.format(k=AVG_FIT_COST_ARGUMENT, v=avg_fit_cost)
+    avg_ac = key_value_fmt.format(k=AVG_FIT_ACC_ARGUMENT, v=avg_fit_acc)
+    return u"{time}: {epochs}: {avg_fc}, {avg_ac}".format(time=time,
+                                                          epochs=epochs,
+                                                          avg_fc=avg_fc,
+                                                          avg_ac=avg_ac)
 
 
-def extract_last_acc_from_training_log(filepath):
-    acc = 0
+def extract_last_param_value_from_training_log(filepath, key):
+    v = 0
     with open(filepath, 'r') as f:
         for line in f.readlines():
-            acc = float(line.split(u'avg_fit_acc: ')[-1])
+            if key == AVG_FIT_ACC_ARGUMENT:
+                v = float(line.split(u': ')[-1])
+            elif key == EPOCH_ARGUMENT:
+                # Extracting from line.
+                epoch_index = int(line.split(u': ')[2])
+                # We provide an amount, therefore we inc the latter by 1.
+                v = epoch_index + 1
 
-    return acc
+    return v
 
 
 def chop_microseconds(delta):
