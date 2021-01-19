@@ -212,7 +212,7 @@ class ResultsTable(object):
         else:
             return np.mean(it_results)
 
-    def __add_row(self, exp_type_name, model_dir):
+    def __add_or_find_existed_row(self, exp_type_name, model_dir):
         # IMPORTANT:
         # This allows us to combine neut with non-neut (for 2-scale).
         ds_type_name = exp_type_name.replace(u'_neut', '')
@@ -274,8 +274,8 @@ class ResultsTable(object):
                                            model_name=model_name,
                                            exp_type_name=exp_type_name)
 
-        row_ind = self.__add_row(exp_type_name=exp_type_name,
-                                 model_dir=model_dir)
+        row_ind = self.__add_or_find_existed_row(exp_type_name=exp_type_name,
+                                                 model_dir=model_dir)
 
         for rt in self.__result_types:
 
