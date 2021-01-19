@@ -26,7 +26,7 @@ from experiment_io import CustomNetworkExperimentIO
 class ResultType(Enum):
 
     F1 = u'f1'
-    TrainingEpochTime = u'train-time'
+    TrainingEpochTime = u'train-epoch-time'
     TrainingTotalTime = u'train-total-time'
     TrainingAccuracy = u'train-acc'
     F1Train = u'f1-last-train'
