@@ -12,7 +12,7 @@ from arekit.contrib.experiments.rusentrel.folding import DEFAULT_CV_COUNT
 from args.train.model_input_type import ModelInputTypeArg
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.contrib.networks.enum_input_types import ModelInputType
-from arekit.contrib.networks.enum_name_types import ModelNames
+from arekit.contrib.networks.enum_name_types import ModelNames, ModelNamesService
 from arekit.contrib.source.ruattitudes.io_utils import RuAttitudesVersions, RuAttitudesVersionsService
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from callback_log_exp import parse_last_epoch_results
@@ -347,9 +347,12 @@ class FineTunedResultsProvider(ResultsTable):
                 labels_count=labels_count)
 
 
-def fill_single23(res):
+def fill_single23(res, models):
     assert(isinstance(res, ResultsTable))
-    for model_name in ModelNames:
+    assert(isinstance(models, list))
+
+    for model_name in models:
+        assert(isinstance(model_name, ModelNames))
         for folding_type in FoldingType:
             # for 3-scale
             for ra_version in [RuAttitudesVersions.V20LargeNeut,
@@ -372,9 +375,12 @@ def fill_single23(res):
                              ra_version=ra_version)
 
 
-def fill_finetunned(res, labels):
+def fill_finetunned(res, models, labels):
     assert(isinstance(res, FineTunedResultsProvider))
-    for model_name in ModelNames:
+    assert(isinstance(models, list))
+
+    for model_name in models:
+        assert(isinstance(model_name, ModelNames))
         for folding_type in FoldingType:
             for l in labels:
                 res.register(model_name=model_name,
@@ -431,6 +437,16 @@ if __name__ == "__main__":
                         default=3,
                         help='Decimals rounding for float values')
 
+    parser.add_argument('--models',
+                        dest='models',
+                        type=unicode,
+                        nargs='?',
+                        # By default, we limited by those models that were
+                        # mentioned earlier in Rusnachenko et. al. papers.
+                        default=[m.value for m in Common.default_results_considered_model_names_list()],
+                        choices=[m_name for m_name in ModelNamesService.iter_supported_names()],
+                        help='List of model names')
+
     ModelInputTypeArg.add_argument(parser)
 
     args = parser.parse_args()
@@ -443,6 +459,7 @@ if __name__ == "__main__":
     foldings = [FoldingType.from_str(v) for v in args.foldings]
     labels = args.labels
     cv_count = DEFAULT_CV_COUNT
+    models = [ModelNamesService.get_type_by_name(m_name) for m_name in args.models]
 
     results_types = {
         u'single': ResultsTable,
@@ -461,8 +478,8 @@ if __name__ == "__main__":
 
     # Filling
     if training_type == u'single':
-        fill_single23(rt)
+        fill_single23(rt, models=models)
     if training_type == u'ft':
-        fill_finetunned(rt, labels=labels)
+        fill_finetunned(rt, labels=labels, models=models)
 
     rt.save(args.round)

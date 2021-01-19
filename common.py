@@ -24,6 +24,25 @@ class Common:
     __log_eval_iter_filename_template = u"cb_eval_{iter}_{dtype}.log"
 
     @staticmethod
+    def default_results_considered_model_names_list():
+        """ There are even more models which are supported!
+            For now, this is a dissertation limitation.
+        """
+        return [
+            # Conventional neural context encoders.
+            ModelNames.CNN,
+            ModelNames.PCNN,
+            ModelNames.LSTM,
+            ModelNames.BiLSTM,
+            # Models with attentive encoders.
+            ModelNames.AttEndsCNN,
+            ModelNames.AttEndsPCNN,
+            ModelNames.IANEnds,
+            ModelNames.AttSelfPZhouBiLSTM,
+            ModelNames.AttSelfZYangBiLSTM,
+        ]
+
+    @staticmethod
     def create_log_eval_filename(iter_index, data_type):
         assert(isinstance(iter_index, int))
         assert(isinstance(data_type, DataType))
