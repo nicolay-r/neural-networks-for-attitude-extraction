@@ -49,25 +49,24 @@ class ResultsTable(object):
     sl_template = u"rsr-{rsr_version}-{folding_str}-balanced-tpc50_{labels_count}l"
     sl_ds_template = u"rsr-{rsr_version}-ra-{ra_version}-{folding_str}-balanced-tpc50_{labels_count}l"
 
-    def __init__(self, input_type, output_dir, result_type, labels, cv_count, foldings):
+    def __init__(self, input_type, output_dir, result_types, labels, cv_count, foldings):
         assert(isinstance(input_type, ModelInputType))
         assert(isinstance(output_dir, unicode))
-        assert(isinstance(result_type, ResultType))
+        assert(isinstance(result_types, list))
         assert(isinstance(cv_count, int))
         assert(isinstance(labels, list))
         assert(isinstance(foldings, list))
 
-        def __it_columns():
+        def __it_columns(rt, label):
             # Providing extra columns for results.
-            for label in labels:
-                if provide_cv_columns:
-                    # cv-based results columns.
-                    yield (self.__rcol_agg(label, FoldingType.CrossValidation), float)
-                    for cv_index in range(cv_count):
-                        yield (self.__rcol_it(label, cv_index), float)
-                if provide_fx_columns:
-                    # fx-based result columns.
-                    yield (self.__rcol_agg(label, FoldingType.Fixed), float)
+            if provide_cv_columns:
+                # cv-based results columns.
+                yield (self.__rcol_agg(rt, label, FoldingType.CrossValidation), float)
+                for cv_index in range(cv_count):
+                    yield (self.__rcol_it(rt, label, cv_index), float)
+            if provide_fx_columns:
+                # fx-based result columns.
+                yield (self.__rcol_agg(rt, label, FoldingType.Fixed), float)
 
         provide_cv_columns = FoldingType.CrossValidation in foldings
         provide_fx_columns = FoldingType.Fixed in foldings
@@ -77,44 +76,53 @@ class ResultsTable(object):
                        (self.DS_TYPE_COL, unicode)]
 
         # Providing result columns.
-        for col in __it_columns():
-            dtypes_list.append(col)
+        for label in labels:
+            for rt in result_types:
+                assert(isinstance(rt, ResultType))
+                for col in __it_columns(rt=rt, label=label):
+                    dtypes_list.append(col)
 
         np_data = np.empty(0, dtype=np.dtype(dtypes_list))
 
         self.__df = pd.DataFrame(np_data)
         self.__input_type = input_type
         self.__output_dir = output_dir
-        self.__result_type = result_type
+        self.__result_types = result_types
         self.__cv_count = cv_count
 
     @staticmethod
-    def __rcol_agg(labels_count, folding_type):
+    def __rcol_agg(rt, labels_count, folding_type):
+        assert(isinstance(rt, ResultType))
         assert(isinstance(folding_type, FoldingType))
-        return u"r_{labels_count}_{folding}".format(
+        return u"{rt}_{labels_count}_{folding}".format(
+            rt=rt.value,
             labels_count=labels_count,
             folding=u'avg' if folding_type == FoldingType.CrossValidation else u'test')
 
     @staticmethod
-    def __rcol_it(labels_count, it):
-        return u"r_{labels_count}_cv{it}".format(labels_count=labels_count, it=it)
+    def __rcol_it(rt, labels_count, it):
+        assert(isinstance(rt, ResultType))
+        return u"{rt}_{labels_count}_cv{it}".format(rt=rt.value,
+                                                    labels_count=labels_count,
+                                                    it=it)
 
     def _create_output_basename(self):
         return u"results-{input_type}-{result_type}".format(
             input_type=self.__input_type.value,
-            result_type=self.__result_type.value)
+            result_type=u"_".join([rt.value for rt in self.__result_types]))
 
     def _create_model_dir(self, folding_type, model_name, exp_type_name):
         return Common.create_full_model_name(folding_type=folding_type,
                                              input_type=self.__input_type,
                                              model_name=model_name)
 
-    def __save_results(self, it_results, avg_res, labels_count, folding_type, row_ind):
+    def __save_results(self, rt, it_results, avg_res,
+                       labels_count, folding_type, row_ind):
+        assert(isinstance(rt, ResultType))
         assert(isinstance(it_results, list))
 
         # set avg. result.
-        col_name_avg = self.__rcol_agg(labels_count=labels_count,
-                                       folding_type=folding_type)
+        col_name_avg = self.__rcol_agg(rt=rt, labels_count=labels_count, folding_type=folding_type)
         if col_name_avg in self.__df.columns:
             self.__df.set_value(row_ind, col_name_avg, avg_res)
 
@@ -124,34 +132,34 @@ class ResultsTable(object):
 
         # setup cv values.
         for cv_index, cv_value in enumerate(it_results):
-            col_name = self.__rcol_it(labels_count=labels_count, it=cv_index)
+            col_name = self.__rcol_it(rt=rt, labels_count=labels_count, it=cv_index)
             if col_name not in self.__df.columns:
                 continue
             self.__df.set_value(row_ind, col_name, cv_value)
 
-    def __iter_files_per_iteration(self, folding_type):
+    def __iter_files_per_iteration(self, result_type, folding_type):
         assert(isinstance(folding_type, FoldingType))
 
         iters = self.__cv_count if folding_type == FoldingType.CrossValidation else 1
 
-        if self.__result_type == ResultType.F1:
+        if result_type == ResultType.F1:
             yield join(Common.log_dir, Common.log_test_eval_exp_filename)
-        elif self.__result_type == ResultType.TrainingEpochTime or \
-                self.__result_type == ResultType.TrainingTotalTime or \
-                self.__result_type == ResultType.TrainingAccuracy or \
-                self.__result_type == ResultType.EpochsCount:
+        elif result_type == ResultType.TrainingEpochTime or \
+                result_type == ResultType.TrainingTotalTime or \
+                result_type == ResultType.TrainingAccuracy or \
+                result_type == ResultType.EpochsCount:
             for it_index in range(iters):
                 yield join(Common.log_dir, Common.create_log_train_filename(data_type=DataType.Train,
                                                                             iter_index=it_index))
-        elif self.__result_type == ResultType.F1Train:
+        elif result_type == ResultType.F1Train:
             for it_index in range(iters):
                 yield join(Common.log_dir, Common.create_log_eval_filename(data_type=DataType.Train,
                                                                            iter_index=it_index))
-        elif self.__result_type == ResultType.LearningRate:
+        elif result_type == ResultType.LearningRate:
             for it_index in range(iters):
                 yield join(Common.log_dir, Common.model_config_name)
         else:
-            raise NotImplementedError("Not supported type: {}".format(self.__result_type))
+            raise NotImplementedError("Not supported type: {}".format(result_type))
 
     @staticmethod
     def __parse_iter_and_avg_result(r_type, files_per_iter):
@@ -183,15 +191,18 @@ class ResultsTable(object):
         else:
             raise NotImplementedError("Not supported type: {}". format(r_type))
 
-    def __calc_avg_it_res(self, it_results):
+    @staticmethod
+    def __calc_avg_it_res(result_type, it_results):
+        assert(isinstance(result_type, ResultType))
+
         if len(it_results) == 0:
             return 0
 
         if len(it_results) == 1:
             return it_results[0]
 
-        if self.__result_type == ResultType.TrainingEpochTime or \
-            self.__result_type == ResultType.TrainingTotalTime:
+        if result_type == ResultType.TrainingEpochTime or \
+            result_type == ResultType.TrainingTotalTime:
             # These complex implementation due to datetime results
             # the latter won't work with np.mean.
             total_result = it_results[0]
@@ -225,6 +236,34 @@ class ResultsTable(object):
 
         return row_ind
 
+    def __for_result_type(self, row_ind, folding_type, labels_count, result_type, target_to_path):
+        assert(callable(target_to_path))
+
+        # Composing the related files
+        files_per_iter = [target_to_path(target) for
+                          target in self.__iter_files_per_iteration(result_type, folding_type)]
+
+        # Check files existance.
+        for target_file in files_per_iter:
+            if not exists(target_file):
+                return False
+
+        it_results = self.__parse_iter_and_avg_result(r_type=result_type,
+                                                      files_per_iter=files_per_iter)
+
+        avg_res = self.__calc_avg_it_res(it_results=it_results,
+                                         result_type=result_type)
+
+        # saving results.
+        self.__save_results(it_results=it_results,
+                            avg_res=avg_res,
+                            folding_type=folding_type,
+                            row_ind=row_ind,
+                            rt=result_type,
+                            labels_count=labels_count)
+
+        return True
+
     def _for_experiment(self, model_name, folding_type, experiment_dir, ra_type, labels_count):
         assert(isinstance(model_name, ModelNames))
         assert(isinstance(folding_type, FoldingType))
@@ -235,29 +274,22 @@ class ResultsTable(object):
                                            model_name=model_name,
                                            exp_type_name=exp_type_name)
 
-        # if the latter results are not presented
-        # then we just reject the related line from the results.
-        files_per_iter = [join(self.__output_dir, experiment_dir, model_dir, target) for
-                          target in self.__iter_files_per_iteration(folding_type)]
-
-        # Check files existance.
-        for target_file in files_per_iter:
-            if not exists(target_file):
-                return
-
-        it_results = self.__parse_iter_and_avg_result(r_type=self.__result_type,
-                                                      files_per_iter=files_per_iter)
         row_ind = self.__add_row(exp_type_name=exp_type_name,
                                  model_dir=model_dir)
 
-        # saving results.
-        self.__save_results(it_results=it_results,
-                            avg_res=self.__calc_avg_it_res(it_results),
-                            folding_type=folding_type,
-                            row_ind=row_ind,
-                            labels_count=labels_count)
+        for rt in self.__result_types:
+
+            # Calculate and filling results.
+            self.__for_result_type(
+                row_ind=row_ind,
+                folding_type=folding_type,
+                target_to_path=lambda target: join(self.__output_dir, experiment_dir, model_dir, target),
+                labels_count=labels_count,
+                result_type=rt)
 
     def save(self, round_decimals):
+
+        self.__df.replace('nan', np.nan, inplace=True)
 
         # Perform rounding.
         rounded_df = self.__df.round(decimals=round_decimals)
@@ -401,10 +433,10 @@ if __name__ == "__main__":
                         help='Results dir')
 
     parser.add_argument('--result-type',
-                        dest='result_type',
+                        dest='result_types',
                         type=unicode,
-                        nargs='?',
-                        default=ResultType.F1.value,
+                        nargs='*',
+                        default=[ResultType.F1.value],
                         choices=[rt.value for rt in ResultType],
                         help="Metric selection which will be used for table cell values")
 
@@ -453,25 +485,24 @@ if __name__ == "__main__":
 
     # Reading arguments.
     training_type = args.training_type
-    result_type = ResultType.from_str(args.result_type)
+    result_types = [ResultType.from_str(r) for r in args.result_types]
     model_input_type = ModelInputTypeArg.read_argument(args)
-    provide_cv_columns = result_type != ResultType.TrainingEpochTime
     foldings = [FoldingType.from_str(v) for v in args.foldings]
     labels = args.labels
     cv_count = DEFAULT_CV_COUNT
     models = [ModelNamesService.get_type_by_name(m_name) for m_name in args.models]
 
-    results_types = {
+    training_types = {
         u'single': ResultsTable,
         u'ft': FineTunedResultsProvider
     }
 
-    class_type = results_types[training_type]
+    class_type = training_types[training_type]
 
     # Single training format.
     rt = class_type(output_dir=args.output_dir,
                     input_type=model_input_type,
-                    result_type=result_type,
+                    result_types=result_types,
                     labels=labels,
                     cv_count=cv_count,
                     foldings=foldings)
