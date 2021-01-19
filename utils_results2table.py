@@ -26,7 +26,8 @@ from experiment_io import CustomNetworkExperimentIO
 class ResultType(Enum):
 
     F1 = u'f1'
-    TrainingTime = u'train-time'
+    TrainingEpochTime = u'train-time'
+    TrainingTotalTime = u'train-total-time'
     TrainingAccuracy = u'train-acc'
     F1Train = u'f1-last-train'
     EpochsCount = u'epochs'
@@ -135,7 +136,8 @@ class ResultsTable(object):
 
         if self.__result_type == ResultType.F1:
             yield join(Common.log_dir, Common.log_test_eval_exp_filename)
-        elif self.__result_type == ResultType.TrainingTime or \
+        elif self.__result_type == ResultType.TrainingEpochTime or \
+                self.__result_type == ResultType.TrainingTotalTime or \
                 self.__result_type == ResultType.TrainingAccuracy or \
                 self.__result_type == ResultType.EpochsCount:
             for it_index in range(iters):
@@ -151,32 +153,45 @@ class ResultsTable(object):
         else:
             raise NotImplementedError("Not supported type: {}".format(self.__result_type))
 
-    def __parse_iter_and_avg_result(self, files_per_iter):
+    @staticmethod
+    def __parse_iter_and_avg_result(r_type, files_per_iter):
+        assert(isinstance(r_type, ResultType))
         assert(isinstance(files_per_iter, list))
+
         # parsing results in order to organize the result table.
-        if self.__result_type == ResultType.F1:
+        if r_type == ResultType.F1:
             # This is a single file which gathers
             # information across all the iterations.
             assert(len(files_per_iter) == 1)
             return parse_last_epoch_results(files_per_iter[0])
-        elif self.__result_type == ResultType.TrainingTime:
+        elif r_type == ResultType.TrainingEpochTime:
             return [extract_avg_epoch_time_from_training_log(fp) for fp in files_per_iter]
-        elif self.__result_type == ResultType.TrainingAccuracy:
+        elif r_type == ResultType.TrainingAccuracy:
             return [extract_last_param_value_from_training_log(fp, key=AVG_FIT_ACC_ARGUMENT) for fp in files_per_iter]
-        elif self.__result_type == ResultType.F1Train:
-            return [parse_last(filepath=fp, col=TwoClassEvalResult.C_F1) for fp in files_per_iter]
-        elif self.__result_type == ResultType.EpochsCount:
+        elif r_type == ResultType.EpochsCount:
             return [extract_last_param_value_from_training_log(fp, key=EPOCH_ARGUMENT) for fp in files_per_iter]
-        elif self.__result_type == ResultType.LearningRate:
+        elif r_type == ResultType.TrainingTotalTime:
+            epochs = ResultsTable.__parse_iter_and_avg_result(r_type=ResultType.EpochsCount,
+                                                              files_per_iter=files_per_iter)
+            times = ResultsTable.__parse_iter_and_avg_result(r_type=ResultType.TrainingEpochTime,
+                                                             files_per_iter=files_per_iter)
+            return [epochs[i] * times[i] for i in range(len(epochs))]
+        elif r_type == ResultType.F1Train:
+            return [parse_last(filepath=fp, col=TwoClassEvalResult.C_F1) for fp in files_per_iter]
+        elif r_type == ResultType.LearningRate:
             return [parse_float_network_parameter(fp, u'learning_rate') for fp in files_per_iter]
         else:
-            raise NotImplementedError("Not supported type: {}". format(self.__result_type))
+            raise NotImplementedError("Not supported type: {}". format(r_type))
 
     def __calc_avg_it_res(self, it_results):
         if len(it_results) == 0:
             return 0
 
-        if self.__result_type == ResultType.TrainingTime:
+        if len(it_results) == 1:
+            return it_results[0]
+
+        if self.__result_type == ResultType.TrainingEpochTime or \
+            self.__result_type == ResultType.TrainingTotalTime:
             # These complex implementation due to datetime results
             # the latter won't work with np.mean.
             total_result = it_results[0]
@@ -230,7 +245,8 @@ class ResultsTable(object):
             if not exists(target_file):
                 return
 
-        it_results = self.__parse_iter_and_avg_result(files_per_iter=files_per_iter)
+        it_results = self.__parse_iter_and_avg_result(r_type=self.__result_type,
+                                                      files_per_iter=files_per_iter)
         row_ind = self.__add_row(exp_type_name=exp_type_name,
                                  model_dir=model_dir)
 
@@ -423,7 +439,7 @@ if __name__ == "__main__":
     training_type = args.training_type
     result_type = ResultType.from_str(args.result_type)
     model_input_type = ModelInputTypeArg.read_argument(args)
-    provide_cv_columns = result_type != ResultType.TrainingTime
+    provide_cv_columns = result_type != ResultType.TrainingEpochTime
     foldings = [FoldingType.from_str(v) for v in args.foldings]
     labels = args.labels
     cv_count = DEFAULT_CV_COUNT
