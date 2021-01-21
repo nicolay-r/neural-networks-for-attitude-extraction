@@ -23,6 +23,19 @@ from common import Common
 from experiment_io import CustomNetworkExperimentIO
 
 
+# Dictionary which allows us to find an attentive model
+# According to the one related but without attentive mechanism.
+# There are even more models, so this list could be enlarged
+# and finally then moved into AREkit framework.
+attentive_models_matching = {
+    ModelNames.CNN: [ModelNames.AttEndsCNN],
+    ModelNames.PCNN: [ModelNames.AttEndsPCNN],
+    ModelNames.LSTM: [ModelNames.IANEnds],
+    ModelNames.BiLSTM: [ModelNames.AttSelfPZhouBiLSTM,
+                        ModelNames.AttSelfZYangBiLSTM]
+}
+
+
 class ResultType(Enum):
 
     F1 = u'f1'
@@ -33,7 +46,8 @@ class ResultType(Enum):
     EpochsCount = u'epochs'
     # Using WIMS-2020 related paper format for results improvement calucalation.
     # Considering f1-test values by default.
-    DSDiffImprovement = u'ds-diff-imp'
+    DSDiffF1Improvement = u'ds-diff-imp'
+    DSDiffAttImprovement = u'ds-diff-att'
 
     LearningRate = u'train-lr'
 
@@ -64,11 +78,11 @@ class ResultsEvalContext(object):
     def copy(cls, other):
         assert(isinstance(other, ResultsEvalContext))
         return cls(model_name=other.model_name,
-                    folding_type=other.folding_type,
-                    ra_ver=other.ra_ver,
-                    rsr_ver=other.rsr_ver,
-                    labels_count=other.labels_count,
-                    rt=other.rt)
+                   folding_type=other.folding_type,
+                   ra_ver=other.ra_ver,
+                   rsr_ver=other.rsr_ver,
+                   labels_count=other.labels_count,
+                   rt=other.rt)
 
 
 class ResultsTable(object):
@@ -173,7 +187,8 @@ class ResultsTable(object):
         iters = self.__cv_count if folding_type == FoldingType.CrossValidation else 1
 
         if result_type == ResultType.F1 or \
-            result_type == ResultType.DSDiffImprovement:
+            result_type == ResultType.DSDiffF1Improvement or \
+            result_type == ResultType.DSDiffAttImprovement:
             yield join(Common.log_dir, Common.log_test_eval_exp_filename)
         elif result_type == ResultType.TrainingEpochTime or \
                 result_type == ResultType.TrainingTotalTime or \
@@ -225,7 +240,41 @@ class ResultsTable(object):
             return [parse_last(filepath=fp, col=TwoClassEvalResult.C_F1) for fp in files_per_iter]
         elif r_type == ResultType.LearningRate:
             return [parse_float_network_parameter(fp, u'learning_rate') for fp in files_per_iter]
-        elif r_type == ResultType.DSDiffImprovement:
+        elif r_type == ResultType.DSDiffAttImprovement:
+            # Perform calculation of attentive models over non-attentive.
+
+            def __calc_diff(base_it_results, rt):
+                assert(isinstance(rt, ResultType))
+
+                # Calculate current results.
+                local_eval_ctx = ResultsEvalContext.copy(eval_ctx)
+                local_eval_ctx.rt = rt
+                curr_it_results = self.__parse_iter_results(files_per_iter=files_per_iter,
+                                                            eval_ctx=local_eval_ctx)
+
+                # calculating result difference.
+                diff = [curr_it_results[i] - base_it_results[i]
+                        for i in range(len(curr_it_results))]
+
+                res.append(diff)
+
+            # using this as a local variable which is accessible from callback
+            res = []
+
+            # Perform another experiments result evaluation.
+            for att_model in attentive_models_matching[eval_ctx.model_name]:
+                self._for_experiment(model_name=att_model,
+                                     folding_type=eval_ctx.folding_type,
+                                     ra_version=eval_ctx.ra_ver,
+                                     rsr_version=eval_ctx.rsr_ver,
+                                     labels_count=eval_ctx.labels_count,
+                                     result_types=[ResultType.F1],
+                                     callback=__calc_diff)
+
+            # Calculating average diff
+            return np.mean(res, axis=0) if len(res) > 1 else []
+
+        elif r_type == ResultType.DSDiffF1Improvement:
 
             def __calc_diff(base_it_results, rt):
                 assert(isinstance(rt, ResultType))
@@ -616,8 +665,17 @@ if __name__ == "__main__":
     foldings = [FoldingType.from_str(v) for v in args.foldings]
     labels = args.labels
     cv_count = DEFAULT_CV_COUNT
-    models = [ModelNamesService.get_type_by_name(m_name) for m_name in args.models]
 
+    # model names
+    if ResultType.DSDiffAttImprovement in result_types:
+        # We consider only those models that are
+        # matched with the corresponding attentive models.
+        models = [ModelNamesService.get_type_by_name(m_name) for m_name in args.models
+                  if ModelNamesService.get_type_by_name(m_name) in attentive_models_matching]
+    else:
+        models = [ModelNamesService.get_type_by_name(m_name) for m_name in args.models]
+
+    # Supported training types.
     training_types = {
         u'single': ResultsTable,
         u'ft': FineTunedResultsProvider
