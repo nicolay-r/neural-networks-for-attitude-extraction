@@ -31,6 +31,9 @@ class ResultType(Enum):
     TrainingAccuracy = u'train-acc'
     F1Train = u'f1-last-train'
     EpochsCount = u'epochs'
+    # Using WIMS-2020 related papar format for results improvement calucalation.
+    # Considering f1-test values by default.
+    DSUsageImprovement = u'ds-usage-improvement'
 
     LearningRate = u'train-lr'
 
@@ -188,6 +191,9 @@ class ResultsTable(object):
             return [parse_last(filepath=fp, col=TwoClassEvalResult.C_F1) for fp in files_per_iter]
         elif r_type == ResultType.LearningRate:
             return [parse_float_network_parameter(fp, u'learning_rate') for fp in files_per_iter]
+        elif r_type == ResultType.DSUsageImprovement:
+            # TODO. Not supported.
+            raise NotImplementedError()
         else:
             raise NotImplementedError("Not supported type: {}". format(r_type))
 
@@ -236,6 +242,29 @@ class ResultsTable(object):
 
         return row_ind
 
+    @staticmethod
+    def __create_exp_dir(cv_count, ra_version, folding_type, labels_count, rsr_version):
+        assert(isinstance(ra_version, RuAttitudesVersions) or ra_version is None)
+        assert(isinstance(rsr_version, RuSentRelVersions))
+        assert(isinstance(cv_count, int))
+
+        folding_str = u"cv{}".format(cv_count) \
+            if folding_type == FoldingType.CrossValidation else u"fixed"
+
+        if ra_version is None:
+            # Using supervised learning only
+            exp_dir = ResultsTable.sl_template.format(rsr_version=rsr_version.value,
+                                                      folding_str=folding_str,
+                                                      labels_count=str(labels_count))
+        else:
+            # Using distant supervision in combination with supervised learning.
+            exp_dir = ResultsTable.sl_ds_template.format(rsr_version=rsr_version.value,
+                                                         ra_version=ra_version.value,
+                                                         folding_str=folding_str,
+                                                         labels_count=str(labels_count))
+
+        return exp_dir
+
     def __for_result_type(self, row_ind, folding_type, labels_count, result_type, target_to_path):
         assert(callable(target_to_path))
 
@@ -264,11 +293,15 @@ class ResultsTable(object):
 
         return True
 
-    def _for_experiment(self, model_name, folding_type, experiment_dir, ra_type, labels_count):
+    def _for_experiment(self, model_name, folding_type, ra_version, rsr_version, labels_count):
         assert(isinstance(model_name, ModelNames))
         assert(isinstance(folding_type, FoldingType))
-        assert(isinstance(ra_type, RuAttitudesVersions) or ra_type is None)
+        assert(isinstance(labels_count, int))
 
+        def __target_to_path(target):
+            return join(self.__output_dir, experiment_dir, model_dir, target)
+
+        ra_type = None if ra_version is None else ra_version
         exp_type_name = ra_type.value if isinstance(ra_type, RuAttitudesVersions) else u'-'
         model_dir = self._create_model_dir(folding_type=folding_type,
                                            model_name=model_name,
@@ -277,15 +310,21 @@ class ResultsTable(object):
         row_ind = self.__add_or_find_existed_row(exp_type_name=exp_type_name,
                                                  model_dir=model_dir)
 
+        # Composing the result dir.
+        experiment_dir = self.__create_exp_dir(ra_version=ra_version,
+                                               folding_type=folding_type,
+                                               labels_count=labels_count,
+                                               rsr_version=rsr_version,
+                                               cv_count=self.__cv_count)
+
         for rt in self.__result_types:
 
             # Calculate and filling results.
-            self.__for_result_type(
-                row_ind=row_ind,
-                folding_type=folding_type,
-                target_to_path=lambda target: join(self.__output_dir, experiment_dir, model_dir, target),
-                labels_count=labels_count,
-                result_type=rt)
+            self.__for_result_type(row_ind=row_ind,
+                                   folding_type=folding_type,
+                                   target_to_path=__target_to_path,
+                                   labels_count=labels_count,
+                                   result_type=rt)
 
     def save(self, round_decimals):
 
@@ -308,29 +347,11 @@ class ResultsTable(object):
         assert(isinstance(folding_type, FoldingType))
         assert(isinstance(ra_version, RuAttitudesVersions) or ra_version is None)
 
-        folding_str = u"cv{}".format(self.__cv_count) \
-            if folding_type == FoldingType.CrossValidation else u"fixed"
-        rsr_version = RuSentRelVersions.V11
-
-        if ra_version is None:
-            # Using supervised learning only
-            ra_type = None
-            exp_dir = self.sl_template.format(rsr_version=rsr_version.value,
-                                              folding_str=folding_str,
-                                              labels_count=str(labels_count))
-        else:
-            # Using distant supervision in combination with supervised learning.
-            ra_type = ra_version
-            exp_dir = self.sl_ds_template.format(rsr_version=rsr_version.value,
-                                                 ra_version=ra_version.value,
-                                                 folding_str=folding_str,
-                                                 labels_count=str(labels_count))
-
         self._for_experiment(model_name=model_name,
                              folding_type=folding_type,
-                             ra_type=ra_type,
+                             ra_version=ra_version,
                              labels_count=labels_count,
-                             experiment_dir=exp_dir)
+                             rsr_version=RuSentRelVersions.V11)
 
 
 class FineTunedResultsProvider(ResultsTable):
