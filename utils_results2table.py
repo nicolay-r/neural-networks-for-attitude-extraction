@@ -646,7 +646,7 @@ if __name__ == "__main__":
     parser.add_argument('--models',
                         dest='models',
                         type=unicode,
-                        nargs='?',
+                        nargs='*',
                         # By default, we limited by those models that were
                         # mentioned earlier in Rusnachenko et. al. papers.
                         default=[m.value for m in Common.default_results_considered_model_names_list()],
