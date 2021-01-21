@@ -271,7 +271,7 @@ class ResultsTable(object):
                                      callback=__calc_diff)
 
             # Calculating average diff
-            return np.mean(res, axis=0) if len(res) > 1 else []
+            return np.mean(res, axis=0) if len(res) > 0 else []
 
         elif r_type == ResultType.DSDiffF1Improvement:
 
@@ -302,7 +302,7 @@ class ResultsTable(object):
                                  result_types=[ResultType.F1],
                                  callback=__calc_diff)
 
-            return res[0] if len(res) > 1 else []
+            return res[0] if len(res) == 1 else []
         else:
             raise NotImplementedError("Not supported type: {}". format(r_type))
 
