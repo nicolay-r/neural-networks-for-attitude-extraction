@@ -31,9 +31,9 @@ class ResultType(Enum):
     TrainingAccuracy = u'train-acc'
     F1Train = u'f1-last-train'
     EpochsCount = u'epochs'
-    # Using WIMS-2020 related papar format for results improvement calucalation.
+    # Using WIMS-2020 related paper format for results improvement calucalation.
     # Considering f1-test values by default.
-    DSUsageImprovement = u'ds-usage-improvement'
+    DSDiffImprovement = u'ds-diff-imp'
 
     LearningRate = u'train-lr'
 
@@ -42,6 +42,33 @@ class ResultType(Enum):
         for t in ResultType:
             if t.value == value:
                 return t
+
+
+class ResultsEvalContext(object):
+
+    def __init__(self, model_name, folding_type, ra_ver, rsr_ver, labels_count, rt):
+        assert(isinstance(model_name, ModelNames))
+        assert(isinstance(folding_type, FoldingType))
+        assert(isinstance(ra_ver, RuAttitudesVersions) or ra_ver is None)
+        assert(isinstance(rsr_ver, RuSentRelVersions))
+        assert(isinstance(labels_count, int))
+        assert(isinstance(rt, ResultType))
+        self.model_name = model_name
+        self.folding_type = folding_type
+        self.ra_ver = ra_ver
+        self.rsr_ver = rsr_ver
+        self.labels_count = labels_count
+        self.rt = rt
+
+    @classmethod
+    def copy(cls, other):
+        assert(isinstance(other, ResultsEvalContext))
+        return cls(model_name=other.model_name,
+                    folding_type=other.folding_type,
+                    ra_ver=other.ra_ver,
+                    rsr_ver=other.rsr_ver,
+                    labels_count=other.labels_count,
+                    rt=other.rt)
 
 
 class ResultsTable(object):
@@ -145,7 +172,8 @@ class ResultsTable(object):
 
         iters = self.__cv_count if folding_type == FoldingType.CrossValidation else 1
 
-        if result_type == ResultType.F1:
+        if result_type == ResultType.F1 or \
+            result_type == ResultType.DSDiffImprovement:
             yield join(Common.log_dir, Common.log_test_eval_exp_filename)
         elif result_type == ResultType.TrainingEpochTime or \
                 result_type == ResultType.TrainingTotalTime or \
@@ -164,10 +192,12 @@ class ResultsTable(object):
         else:
             raise NotImplementedError("Not supported type: {}".format(result_type))
 
-    @staticmethod
-    def __parse_iter_and_avg_result(r_type, files_per_iter):
-        assert(isinstance(r_type, ResultType))
+    def __parse_iter_results(self, files_per_iter, eval_ctx):
         assert(isinstance(files_per_iter, list))
+        assert(isinstance(eval_ctx, ResultsEvalContext))
+
+        # Picking a current result type for eval_context.
+        r_type = eval_ctx.rt
 
         # parsing results in order to organize the result table.
         if r_type == ResultType.F1:
@@ -182,18 +212,49 @@ class ResultsTable(object):
         elif r_type == ResultType.EpochsCount:
             return [extract_last_param_value_from_training_log(fp, key=EPOCH_ARGUMENT) for fp in files_per_iter]
         elif r_type == ResultType.TrainingTotalTime:
-            epochs = ResultsTable.__parse_iter_and_avg_result(r_type=ResultType.EpochsCount,
-                                                              files_per_iter=files_per_iter)
-            times = ResultsTable.__parse_iter_and_avg_result(r_type=ResultType.TrainingEpochTime,
-                                                             files_per_iter=files_per_iter)
+            # Calculate epochs count.
+            eval_ctx.rt = ResultType.EpochsCount
+            epochs = self.__parse_iter_results(files_per_iter=files_per_iter,
+                                               eval_ctx=eval_ctx)
+            # Calculate training epoch time.
+            eval_ctx.rt = ResultType.TrainingEpochTime
+            times = self.__parse_iter_results(files_per_iter=files_per_iter,
+                                              eval_ctx=eval_ctx)
             return [epochs[i] * times[i] for i in range(len(epochs))]
         elif r_type == ResultType.F1Train:
             return [parse_last(filepath=fp, col=TwoClassEvalResult.C_F1) for fp in files_per_iter]
         elif r_type == ResultType.LearningRate:
             return [parse_float_network_parameter(fp, u'learning_rate') for fp in files_per_iter]
-        elif r_type == ResultType.DSUsageImprovement:
-            # TODO. Not supported.
-            raise NotImplementedError()
+        elif r_type == ResultType.DSDiffImprovement:
+
+            def __calc_diff(base_it_results, rt):
+                assert(isinstance(rt, ResultType))
+
+                # Calculate current results.
+                local_eval_ctx = ResultsEvalContext.copy(eval_ctx)
+                local_eval_ctx.rt = rt
+                curr_it_results = self.__parse_iter_results(files_per_iter=files_per_iter,
+                                                            eval_ctx=local_eval_ctx)
+
+                # calculating result difference.
+                diff = [curr_it_results[i] - base_it_results[i]
+                        for i in range(len(curr_it_results))]
+
+                res.append(diff)
+
+            # using this as a local variable which is accessible from callback
+            res = []
+
+            # Perform another experiments result evaluation.
+            self._for_experiment(model_name=eval_ctx.model_name,
+                                 folding_type=eval_ctx.folding_type,
+                                 ra_version=None,
+                                 rsr_version=eval_ctx.rsr_ver,
+                                 labels_count=eval_ctx.labels_count,
+                                 result_types=[ResultType.F1],
+                                 callback=__calc_diff)
+
+            return res[0]
         else:
             raise NotImplementedError("Not supported type: {}". format(r_type))
 
@@ -277,29 +338,30 @@ class ResultsTable(object):
 
         return exp_dir
 
-    def __for_result_type(self, folding_type, result_type, target_to_path):
+    def __for_result_type(self, eval_ctx, target_to_path):
+        assert(isinstance(eval_ctx, ResultsEvalContext))
         assert(callable(target_to_path))
+
+        folding_type = eval_ctx.folding_type
 
         # Composing the related files
         files_per_iter = [target_to_path(target) for
-                          target in self.__iter_files_per_iteration(result_type, folding_type)]
+                          target in self.__iter_files_per_iteration(result_type=eval_ctx.rt,
+                                                                    folding_type=folding_type)]
 
         # Check files existance.
         for target_file in files_per_iter:
             if not exists(target_file):
                 return None
 
-        it_results = self.__parse_iter_and_avg_result(r_type=result_type,
-                                                      files_per_iter=files_per_iter)
+        return self.__parse_iter_results(files_per_iter=files_per_iter,
+                                         eval_ctx=eval_ctx)
 
-        avg_res = self.__calc_avg_it_res(it_results=it_results,
-                                         result_type=result_type)
-
-        return it_results, avg_res
-
-    def _for_experiment(self, model_name, folding_type, ra_version, rsr_version, labels_count, callback):
+    def _for_experiment(self, model_name, folding_type, ra_version,
+                        rsr_version, labels_count, result_types, callback):
         assert(isinstance(model_name, ModelNames))
         assert(isinstance(folding_type, FoldingType))
+        assert(isinstance(result_types, list))
         assert(isinstance(labels_count, int))
 
         def __target_to_path(target):
@@ -319,19 +381,28 @@ class ResultsTable(object):
                                         rsr_version=rsr_version,
                                         cv_count=self.__cv_count)
 
-        for rt in self.__result_types:
+        for rt in result_types:
+            assert(isinstance(rt, ResultType))
+
+            # Composing eval context that allows us
+            # to additionally run results evaluation,
+            # if the latter is needed.
+            eval_ctx = ResultsEvalContext(ra_ver=ra_version,
+                                          rsr_ver=rsr_version,
+                                          model_name=model_name,
+                                          labels_count=labels_count,
+                                          rt=rt,
+                                          folding_type=folding_type)
 
             # Calculate and filling results.
-            out = self.__for_result_type(folding_type=folding_type,
-                                         target_to_path=__target_to_path,
-                                         result_type=rt)
+            it_results = self.__for_result_type(target_to_path=__target_to_path,
+                                                eval_ctx=eval_ctx)
 
-            if out is None:
+            if it_results is None:
                 continue
 
             # otherwise we can cast it as follows
-            it_results, avg_res = out
-            callback(it_results, avg_res, rt)
+            callback(it_results, rt)
 
     def save(self, round_decimals):
 
@@ -354,13 +425,18 @@ class ResultsTable(object):
         assert(isinstance(folding_type, FoldingType))
         assert(isinstance(ra_version, RuAttitudesVersions) or ra_version is None)
 
-        def __save_results_into_table(it_results, avg_res, rt):
+        def __save_results_into_table(it_results, rt):
             assert(isinstance(rt, ResultType))
 
             # Finding the related row_id.
             row_ind = self.__add_or_find_existed_row(ra_version=ra_version,
                                                      folding_type=folding_type,
                                                      model_name=model_name)
+
+            # Calculate averaged result that needed
+            # in for the related table column.
+            avg_res = self.__calc_avg_it_res(it_results=it_results,
+                                             result_type=rt)
 
             # Writing results into the related row.
             self.__save_results(it_results=it_results,
@@ -375,6 +451,7 @@ class ResultsTable(object):
                              ra_version=ra_version,
                              labels_count=labels_count,
                              rsr_version=RuSentRelVersions.V11,
+                             result_types=self.__result_types,
                              # Processing results by saving the latter into table.
                              callback=__save_results_into_table)
 
