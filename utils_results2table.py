@@ -218,7 +218,19 @@ class ResultsTable(object):
         else:
             return np.mean(it_results)
 
-    def __add_or_find_existed_row(self, exp_type_name, model_dir):
+    @staticmethod
+    def __create_exp_type_name(ra_version):
+        assert(isinstance(ra_version, RuAttitudesVersions) or ra_version is None)
+        ra_type = None if ra_version is None else ra_version
+        return ra_type.value if isinstance(ra_type, RuAttitudesVersions) else u'-'
+
+    def __add_or_find_existed_row(self, ra_version, folding_type, model_name):
+
+        exp_type_name = self.__create_exp_type_name(ra_version)
+        model_dir = self._create_model_dir(folding_type=folding_type,
+                                           model_name=model_name,
+                                           exp_type_name=exp_type_name)
+
         # IMPORTANT:
         # This allows us to combine neut with non-neut (for 2-scale).
         ds_type_name = exp_type_name.replace(u'_neut', '')
@@ -265,7 +277,7 @@ class ResultsTable(object):
 
         return exp_dir
 
-    def __for_result_type(self, row_ind, folding_type, labels_count, result_type, target_to_path):
+    def __for_result_type(self, folding_type, result_type, target_to_path):
         assert(callable(target_to_path))
 
         # Composing the related files
@@ -275,7 +287,7 @@ class ResultsTable(object):
         # Check files existance.
         for target_file in files_per_iter:
             if not exists(target_file):
-                return False
+                return None
 
         it_results = self.__parse_iter_and_avg_result(r_type=result_type,
                                                       files_per_iter=files_per_iter)
@@ -283,48 +295,43 @@ class ResultsTable(object):
         avg_res = self.__calc_avg_it_res(it_results=it_results,
                                          result_type=result_type)
 
-        # saving results.
-        self.__save_results(it_results=it_results,
-                            avg_res=avg_res,
-                            folding_type=folding_type,
-                            row_ind=row_ind,
-                            rt=result_type,
-                            labels_count=labels_count)
+        return it_results, avg_res
 
-        return True
-
-    def _for_experiment(self, model_name, folding_type, ra_version, rsr_version, labels_count):
+    def _for_experiment(self, model_name, folding_type, ra_version, rsr_version, labels_count, callback):
         assert(isinstance(model_name, ModelNames))
         assert(isinstance(folding_type, FoldingType))
         assert(isinstance(labels_count, int))
 
         def __target_to_path(target):
-            return join(self.__output_dir, experiment_dir, model_dir, target)
+            # This is how we combine all the parameters into final
+            # path to the target.
+            return join(self.__output_dir, exp_dir, model_dir, target)
 
-        ra_type = None if ra_version is None else ra_version
-        exp_type_name = ra_type.value if isinstance(ra_type, RuAttitudesVersions) else u'-'
+        exp_type_name = self.__create_exp_type_name(ra_version)
         model_dir = self._create_model_dir(folding_type=folding_type,
                                            model_name=model_name,
                                            exp_type_name=exp_type_name)
 
-        row_ind = self.__add_or_find_existed_row(exp_type_name=exp_type_name,
-                                                 model_dir=model_dir)
-
         # Composing the result dir.
-        experiment_dir = self.__create_exp_dir(ra_version=ra_version,
-                                               folding_type=folding_type,
-                                               labels_count=labels_count,
-                                               rsr_version=rsr_version,
-                                               cv_count=self.__cv_count)
+        exp_dir = self.__create_exp_dir(ra_version=ra_version,
+                                        folding_type=folding_type,
+                                        labels_count=labels_count,
+                                        rsr_version=rsr_version,
+                                        cv_count=self.__cv_count)
 
         for rt in self.__result_types:
 
             # Calculate and filling results.
-            self.__for_result_type(row_ind=row_ind,
-                                   folding_type=folding_type,
-                                   target_to_path=__target_to_path,
-                                   labels_count=labels_count,
-                                   result_type=rt)
+            out = self.__for_result_type(folding_type=folding_type,
+                                         target_to_path=__target_to_path,
+                                         result_type=rt)
+
+            if out is None:
+                continue
+
+            # otherwise we can cast it as follows
+            it_results, avg_res = out
+            callback(it_results, avg_res, rt)
 
     def save(self, round_decimals):
 
@@ -347,11 +354,29 @@ class ResultsTable(object):
         assert(isinstance(folding_type, FoldingType))
         assert(isinstance(ra_version, RuAttitudesVersions) or ra_version is None)
 
+        def __save_results_into_table(it_results, avg_res, rt):
+            assert(isinstance(rt, ResultType))
+
+            # Finding the related row_id.
+            row_ind = self.__add_or_find_existed_row(ra_version=ra_version,
+                                                     folding_type=folding_type,
+                                                     model_name=model_name)
+
+            # Writing results into the related row.
+            self.__save_results(it_results=it_results,
+                                avg_res=avg_res,
+                                folding_type=folding_type,
+                                row_ind=row_ind,
+                                rt=rt,
+                                labels_count=labels_count)
+
         self._for_experiment(model_name=model_name,
                              folding_type=folding_type,
                              ra_version=ra_version,
                              labels_count=labels_count,
-                             rsr_version=RuSentRelVersions.V11)
+                             rsr_version=RuSentRelVersions.V11,
+                             # Processing results by saving the latter into table.
+                             callback=__save_results_into_table)
 
 
 class FineTunedResultsProvider(ResultsTable):
