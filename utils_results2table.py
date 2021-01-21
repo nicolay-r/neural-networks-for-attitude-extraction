@@ -1,4 +1,6 @@
 import argparse
+import collections
+
 from tabulate import tabulate
 
 import numpy as np
@@ -163,7 +165,7 @@ class ResultsTable(object):
     def __save_results(self, rt, it_results, avg_res,
                        labels_count, folding_type, row_ind):
         assert(isinstance(rt, ResultType))
-        assert(isinstance(it_results, list))
+        assert(isinstance(it_results, collections.Iterable))
 
         # set avg. result.
         col_name_avg = self.__rcol_agg(rt=rt, labels_count=labels_count, folding_type=folding_type)
@@ -243,7 +245,7 @@ class ResultsTable(object):
         elif r_type == ResultType.DSDiffAttImprovement:
             # Perform calculation of attentive models over non-attentive.
 
-            def __calc_diff(base_it_results, rt):
+            def __calc_diff(att_it_results, rt):
                 assert(isinstance(rt, ResultType))
 
                 # Calculate current results.
@@ -252,10 +254,7 @@ class ResultsTable(object):
                 curr_it_results = self.__parse_iter_results(files_per_iter=files_per_iter,
                                                             eval_ctx=local_eval_ctx)
 
-                # calculating result difference.
-                diff = [curr_it_results[i] - base_it_results[i]
-                        for i in range(len(curr_it_results))]
-
+                diff = [att_it_results[i] - curr_it_results[i] for i in range(len(curr_it_results))]
                 res.append(diff)
 
             # using this as a local variable which is accessible from callback
