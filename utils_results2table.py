@@ -254,7 +254,7 @@ class ResultsTable(object):
                                  result_types=[ResultType.F1],
                                  callback=__calc_diff)
 
-            return res[0]
+            return res[0] if len(res) > 1 else []
         else:
             raise NotImplementedError("Not supported type: {}". format(r_type))
 
