@@ -411,18 +411,19 @@ class FineTunedResultsProvider(ResultsTable):
 
         return updated_name
 
-    def _for_experiment(self, model_name, folding_type, experiment_dir, ra_type, labels_count):
-        assert(ra_type is None)
+    def _for_experiment(self, model_name, folding_type, ra_version, rsr_version, labels_count, callback):
+        assert(ra_version is None)
 
         # For every tag key we gathering results
         # within a single experiment dir.
-        for ra_version in self.__tags.iterkeys():
+        for ra_version_loc in self.__tags.iterkeys():
             super(FineTunedResultsProvider, self)._for_experiment(
                 model_name=model_name,
                 folding_type=folding_type,
-                experiment_dir=experiment_dir,
-                ra_type=ra_version,
-                labels_count=labels_count)
+                rsr_version=rsr_version,
+                ra_version=ra_version_loc,
+                labels_count=labels_count,
+                callback=callback)
 
 
 def fill_single23(res, models):
