@@ -488,7 +488,8 @@ class FineTunedResultsProvider(ResultsTable):
 
         return updated_name
 
-    def _for_experiment(self, model_name, folding_type, ra_version, rsr_version, labels_count, callback):
+    def _for_experiment(self, model_name, folding_type, ra_version,
+                        rsr_version, labels_count, result_types, callback):
         assert(ra_version is None)
 
         # For every tag key we gathering results
@@ -500,6 +501,7 @@ class FineTunedResultsProvider(ResultsTable):
                 rsr_version=rsr_version,
                 ra_version=ra_version_loc,
                 labels_count=labels_count,
+                result_types=result_types,
                 callback=callback)
 
 
