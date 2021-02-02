@@ -452,12 +452,17 @@ class ResultsTable(object):
             # otherwise we can cast it as follows
             callback(it_results, rt)
 
-    def save(self, round_decimals):
+    def save(self, round_decimals, coef_scaler):
+        assert(isinstance(coef_scaler, float))
 
         self.__df.replace('nan', np.nan, inplace=True)
 
         # Perform rounding.
         rounded_df = self.__df.round(decimals=round_decimals)
+ 
+        # Perform results scaling (Optional).
+        if (coef_scaler > 1.0):
+            rounded_df[rounded_df.select_dtypes(include=['number']).columns] *= coef_scaler 
 
         # composing output filepath.
         basename = self._create_output_basename()
@@ -643,6 +648,13 @@ if __name__ == "__main__":
                         default=3,
                         help='Decimals rounding for float values')
 
+    parser.add_argument('--scale',
+                        dest='scale',
+                        type=float,
+                        nargs='?',
+                        default=1.0,
+                        help='Scaler coefficient for all the results in table')
+
     parser.add_argument('--models',
                         dest='models',
                         type=unicode,
@@ -696,4 +708,5 @@ if __name__ == "__main__":
     if training_type == u'ft':
         fill_finetunned(rt, labels=labels, models=models)
 
-    rt.save(args.round)
+    rt.save(round_decimals=args.round, 
+            coef_scaler=args.scale)
