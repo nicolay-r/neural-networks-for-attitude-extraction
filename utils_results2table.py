@@ -254,7 +254,8 @@ class ResultsTable(object):
                 curr_it_results = self.__parse_iter_results(files_per_iter=files_per_iter,
                                                             eval_ctx=local_eval_ctx)
 
-                diff = [att_it_results[i] - curr_it_results[i] for i in range(len(curr_it_results))]
+                diff = [self.__calc_diff_metric(a=att_it_results[i], b=curr_it_results[i])
+                        for i in range(len(curr_it_results))]
                 res.append(diff)
 
             # using this as a local variable which is accessible from callback
@@ -285,7 +286,7 @@ class ResultsTable(object):
                                                             eval_ctx=local_eval_ctx)
 
                 # calculating result difference.
-                diff = [curr_it_results[i] - base_it_results[i]
+                diff = [self.__calc_diff_metric(a=curr_it_results[i], b=base_it_results[i])
                         for i in range(len(curr_it_results))]
 
                 res.append(diff)
@@ -305,6 +306,12 @@ class ResultsTable(object):
             return res[0] if len(res) == 1 else []
         else:
             raise NotImplementedError("Not supported type: {}". format(r_type))
+
+    @staticmethod
+    def __calc_diff_metric(a, b):
+        """ Perform difference calculation in percents.
+        """
+        return(float(a) / b - 1) * 100 if abs(b-0) > 1e-5 else 0
 
     @staticmethod
     def __calc_avg_it_res(result_type, it_results):
