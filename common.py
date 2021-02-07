@@ -38,8 +38,7 @@ class Common:
             ModelNames.AttEndsCNN,
             ModelNames.AttEndsPCNN,
             ModelNames.IANEnds,
-            ModelNames.AttSelfPZhouBiLSTM,
-            ModelNames.AttSelfZYangBiLSTM,
+            ModelNames.AttSelfPZhouBiLSTM
         ]
 
     @staticmethod

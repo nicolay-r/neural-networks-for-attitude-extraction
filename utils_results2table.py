@@ -33,8 +33,7 @@ attentive_models_matching = {
     ModelNames.CNN: [ModelNames.AttEndsCNN],
     ModelNames.PCNN: [ModelNames.AttEndsPCNN],
     ModelNames.LSTM: [ModelNames.IANEnds],
-    ModelNames.BiLSTM: [ModelNames.AttSelfPZhouBiLSTM,
-                        ModelNames.AttSelfZYangBiLSTM]
+    ModelNames.BiLSTM: [ModelNames.AttSelfPZhouBiLSTM]
 }
 
 
