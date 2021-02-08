@@ -369,11 +369,10 @@ class ResultsTable(object):
 
         return row_ind
 
-    @staticmethod
-    def __create_exp_dir(cv_count, ra_version, folding_type, labels_count, rsr_version):
+    def _create_exp_dir(self, cv_count, ra_version, folding_type, labels_count, rsr_version):
+        assert(isinstance(cv_count, int))
         assert(isinstance(ra_version, RuAttitudesVersions) or ra_version is None)
         assert(isinstance(rsr_version, RuSentRelVersions))
-        assert(isinstance(cv_count, int))
 
         folding_str = u"cv{}".format(cv_count) \
             if folding_type == FoldingType.CrossValidation else u"fixed"
@@ -429,11 +428,11 @@ class ResultsTable(object):
                                            exp_type_name=exp_type_name)
 
         # Composing the result dir.
-        exp_dir = self.__create_exp_dir(ra_version=ra_version,
-                                        folding_type=folding_type,
-                                        labels_count=labels_count,
-                                        rsr_version=rsr_version,
-                                        cv_count=self.__cv_count)
+        exp_dir = self._create_exp_dir(ra_version=ra_version,
+                                       folding_type=folding_type,
+                                       labels_count=labels_count,
+                                       rsr_version=rsr_version,
+                                       cv_count=self.__cv_count)
 
         for rt in result_types:
             assert(isinstance(rt, ResultType))
@@ -536,6 +535,13 @@ class FineTunedResultsProvider(ResultsTable):
         assert(isinstance(ra_version, RuAttitudesVersions))
         return FineTunedResultsProvider.__tags[ra_version]
 
+    def _create_exp_dir(self, cv_count, ra_version, folding_type, labels_count, rsr_version):
+        return super(FineTunedResultsProvider, self)._create_exp_dir(cv_count=cv_count,
+                                                                     ra_version=None,
+                                                                     folding_type=folding_type,
+                                                                     labels_count=labels_count,
+                                                                     rsr_version=rsr_version)
+
     def _create_model_dir(self, folding_type, model_name, exp_type_name):
         origin_name = super(FineTunedResultsProvider, self)._create_model_dir(folding_type=folding_type,
                                                                               model_name=model_name,
@@ -547,21 +553,17 @@ class FineTunedResultsProvider(ResultsTable):
 
         return updated_name
 
-    def _for_experiment(self, model_name, folding_type, ra_version,
-                        rsr_version, labels_count, result_types, callback):
+    def register(self, model_name, folding_type, labels_count, ra_version):
         assert(ra_version is None)
 
         # For every tag key we gathering results
         # within a single experiment dir.
         for ra_version_loc in self.__tags.iterkeys():
-            super(FineTunedResultsProvider, self)._for_experiment(
+            super(FineTunedResultsProvider, self).register(
                 model_name=model_name,
                 folding_type=folding_type,
-                rsr_version=rsr_version,
-                ra_version=ra_version_loc,
                 labels_count=labels_count,
-                result_types=result_types,
-                callback=callback)
+                ra_version=ra_version_loc)
 
 
 def fill_single23(res, models):
