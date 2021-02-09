@@ -516,9 +516,15 @@ class ResultsTable(object):
 
 class FineTunedResultsProvider(ResultsTable):
 
+    # Assuming that we using non-ra experiment
+    # for fine-tunning.
+    __source_ra_version = None
+    NO_SUFFIX = u'-'
+
     __fine_tuned_suffix = u"{model_name}-ft-{model_tag}"
 
     __tags = {
+        __source_ra_version: NO_SUFFIX,
         RuAttitudesVersions.V12: u'ra12',
         RuAttitudesVersions.V20Base: u'ra20b',
         RuAttitudesVersions.V20BaseNeut: u'ra20bn',
@@ -537,7 +543,7 @@ class FineTunedResultsProvider(ResultsTable):
 
     def _create_exp_dir(self, cv_count, ra_version, folding_type, labels_count, rsr_version):
         return super(FineTunedResultsProvider, self)._create_exp_dir(cv_count=cv_count,
-                                                                     ra_version=None,
+                                                                     ra_version=self.__source_ra_version,
                                                                      folding_type=folding_type,
                                                                      labels_count=labels_count,
                                                                      rsr_version=rsr_version)
@@ -548,13 +554,18 @@ class FineTunedResultsProvider(ResultsTable):
                                                                               exp_type_name=exp_type_name)
 
         ra_version = RuAttitudesVersionsService.find_by_name(exp_type_name)
-        updated_name = self.__fine_tuned_suffix.format(model_name=origin_name,
-                                                       model_tag=self.__model_tag_from_ra_version(ra_version))
 
-        return updated_name
+        # In such case we would like to provide
+        # original name, i.e. the case when we
+        # do not adopt fine-tunning in training process
+        if ra_version == self.NO_SUFFIX:
+            return origin_name
+
+        return self.__fine_tuned_suffix.format(model_name=origin_name,
+                                               model_tag=self.__model_tag_from_ra_version(ra_version))
 
     def register(self, model_name, folding_type, labels_count, ra_version):
-        assert(ra_version is None)
+        assert(ra_version is self.__source_ra_version)
 
         # For every tag key we gathering results
         # within a single experiment dir.
