@@ -90,7 +90,7 @@ class ResultsTable(object):
 
     MODEL_NAME_COL = u'model_name'
     DS_TYPE_COL = u'ds_type'
-
+    
     sl_template = u"rsr-{rsr_version}-{folding_str}-balanced-tpc50_{labels_count}l"
     sl_ds_template = u"rsr-{rsr_version}-ra-{ra_version}-{folding_str}-balanced-tpc50_{labels_count}l"
 
@@ -156,7 +156,7 @@ class ResultsTable(object):
             input_type=self.__input_type.value,
             result_type=u"_".join([rt.value for rt in self.__result_types]))
 
-    def _create_model_dir(self, folding_type, model_name, exp_type_name):
+    def _create_model_dir(self, folding_type, model_name, exp_type):
         return Common.create_full_model_name(folding_type=folding_type,
                                              input_type=self.__input_type,
                                              model_name=model_name)
@@ -334,17 +334,19 @@ class ResultsTable(object):
             return np.mean(it_results)
 
     @staticmethod
-    def __create_exp_type_name(ra_version):
+    def __create_exp_type_or_none(ra_version):
         assert(isinstance(ra_version, RuAttitudesVersions) or ra_version is None)
         ra_type = None if ra_version is None else ra_version
-        return ra_type.value if isinstance(ra_type, RuAttitudesVersions) else u'-'
+        return ra_type.value if isinstance(ra_type, RuAttitudesVersions) else None
 
     def __add_or_find_existed_row(self, ra_version, folding_type, model_name):
 
-        exp_type_name = self.__create_exp_type_name(ra_version)
+        exp_type = self.__create_exp_type_or_none(ra_version)
         model_dir = self._create_model_dir(folding_type=folding_type,
                                            model_name=model_name,
-                                           exp_type_name=exp_type_name)
+                                           exp_type=exp_type)
+
+        exp_type_name = exp_type if exp_type is not None else u'-'
 
         # IMPORTANT:
         # This allows us to combine neut with non-neut (for 2-scale).
@@ -422,10 +424,10 @@ class ResultsTable(object):
             # path to the target.
             return join(self.__output_dir, exp_dir, model_dir, target)
 
-        exp_type_name = self.__create_exp_type_name(ra_version)
+        exp_type = self.__create_exp_type_or_none(ra_version)
         model_dir = self._create_model_dir(folding_type=folding_type,
                                            model_name=model_name,
-                                           exp_type_name=exp_type_name)
+                                           exp_type=exp_type)
 
         # Composing the result dir.
         exp_dir = self._create_exp_dir(ra_version=ra_version,
@@ -519,12 +521,11 @@ class FineTunedResultsProvider(ResultsTable):
     # Assuming that we using non-ra experiment
     # for fine-tunning.
     __source_ra_version = None
-    NO_SUFFIX = u'-'
 
     __fine_tuned_suffix = u"{model_name}-ft-{model_tag}"
 
     __tags = {
-        __source_ra_version: NO_SUFFIX,
+        __source_ra_version: None,
         RuAttitudesVersions.V12: u'ra12',
         RuAttitudesVersions.V20Base: u'ra20b',
         RuAttitudesVersions.V20BaseNeut: u'ra20bn',
@@ -548,18 +549,20 @@ class FineTunedResultsProvider(ResultsTable):
                                                                      labels_count=labels_count,
                                                                      rsr_version=rsr_version)
 
-    def _create_model_dir(self, folding_type, model_name, exp_type_name):
+    def _create_model_dir(self, folding_type, model_name, exp_type):
+        assert(isinstance(exp_type, unicode) or exp_type is None)
+
         origin_name = super(FineTunedResultsProvider, self)._create_model_dir(folding_type=folding_type,
                                                                               model_name=model_name,
-                                                                              exp_type_name=exp_type_name)
-
-        ra_version = RuAttitudesVersionsService.find_by_name(exp_type_name)
+                                                                              exp_type=exp_type)
 
         # In such case we would like to provide
         # original name, i.e. the case when we
         # do not adopt fine-tunning in training process
-        if ra_version == self.NO_SUFFIX:
+        if exp_type is None:
             return origin_name
+
+        ra_version = RuAttitudesVersionsService.find_by_name(exp_type)
 
         return self.__fine_tuned_suffix.format(model_name=origin_name,
                                                model_tag=self.__model_tag_from_ra_version(ra_version))
