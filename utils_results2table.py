@@ -580,28 +580,33 @@ class FineTunedResultsProvider(ResultsTable):
                 ra_version=ra_version_loc)
 
 
-def fill_single23(res, models):
+class PreTrainedResultsProvider(ResultsTable):
+
+    pt_template = u"ra-{ra_version}-balanced-tpc50_{labels_count}l"
+
+    def _create_exp_dir(self, cv_count, ra_version, folding_type, labels_count, rsr_version):
+        return self.pt_template.format(ra_version=ra_version.value,
+                                       labels_count=str(labels_count))
+
+
+def fill_single23(res, models, ra_3l, ra_2l):
     assert(isinstance(res, ResultsTable))
     assert(isinstance(models, list))
+    assert(isinstance(ra_2l, list))
+    assert(isinstance(ra_3l, list))
 
     for model_name in models:
         assert(isinstance(model_name, ModelNames))
         for folding_type in FoldingType:
             # for 3-scale
-            for ra_version in [RuAttitudesVersions.V20LargeNeut,
-                               RuAttitudesVersions.V20BaseNeut,
-                               RuAttitudesVersions.V12,
-                               None]:
+            for ra_version in ra_3l:
                 res.register(model_name=model_name,
                              folding_type=folding_type,
                              labels_count=3,
                              ra_version=ra_version)
 
             # for 2-scale
-            for ra_version in [RuAttitudesVersions.V20Large,
-                               RuAttitudesVersions.V20Base,
-                               RuAttitudesVersions.V12,
-                               None]:
+            for ra_version in ra_2l:
                 res.register(model_name=model_name,
                              folding_type=folding_type,
                              labels_count=2,
@@ -646,7 +651,7 @@ if __name__ == "__main__":
                         type=unicode,
                         nargs='?',
                         default=u'single',
-                        choices=[u'single', u'ft'],
+                        choices=[u'single', u'ft', u'pt'],
                         help='Training format used for results gathering')
 
     parser.add_argument('--labels',
@@ -711,7 +716,8 @@ if __name__ == "__main__":
     # Supported training types.
     training_types = {
         u'single': ResultsTable,
-        u'ft': FineTunedResultsProvider
+        u'ft': FineTunedResultsProvider,
+        u'pt': PreTrainedResultsProvider
     }
 
     class_type = training_types[training_type]
@@ -724,11 +730,21 @@ if __name__ == "__main__":
                     cv_count=cv_count,
                     foldings=foldings)
 
+    ra_3l = [RuAttitudesVersions.V20LargeNeut,
+             RuAttitudesVersions.V20BaseNeut,
+             RuAttitudesVersions.V12]
+
+    ra_2l = [RuAttitudesVersions.V20Large,
+             RuAttitudesVersions.V20Base,
+             RuAttitudesVersions.V12]
+
     # Filling
     if training_type == u'single':
-        fill_single23(rt, models=models)
+        fill_single23(rt, models=models, ra_3l=ra_3l + [None], ra_2l=ra_2l + [None])
     if training_type == u'ft':
         fill_finetunned(rt, labels=labels, models=models)
+    if training_type == u'pt':
+        fill_single23(rt, models=models, ra_3l=ra_3l, ra_2l=ra_2l)
 
-    rt.save(round_decimals=args.round, 
+    rt.save(round_decimals=args.round,
             coef_scaler=args.scale)
