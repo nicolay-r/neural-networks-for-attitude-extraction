@@ -10,6 +10,8 @@ from enum import Enum
 
 from arekit.common.evaluation.results.two_class import TwoClassEvalResult
 from arekit.common.experiment.data_type import DataType
+from arekit.common.experiment.scales.factory import create_labels_scaler
+from arekit.common.labels.base import PositiveLabel, NegativeLabel, NeutralLabel
 from arekit.contrib.experiments.rusentrel.folding import DEFAULT_CV_COUNT
 from args.train.model_input_type import ModelInputTypeArg
 from arekit.common.experiment.folding.types import FoldingType
@@ -29,6 +31,8 @@ from experiment_io import CustomNetworkExperimentIO
 # According to the one related but without attentive mechanism.
 # There are even more models, so this list could be enlarged
 # and finally then moved into AREkit framework.
+from samples_utils import calculate_samples_count
+
 attentive_models_matching = {
     ModelNames.CNN: [ModelNames.AttEndsCNN],
     ModelNames.PCNN: [ModelNames.AttEndsPCNN],
@@ -49,6 +53,9 @@ class ResultType(Enum):
     # Considering f1-test values by default.
     DSDiffF1Improvement = u'ds-diff-imp'
     DSDiffAttImprovement = u'ds-diff-att'
+    TrainingPosSamplesCount = u'train-samples-pos'
+    TrainingNegSamplesCount = u'train-samples-neg'
+    TrainingNeuSamplesCount = u'train-samples-neu'
 
     LearningRate = u'train-lr'
 
@@ -205,6 +212,11 @@ class ResultsTable(object):
         elif result_type == ResultType.LearningRate:
             for it_index in range(iters):
                 yield join(Common.log_dir, Common.model_config_name)
+        elif result_type == ResultType.TrainingPosSamplesCount or \
+                result_type == ResultType.TrainingNegSamplesCount or \
+                result_type == ResultType.TrainingNeuSamplesCount:
+            # returning back from the model dir to the experiment dir.
+            yield u".."
         else:
             raise NotImplementedError("Not supported type: {}".format(result_type))
 
@@ -303,6 +315,29 @@ class ResultsTable(object):
                                  callback=__calc_diff)
 
             return res[0] if len(res) == 1 else []
+
+        elif r_type == ResultType.TrainingNegSamplesCount or \
+                r_type == ResultType.TrainingPosSamplesCount or \
+                r_type == ResultType.TrainingNeuSamplesCount:
+
+            def calc_for_iter(iter_index, fp):
+                # creating scaler.
+                scaler = create_labels_scaler(eval_ctx.labels_count)
+                # creating dict to perform convertion from type to label.
+                type_to_label = {
+                    ResultType.TrainingPosSamplesCount: PositiveLabel(),
+                    ResultType.TrainingNegSamplesCount: NegativeLabel(),
+                    ResultType.TrainingNeuSamplesCount: NeutralLabel()
+                }
+
+                samples_local_fp = u'sample-train-{it_index}.tsv.gz'.format(it_index=iter_index)
+
+                return calculate_samples_count(
+                    uint_label=scaler.label_to_uint(type_to_label[r_type]),
+                    input_samples_filepath=join(fp, samples_local_fp))
+
+            return [calc_for_iter(i, fp) for i, fp in enumerate(files_per_iter)]
+
         else:
             raise NotImplementedError("Not supported type: {}". format(r_type))
 
