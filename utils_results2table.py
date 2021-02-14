@@ -11,6 +11,7 @@ from enum import Enum
 from arekit.common.evaluation.results.two_class import TwoClassEvalResult
 from arekit.common.experiment.data_type import DataType
 from arekit.common.experiment.scales.factory import create_labels_scaler
+from arekit.common.experiment.scales.two import TwoLabelScaler
 from arekit.common.labels.base import PositiveLabel, NegativeLabel, NeutralLabel
 from arekit.contrib.experiments.rusentrel.folding import DEFAULT_CV_COUNT
 from args.train.model_input_type import ModelInputTypeArg
@@ -321,14 +322,20 @@ class ResultsTable(object):
                 r_type == ResultType.TrainingNeuSamplesCount:
 
             def calc_for_iter(iter_index, fp):
+
                 # creating scaler.
                 scaler = create_labels_scaler(eval_ctx.labels_count)
+
                 # creating dict to perform convertion from type to label.
                 type_to_label = {
                     ResultType.TrainingPosSamplesCount: PositiveLabel(),
                     ResultType.TrainingNegSamplesCount: NegativeLabel(),
                     ResultType.TrainingNeuSamplesCount: NeutralLabel()
                 }
+
+                if isinstance(scaler, TwoLabelScaler) and r_type == ResultType.TrainingNeuSamplesCount:
+                    # Neutral labels are not supported in 2-scale mode.
+                    return 0
 
                 samples_local_fp = u'sample-train-{it_index}.tsv.gz'.format(it_index=iter_index)
 
