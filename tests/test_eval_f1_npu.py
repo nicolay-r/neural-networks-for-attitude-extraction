@@ -6,12 +6,13 @@ from enum import Enum
 from arekit.common.evaluation.evaluators.three_class import ThreeClassEvaluator
 from arekit.common.evaluation.results.three_class import ThreeClassEvalResult
 from arekit.common.evaluation.utils import OpinionCollectionsToCompareUtils
+from arekit.common.experiment.data_type import DataType
 from arekit.common.labels.str_fmt import StringLabelsFormatter
 from arekit.common.opinions.collection import OpinionCollection
 from arekit.common.utils import progress_bar_iter
 from arekit.contrib.experiments.rusentrel.labels_formatter import RuSentRelNeutralLabelsFormatter
 from arekit.contrib.experiments.synonyms.provider import RuSentRelSynonymsCollectionProvider
-from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
+from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions, RuSentRelIOUtils
 from arekit.contrib.source.rusentrel.labels_fmt import RuSentRelLabelsFormatter
 from arekit.contrib.source.rusentrel.opinions.collection import RuSentRelOpinionCollection
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
@@ -20,7 +21,9 @@ from arekit.processing.lemmatization.mystem import MystemWrapper
 
 
 class Results(Enum):
+
     Etalon = u'annot-3-scale'
+
     Test = u'test_results'
 
 
@@ -47,7 +50,7 @@ class CustomZippedResultsIOUtils(ZipArchiveUtils):
             yield int(doc_id_str)
 
     @staticmethod
-    def iter_doc_opinions(doc_id, result_version, labels_fmt, opin_path_fmt=u"{doc_id}.opin.txt"):
+    def iter_doc_opinions(doc_id, result_version, labels_fmt, opin_path_fmt):
         assert(isinstance(labels_fmt, StringLabelsFormatter))
 
         return CustomZippedResultsIOUtils.iter_from_zip(
@@ -84,7 +87,7 @@ class TestEvalF1NPU(unittest.TestCase):
             stemmer=stemmer,
             version=RuSentRelVersions.V11)
 
-        doc_ids = [46]
+        doc_ids = RuSentRelIOUtils.iter_test_indices(RuSentRelVersions.V11)
 
         cmp_pairs_iter = OpinionCollectionsToCompareUtils.iter_comparable_collections(
             doc_ids=doc_ids,
@@ -97,13 +100,14 @@ class TestEvalF1NPU(unittest.TestCase):
                 opinions=CustomZippedResultsIOUtils.iter_doc_opinions(
                     doc_id=doc_id,
                     labels_fmt=RuSentRelLabelsFormatter(),
+                    opin_path_fmt=u"{doc_id}.opin.txt",
                     result_version=Results.Test),
                 synonyms=actual_synonyms,
                 error_on_duplicates=False,
                 error_on_synonym_end_missed=False))
 
         # getting evaluator.
-        evaluator = ThreeClassEvaluator()
+        evaluator = ThreeClassEvaluator(DataType.Test)
 
         # evaluate every document.
         logged_cmp_pairs_it = progress_bar_iter(cmp_pairs_iter, desc=u"Evaluate", unit=u'pairs')
