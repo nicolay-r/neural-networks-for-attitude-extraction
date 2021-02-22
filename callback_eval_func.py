@@ -12,9 +12,9 @@ def calculate_results(doc_ids, synonyms, evaluator,
         etalon and results opinions for a particular document (doc_id).
     """
     assert(isinstance(synonyms, SynonymsCollection))
+    assert(isinstance(evaluator, ThreeClassEvaluator))
     assert(callable(iter_etalon_opins_by_doc_id_func))
     assert(callable(iter_result_opins_by_doc_id_func))
-    assert(isinstance(evaluator, ThreeClassEvaluator))
 
     cmp_pairs_iter = OpinionCollectionsToCompareUtils.iter_comparable_collections(
         doc_ids=doc_ids,
