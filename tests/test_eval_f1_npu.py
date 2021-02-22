@@ -3,13 +3,9 @@ from os.path import dirname, join
 
 from enum import Enum
 
-from arekit.common.evaluation.evaluators.three_class import ThreeClassEvaluator
-from arekit.common.evaluation.results.three_class import ThreeClassEvalResult
-from arekit.common.evaluation.utils import OpinionCollectionsToCompareUtils
 from arekit.common.experiment.data_type import DataType
 from arekit.common.labels.str_fmt import StringLabelsFormatter
 from arekit.common.opinions.collection import OpinionCollection
-from arekit.common.utils import progress_bar_iter
 from arekit.contrib.experiments.rusentrel.labels_formatter import RuSentRelNeutralLabelsFormatter
 from arekit.contrib.experiments.synonyms.provider import RuSentRelSynonymsCollectionProvider
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions, RuSentRelIOUtils
@@ -18,6 +14,7 @@ from arekit.contrib.source.rusentrel.opinions.collection import RuSentRelOpinion
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
 from arekit.contrib.source.zip_utils import ZipArchiveUtils
 from arekit.processing.lemmatization.mystem import MystemWrapper
+from callback_eval_npu_func import calc_f1_npu
 
 
 class Results(Enum):
@@ -87,16 +84,16 @@ class TestEvalF1NPU(unittest.TestCase):
             stemmer=stemmer,
             version=RuSentRelVersions.V11)
 
-        doc_ids = RuSentRelIOUtils.iter_test_indices(RuSentRelVersions.V11)
-
-        cmp_pairs_iter = OpinionCollectionsToCompareUtils.iter_comparable_collections(
-            doc_ids=doc_ids,
-            read_etalon_collection_func=lambda doc_id: OpinionCollection(
+        result = calc_f1_npu(
+            doc_ids=RuSentRelIOUtils.iter_test_indices(RuSentRelVersions.V11),
+            synonyms=actual_synonyms,
+            data_type=DataType.Test,
+            iter_etalon_opins_by_doc_id_func=lambda doc_id: OpinionCollection(
                 opinions=self.iter_with_neutral(doc_id=doc_id),
                 synonyms=actual_synonyms,
                 error_on_duplicates=False,
                 error_on_synonym_end_missed=True),
-            read_result_collection_func=lambda doc_id: OpinionCollection(
+            iter_result_opins_by_doc_id_func=lambda doc_id: OpinionCollection(
                 opinions=CustomZippedResultsIOUtils.iter_doc_opinions(
                     doc_id=doc_id,
                     labels_fmt=RuSentRelLabelsFormatter(),
@@ -104,22 +101,13 @@ class TestEvalF1NPU(unittest.TestCase):
                     result_version=Results.Test),
                 synonyms=actual_synonyms,
                 error_on_duplicates=False,
-                error_on_synonym_end_missed=False))
-
-        # getting evaluator.
-        evaluator = ThreeClassEvaluator(DataType.Test)
-
-        # evaluate every document.
-        logged_cmp_pairs_it = progress_bar_iter(cmp_pairs_iter, desc=u"Evaluate", unit=u'pairs')
-        result = evaluator.evaluate(cmp_pairs=logged_cmp_pairs_it)
-        assert (isinstance(result, ThreeClassEvalResult))
-
-        # calculate results.
-        result.calculate()
+                error_on_synonym_end_missed=False)
+            )
 
         # logging all the result information.
         for doc_id, doc_info in result.iter_document_results():
             print u"{}:\t{}".format(doc_id, doc_info)
+
         print "------------------------"
         print str(result.TotalResult)
         print "------------------------"
