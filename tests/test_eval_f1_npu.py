@@ -3,6 +3,7 @@ from os.path import dirname, join
 
 from enum import Enum
 
+from arekit.common.evaluation.evaluators.three_class import ThreeClassEvaluator
 from arekit.common.experiment.data_type import DataType
 from arekit.common.labels.str_fmt import StringLabelsFormatter
 from arekit.common.opinions.collection import OpinionCollection
@@ -14,7 +15,7 @@ from arekit.contrib.source.rusentrel.opinions.collection import RuSentRelOpinion
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
 from arekit.contrib.source.zip_utils import ZipArchiveUtils
 from arekit.processing.lemmatization.mystem import MystemWrapper
-from callback_eval_npu_func import calc_f1_npu
+from callback_eval_func import calculate_results
 
 
 class Results(Enum):
@@ -84,10 +85,10 @@ class TestEvalF1NPU(unittest.TestCase):
             stemmer=stemmer,
             version=RuSentRelVersions.V11)
 
-        result = calc_f1_npu(
+        result = calculate_results(
             doc_ids=RuSentRelIOUtils.iter_test_indices(RuSentRelVersions.V11),
             synonyms=actual_synonyms,
-            data_type=DataType.Test,
+            evaluator=ThreeClassEvaluator(DataType.Test),
             iter_etalon_opins_by_doc_id_func=lambda doc_id: OpinionCollection(
                 opinions=self.iter_with_neutral(doc_id=doc_id),
                 synonyms=actual_synonyms,

@@ -63,4 +63,3 @@ class CallbackEvalF1NPU(Callback):
             self.__eval_short_file.close()
 
         self.__it_index = None
-
