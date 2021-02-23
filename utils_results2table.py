@@ -25,13 +25,13 @@ from callback_log_iter import parse_last
 from callback_log_training import extract_avg_epoch_time_from_training_log, extract_last_param_value_from_training_log, \
     chop_microseconds, parse_float_network_parameter, AVG_FIT_ACC_ARGUMENT, EPOCH_ARGUMENT
 from common import Common
-from experiment_io import CustomNetworkExperimentIO
 
 
 # Dictionary which allows us to find an attentive model
 # According to the one related but without attentive mechanism.
 # There are even more models, so this list could be enlarged
 # and finally then moved into AREkit framework.
+from exp_io import CustomNetworkExperimentIO
 from samples_utils import calculate_samples_count
 
 attentive_models_matching = {

@@ -52,6 +52,8 @@ class CallbackEvalF1NPU(Callback):
         create_dir_if_not_exists(eval_verbose_log_filepath)
         create_dir_if_not_exists(eval_short_log_filepath)
 
+        print u"Saving at: {}".format(eval_short_log_filepath)
+
         self.__eval_short_file = open(eval_short_log_filepath, u"w", buffering=0)
         self.__eval_verbose_file = open(eval_verbose_log_filepath, u"w", buffering=0)
 

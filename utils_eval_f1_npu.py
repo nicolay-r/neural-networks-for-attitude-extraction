@@ -17,7 +17,7 @@ from arekit.contrib.networks.core.io_utils import NetworkIOUtils
 from arekit.contrib.networks.core.model_io import NeuralNetworkModelIO
 from arekit.contrib.networks.enum_input_types import ModelInputType
 from arekit.contrib.source.ruattitudes.io_utils import RuAttitudesVersionsService
-from arekit.contrib.source.rusentiframes.types import RuSentiFramesVersionsService
+from arekit.contrib.source.rusentiframes.types import RuSentiFramesVersions
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
 from args.rusentrel import RuSentRelVersionArg
 from args.stemmer import StemmerArg
@@ -30,12 +30,12 @@ from data_training import RuSentRelTrainingData
 from exp_io import CustomNetworkExperimentIO
 
 
-class ExperimentF1PNUEvaluator(ExperimentEngine):
+class ExperimentF1pnuEvaluator(ExperimentEngine):
 
-    def __init__(self, experiment, data_type, max_epochs_count):
+    def __init__(self, experiment, data_type, max_epochs_count, keep_last_only=True):
         assert(isinstance(max_epochs_count, int))
 
-        super(ExperimentF1PNUEvaluator, self).__init__(experiment)
+        super(ExperimentF1pnuEvaluator, self).__init__(experiment)
 
         self.__data_type = data_type
         self.__max_epochs_count = max_epochs_count
@@ -46,8 +46,12 @@ class ExperimentF1PNUEvaluator(ExperimentEngine):
             stemmer=self._experiment.DataIO.Stemmer,
             version=rusentrel_version)
 
+        self.__keep_last_only = keep_last_only
+
     def __get_target_dir(self):
-        return self._experiment.ExperimentIO.get_target_dir()
+        model_io = self._experiment.DataIO.ModelIO
+        assert(isinstance(model_io, NeuralNetworkModelIO))
+        return model_io.get_model_dir()
 
     def _handle_iteration(self, iter_index):
         exp_data = self._experiment.DataIO
@@ -63,7 +67,17 @@ class ExperimentF1PNUEvaluator(ExperimentEngine):
         assert(isinstance(exp_io, NetworkIOUtils))
 
         with callback:
-            for epoch_index in range(self.__max_epochs_count):
+            for epoch_index in reversed(range(self.__max_epochs_count)):
+
+                collection_dir = exp_io.create_result_opinion_collection_filepath(
+                    data_type=self.__data_type,
+                    epoch_index=epoch_index,
+                    doc_id=next(iter(cmp_doc_ids_set)))
+
+                if not exists(collection_dir):
+                    continue
+                else:
+                    print u"Eval source: {}".format(collection_dir)
 
                 # Calculate results.
                 calculate_results(
@@ -89,6 +103,9 @@ class ExperimentF1PNUEvaluator(ExperimentEngine):
                 callback.write_results(result=result,
                                        data_type=self.__data_type,
                                        epoch_index=epoch_index)
+
+                if self.__keep_last_only:
+                    break
 
     def _before_running(self):
         # Providing a root dir for logging.
@@ -121,6 +138,7 @@ if __name__ == "__main__":
     dist_in_terms_between_attitude_ends = None
 
     grid = {
+        u"frames_versions": [RuSentiFramesVersions.V20],
         u"foldings": [FoldingType.Fixed, FoldingType.CrossValidation],
         u"exp_types": [ExperimentTypes.RuSentRel,
                        ExperimentTypes.RuSentRelWithRuAttitudes],
@@ -129,8 +147,6 @@ if __name__ == "__main__":
         u"ra_names": [RuAttitudesVersionsService.find_by_name(ra_name)
                       for ra_name in RuAttitudesVersionsService.iter_supported_names()],
         u"input_types": [ModelInputType.SingleInstance],
-        u"frames_versions": [RuSentiFramesVersionsService.get_type_by_name(frames_version)
-                             for frames_version in RuSentiFramesVersionsService.iter_supported_names()],
         u'model_names': Common.default_results_considered_model_names_list(),
         u'balancing': [True, False],
         u'model_name_tags': [ModelNameTagArg.NO_TAG]
@@ -180,7 +196,7 @@ if __name__ == "__main__":
         if not exists(model_io.get_model_dir()):
             return
 
-        engine = ExperimentF1PNUEvaluator(experiment=experiment,
+        engine = ExperimentF1pnuEvaluator(experiment=experiment,
                                           data_type=DataType.Test,
                                           max_epochs_count=max_epochs_count)
 
