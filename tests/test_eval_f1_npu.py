@@ -87,7 +87,6 @@ class TestEvalF1NPU(unittest.TestCase):
 
         result = calculate_results(
             doc_ids=RuSentRelIOUtils.iter_test_indices(RuSentRelVersions.V11),
-            synonyms=actual_synonyms,
             evaluator=ThreeClassEvaluator(DataType.Test),
             iter_etalon_opins_by_doc_id_func=lambda doc_id: OpinionCollection(
                 opinions=self.iter_with_neutral(doc_id=doc_id),

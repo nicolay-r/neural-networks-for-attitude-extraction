@@ -39,8 +39,12 @@ class Common:
         return Common.__tags[version]
 
     @staticmethod
-    def enumerate_tag_values():
+    def iter_tag_values():
         return Common.__tags.itervalues()
+
+    @staticmethod
+    def iter_tag_keys():
+        return Common.__tags.iterkeys()
 
     @staticmethod
     def default_results_considered_model_names_list():

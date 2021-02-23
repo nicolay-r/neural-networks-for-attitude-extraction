@@ -1,33 +1,22 @@
 from arekit.common.evaluation.evaluators.three_class import ThreeClassEvaluator
 from arekit.common.evaluation.utils import OpinionCollectionsToCompareUtils
-from arekit.common.opinions.collection import OpinionCollection
-from arekit.common.synonyms import SynonymsCollection
 from arekit.common.utils import progress_bar_iter
 
 
-def calculate_results(doc_ids, synonyms, evaluator,
+def calculate_results(doc_ids, evaluator,
                       iter_etalon_opins_by_doc_id_func,
                       iter_result_opins_by_doc_id_func):
     """ Provides f1 (neg, pos, neu) calculation by given enumerations of
         etalon and results opinions for a particular document (doc_id).
     """
-    assert(isinstance(synonyms, SynonymsCollection))
     assert(isinstance(evaluator, ThreeClassEvaluator))
     assert(callable(iter_etalon_opins_by_doc_id_func))
     assert(callable(iter_result_opins_by_doc_id_func))
 
     cmp_pairs_iter = OpinionCollectionsToCompareUtils.iter_comparable_collections(
         doc_ids=doc_ids,
-        read_etalon_collection_func=lambda doc_id: OpinionCollection(
-            opinions=iter_etalon_opins_by_doc_id_func(doc_id),
-            synonyms=synonyms,
-            error_on_duplicates=False,
-            error_on_synonym_end_missed=True),
-        read_result_collection_func=lambda doc_id: OpinionCollection(
-            opinions=iter_result_opins_by_doc_id_func(doc_id),
-            synonyms=synonyms,
-            error_on_duplicates=False,
-            error_on_synonym_end_missed=False))
+        read_etalon_collection_func=lambda doc_id: iter_etalon_opins_by_doc_id_func(doc_id),
+        read_result_collection_func=lambda doc_id: iter_result_opins_by_doc_id_func(doc_id))
 
     # evaluate every document.
     logged_cmp_pairs_it = progress_bar_iter(cmp_pairs_iter, desc=u"Evaluate", unit=u'pairs')

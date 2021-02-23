@@ -38,13 +38,6 @@ class ExperimentF1pnuEvaluator(ExperimentEngine):
 
         self.__data_type = data_type
         self.__max_epochs_count = max_epochs_count
-
-        # NOTE:
-        # This is the only limitation: we provide synonyms collection.
-        self.__synonyms = RuSentRelSynonymsCollectionProvider.load_collection(
-            stemmer=self._experiment.DataIO.Stemmer,
-            version=rusentrel_version)
-
         self.__keep_last_only = keep_last_only
 
     def __get_target_dir(self):
@@ -85,7 +78,6 @@ class ExperimentF1pnuEvaluator(ExperimentEngine):
                 # Calculate results.
                 calculate_results(
                     doc_ids=cmp_doc_ids_set,
-                    synonyms=self.__synonyms,
                     evaluator=exp_data.Evaluator,
                     iter_etalon_opins_by_doc_id_func=lambda doc_id:
                         self._experiment.OpinionOperations.try_read_neutrally_annotated_opinion_collection(
@@ -151,7 +143,7 @@ if __name__ == "__main__":
         u"input_types": [ModelInputType.SingleInstance],
         u'model_names': Common.default_results_considered_model_names_list(),
         u'balancing': [True, False],
-        u'model_name_tags': list(Common.enumerate_tag_values()),
+        u'model_name_tags': list(Common.iter_tag_values()),
         u"frames_versions": [RuSentiFramesVersionsService.get_type_by_name(frames_version)
                              for frames_version in RuSentiFramesVersionsService.iter_supported_names()],
     }
@@ -199,6 +191,7 @@ if __name__ == "__main__":
 
         # Check dir existence in advance.
         if not exists(model_io.get_model_dir()):
+            print u"Skipping: {}".format(model_io.get_model_dir())
             return
 
         engine = ExperimentF1pnuEvaluator(experiment=experiment,
