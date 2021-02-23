@@ -27,7 +27,7 @@ from callback_eval import CallbackEvalF1NPU
 from callback_eval_func import calculate_results
 from common import Common
 from data_training import RuSentRelTrainingData
-from exp_eval_io import CustomNetworkEvaluationExperimentIO
+from exp_io import CustomNetworkExperimentIO
 
 
 class ExperimentF1PNUEvaluator(ExperimentEngine):
@@ -158,7 +158,7 @@ if __name__ == "__main__":
                                        experiment_data=experiment_data,
                                        folding_type=folding_type,
                                        rusentrel_version=rusentrel_version,
-                                       experiment_io_type=CustomNetworkEvaluationExperimentIO,
+                                       experiment_io_type=CustomNetworkExperimentIO,
                                        ruattitudes_version=ra_version,
                                        load_ruattitude_docs=False,
                                        extra_name_suffix=extra_name_suffix)
