@@ -15,7 +15,7 @@ from arekit.contrib.experiments.synonyms.provider import RuSentRelSynonymsCollec
 from arekit.contrib.experiments.types import ExperimentTypes
 from arekit.contrib.networks.core.io_utils import NetworkIOUtils
 from arekit.contrib.networks.core.model_io import NeuralNetworkModelIO
-from arekit.contrib.networks.enum_input_types import ModelInputTypeService
+from arekit.contrib.networks.enum_input_types import ModelInputType
 from arekit.contrib.source.ruattitudes.io_utils import RuAttitudesVersionsService
 from arekit.contrib.source.rusentiframes.types import RuSentiFramesVersionsService
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
@@ -27,7 +27,7 @@ from callback_eval import CallbackEvalF1NPU
 from callback_eval_func import calculate_results
 from common import Common
 from data_training import RuSentRelTrainingData
-from experiment_io import CustomNetworkExperimentIO
+from exp_eval_io import CustomNetworkEvaluationExperimentIO
 
 
 class ExperimentF1PNUEvaluator(ExperimentEngine):
@@ -57,8 +57,7 @@ class ExperimentF1PNUEvaluator(ExperimentEngine):
         callback = exp_data.Callback
         assert(isinstance(callback, Callback))
         callback.set_iter_index(iter_index)
-        print self._experiment.DocumentOperations
-        cmp_doc_ids_set = set(self._experiment.DocumentOperations.iter_doc_ids_to_compare())
+        cmp_doc_ids_set = set(self._experiment.DocumentOperations.iter_news_indices(data_type=self.__data_type))
 
         exp_io = self._experiment.ExperimentIO
         assert(isinstance(exp_io, NetworkIOUtils))
@@ -66,14 +65,7 @@ class ExperimentF1PNUEvaluator(ExperimentEngine):
         with callback:
             for epoch_index in range(self.__max_epochs_count):
 
-                target_file = exp_io.get_output_model_results_filepath(
-                    data_type=self.__data_type,
-                    epoch_index=epoch_index)
-
-                if not exists(target_file):
-                    continue
-
-                print "Found:", target_file
+                # TODO. Solve problem with neutral annot.
 
                 # Calculate results.
                 calculate_results(
@@ -114,7 +106,7 @@ if __name__ == "__main__":
                         dest="max_epochs",
                         type=int,
                         default=200,
-                        nargs=1,
+                        nargs='?',
                         help="Labels count in an output classifier")
 
     # Parsing arguments.
@@ -122,7 +114,7 @@ if __name__ == "__main__":
 
     labels_count = 3
     balanced_input = True
-    max_epochs_count = args.max_epochs[0]
+    max_epochs_count = args.max_epochs
     terms_per_context = TermsPerContextArg.default
     rusentrel_version = RuSentRelVersionArg.default
     stemmer = StemmerArg.supported[StemmerArg.default]
@@ -138,8 +130,7 @@ if __name__ == "__main__":
                          for ent_fmt in EntityFormattersService.iter_supported_names()],
         u"ra_names": [RuAttitudesVersionsService.find_by_name(ra_name)
                       for ra_name in RuAttitudesVersionsService.iter_supported_names()],
-        u"input_types": [ModelInputTypeService.get_type_by_name(input_type)
-                         for input_type in ModelInputTypeService.iter_supported_names()],
+        u"input_types": [ModelInputType.SingleInstance],
         u"frames_versions": [RuSentiFramesVersionsService.get_type_by_name(frames_version)
                              for frames_version in RuSentiFramesVersionsService.iter_supported_names()],
         u'model_names': Common.default_results_considered_model_names_list(),
@@ -169,7 +160,7 @@ if __name__ == "__main__":
                                        experiment_data=experiment_data,
                                        folding_type=folding_type,
                                        rusentrel_version=rusentrel_version,
-                                       experiment_io_type=CustomNetworkExperimentIO,
+                                       experiment_io_type=CustomNetworkEvaluationExperimentIO,
                                        ruattitudes_version=ra_version,
                                        load_ruattitude_docs=False,
                                        extra_name_suffix=extra_name_suffix)
@@ -187,7 +178,7 @@ if __name__ == "__main__":
         # Setup model io.
         experiment_data.set_model_io(model_io)
 
-        # Check dir existance in advance.
+        # Check dir existence in advance.
         if not exists(model_io.get_model_dir()):
             return
 
