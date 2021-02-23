@@ -9,7 +9,6 @@ from arekit.common.experiment.data_type import DataType
 from arekit.common.experiment.engine.cv_based import ExperimentEngine
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.common.experiment.scales.factory import create_labels_scaler
-from arekit.contrib.bert.callback import Callback
 from arekit.contrib.experiments.factory import create_experiment
 from arekit.contrib.experiments.synonyms.provider import RuSentRelSynonymsCollectionProvider
 from arekit.contrib.experiments.types import ExperimentTypes
@@ -17,7 +16,7 @@ from arekit.contrib.networks.core.io_utils import NetworkIOUtils
 from arekit.contrib.networks.core.model_io import NeuralNetworkModelIO
 from arekit.contrib.networks.enum_input_types import ModelInputType
 from arekit.contrib.source.ruattitudes.io_utils import RuAttitudesVersionsService
-from arekit.contrib.source.rusentiframes.types import RuSentiFramesVersions
+from arekit.contrib.source.rusentiframes.types import RuSentiFramesVersionsService
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
 from args.rusentrel import RuSentRelVersionArg
 from args.stemmer import StemmerArg
@@ -59,9 +58,13 @@ class ExperimentF1pnuEvaluator(ExperimentEngine):
 
         # Setup callback.
         callback = exp_data.Callback
-        assert(isinstance(callback, Callback))
+        assert(isinstance(callback, CallbackEvalF1NPU))
         callback.set_iter_index(iter_index)
         cmp_doc_ids_set = set(self._experiment.DocumentOperations.iter_news_indices(data_type=self.__data_type))
+
+        # Perform cancellation if the related file already existed.
+        if callback.has_verbose_log_filepath():
+            return
 
         exp_io = self._experiment.ExperimentIO
         assert(isinstance(exp_io, NetworkIOUtils))
@@ -76,8 +79,8 @@ class ExperimentF1pnuEvaluator(ExperimentEngine):
 
                 if not exists(collection_dir):
                     continue
-                else:
-                    print u"Eval source: {}".format(collection_dir)
+
+                print u"Eval source: {}".format(collection_dir)
 
                 # Calculate results.
                 calculate_results(
@@ -138,7 +141,6 @@ if __name__ == "__main__":
     dist_in_terms_between_attitude_ends = None
 
     grid = {
-        u"frames_versions": [RuSentiFramesVersions.V20],
         u"foldings": [FoldingType.Fixed, FoldingType.CrossValidation],
         u"exp_types": [ExperimentTypes.RuSentRel,
                        ExperimentTypes.RuSentRelWithRuAttitudes],
@@ -149,7 +151,9 @@ if __name__ == "__main__":
         u"input_types": [ModelInputType.SingleInstance],
         u'model_names': Common.default_results_considered_model_names_list(),
         u'balancing': [True, False],
-        u'model_name_tags': [ModelNameTagArg.NO_TAG]
+        u'model_name_tags': list(Common.enumerate_tag_values()),
+        u"frames_versions": [RuSentiFramesVersionsService.get_type_by_name(frames_version)
+                             for frames_version in RuSentiFramesVersionsService.iter_supported_names()],
     }
 
     def __run():
@@ -183,11 +187,12 @@ if __name__ == "__main__":
                                                         model_name=model_name,
                                                         input_type=model_input_type)
 
-        model_io = NeuralNetworkModelIO(full_model_name=full_model_name,
-                                        target_dir=experiment.ExperimentIO.get_target_dir(),
-                                        # From this depends on whether we have a specific dir or not.
-                                        source_dir=None if model_name_tag == ModelNameTagArg.NO_TAG else object(),
-                                        model_name_tag=model_name_tag)
+        model_io = NeuralNetworkModelIO(
+            full_model_name=full_model_name,
+            target_dir=experiment.ExperimentIO.get_target_dir(),
+            # From this depends on whether we have a specific dir or not.
+            source_dir=None if model_name_tag is None else u"",
+            model_name_tag=ModelNameTagArg.NO_TAG if model_name_tag is None else model_name_tag)
 
         # Setup model io.
         experiment_data.set_model_io(model_io)

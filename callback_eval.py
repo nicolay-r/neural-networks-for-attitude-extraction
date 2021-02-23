@@ -1,4 +1,4 @@
-from os.path import join
+from os.path import join, exists
 
 from arekit.common.utils import create_dir_if_not_exists
 from arekit.contrib.bert.callback import Callback
@@ -39,11 +39,16 @@ class CallbackEvalF1NPU(Callback):
         self.__eval_verbose_file.write(u"{}\n".format(eval_verbose_msg))
         self.__eval_short_file.write(u"{}\n".format(eval_short_msg))
 
+    def has_verbose_log_filepath(self):
+        return exists(self.__create_verbose_log_filepath())
+
+    def __create_verbose_log_filepath(self):
+        return join(self.__log_dir,
+                    self.__log_eval_iter_verbose_filename.format(iter=self.__it_index, dtype=self.__data_type))
+
     def __enter__(self):
         # Compose filepath for verbose results.
-        eval_verbose_log_filepath = join(
-            self.__log_dir,
-            self.__log_eval_iter_verbose_filename.format(iter=self.__it_index, dtype=self.__data_type))
+        eval_verbose_log_filepath = self.__create_verbose_log_filepath()
 
         eval_short_log_filepath = join(
             self.__log_dir,

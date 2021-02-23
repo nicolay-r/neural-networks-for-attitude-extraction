@@ -7,6 +7,7 @@ from arekit.common.experiment.scales.three import ThreeLabelScaler
 from arekit.common.experiment.scales.two import TwoLabelScaler
 from arekit.contrib.networks.enum_input_types import ModelInputType
 from arekit.contrib.networks.enum_name_types import ModelNames
+from arekit.contrib.source.ruattitudes.io_utils import RuAttitudesVersions
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
 from embeddings.rusvectores import RusvectoresEmbedding
 
@@ -22,6 +23,24 @@ class Common:
     model_config_name = u"model_config.txt"
     __log_train_filename_template = u"cb_train_{iter}_{dtype}.log"
     __log_eval_iter_filename_template = u"cb_eval_{iter}_{dtype}.log"
+
+    # tags that utilized in finetuned model names.
+    __tags = {
+        None: None,
+        RuAttitudesVersions.V12: u'ra12',
+        RuAttitudesVersions.V20Base: u'ra20b',
+        RuAttitudesVersions.V20BaseNeut: u'ra20bn',
+        RuAttitudesVersions.V20Large: u'ra20l',
+        RuAttitudesVersions.V20LargeNeut: u'ra20ln'
+    }
+
+    @staticmethod
+    def get_tag_by_ruattitudes_version(version):
+        return Common.__tags[version]
+
+    @staticmethod
+    def enumerate_tag_values():
+        return Common.__tags.itervalues()
 
     @staticmethod
     def default_results_considered_model_names_list():
