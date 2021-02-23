@@ -65,8 +65,6 @@ class ExperimentF1PNUEvaluator(ExperimentEngine):
         with callback:
             for epoch_index in range(self.__max_epochs_count):
 
-                # TODO. Solve problem with neutral annot.
-
                 # Calculate results.
                 calculate_results(
                     doc_ids=cmp_doc_ids_set,
