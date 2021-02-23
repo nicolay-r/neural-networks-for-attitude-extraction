@@ -81,7 +81,6 @@ class ExperimentF1pnuEvaluator(ExperimentEngine):
                     doc_id=next(iter(cmp_doc_ids_set)))
 
                 if not exists(collection_dir):
-                    print u"Skipping [Collection dir was not found]: {}".format(collection_dir)
                     continue
 
                 print u"Eval source: {}".format(collection_dir)
