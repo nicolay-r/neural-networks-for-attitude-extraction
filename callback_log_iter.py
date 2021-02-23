@@ -1,3 +1,5 @@
+from arekit.common.evaluation.results.base import BaseEvalResult
+from arekit.common.evaluation.results.three_class import ThreeClassEvalResult
 from arekit.common.evaluation.results.two_class import TwoClassEvalResult
 
 PARAMS_SEP = u"; "
@@ -5,7 +7,8 @@ NAME_VALUE_SEP = u': '
 
 
 def create_iteration_verbose_eval_msg(eval_result, data_type, epoch_index):
-    assert (isinstance(eval_result, TwoClassEvalResult))
+    assert (isinstance(eval_result, TwoClassEvalResult) or
+            isinstance(eval_result, ThreeClassEvalResult))
     title = u"Stat for [{dtype}], e={epoch}:".format(dtype=data_type, epoch=epoch_index)
     contents = [u"{doc_id}: {result}".format(doc_id=doc_id, result=result)
                 for doc_id, result in eval_result.iter_document_results()]
@@ -13,7 +16,8 @@ def create_iteration_verbose_eval_msg(eval_result, data_type, epoch_index):
 
 
 def create_iteration_short_eval_msg(eval_result, data_type, epoch_index):
-    assert (isinstance(eval_result, TwoClassEvalResult))
+    assert (isinstance(eval_result, BaseEvalResult) or
+            isinstance(eval_result, ThreeClassEvalResult))
     title = u"Stat for '[{dtype}]', e={epoch}".format(dtype=data_type, epoch=epoch_index)
     params = [u"{m_name}{nv_sep}{value}".format(m_name=metric_name, nv_sep=NAME_VALUE_SEP, value=round(value, 2))
               for metric_name, value in eval_result.iter_total_by_param_results()]
