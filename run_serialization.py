@@ -23,8 +23,7 @@ from args.experiment import ExperimentTypeArg
 from args.labels_count import LabelsCountArg
 from args.ra_ver import RuAttitudesVersionArg
 from data_serializing import RuSentRelExperimentSerializationData
-from experiment_io import CustomNetworkExperimentIO
-
+from exp_io import CustomNetworkExperimentIO
 
 if __name__ == "__main__":
 

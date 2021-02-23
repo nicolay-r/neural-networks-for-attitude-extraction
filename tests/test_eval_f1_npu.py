@@ -15,7 +15,7 @@ from arekit.contrib.source.rusentrel.opinions.collection import RuSentRelOpinion
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
 from arekit.contrib.source.zip_utils import ZipArchiveUtils
 from arekit.processing.lemmatization.mystem import MystemWrapper
-from callback_eval_func import calculate_results
+from callback_eval_func import calculate_results, iter_with_neutral
 
 
 class Results(Enum):
@@ -61,23 +61,6 @@ class CustomZippedResultsIOUtils(ZipArchiveUtils):
 
 class TestEvalF1NPU(unittest.TestCase):
 
-    @staticmethod
-    def iter_with_neutral(doc_id):
-
-        # Providing original opinions from etalon data.
-        for etalon_opinion in RuSentRelOpinionCollection.iter_opinions_from_doc(doc_id=doc_id):
-            yield etalon_opinion
-
-        # Providing manually annotated (neutral opinions)
-        opins_it = CustomZippedResultsIOUtils.iter_doc_opinions(
-            doc_id=doc_id,
-            result_version=Results.Etalon,
-            labels_fmt=CustomRuSentRelLabelsFormatter(),
-            opin_path_fmt=u"art{doc_id}.neut.Test.txt")
-
-        for neut_opinion in opins_it:
-            yield neut_opinion
-
     def test(self):
 
         stemmer = MystemWrapper()
@@ -89,7 +72,13 @@ class TestEvalF1NPU(unittest.TestCase):
             doc_ids=RuSentRelIOUtils.iter_test_indices(RuSentRelVersions.V11),
             evaluator=ThreeClassEvaluator(DataType.Test),
             iter_etalon_opins_by_doc_id_func=lambda doc_id: OpinionCollection(
-                opinions=self.iter_with_neutral(doc_id=doc_id),
+                opinions=iter_with_neutral(
+                    etalon_opins=RuSentRelOpinionCollection.iter_opinions_from_doc(doc_id=doc_id),
+                    neut_opins=CustomZippedResultsIOUtils.iter_doc_opinions(
+                        doc_id=doc_id,
+                        result_version=Results.Etalon,
+                        labels_fmt=CustomRuSentRelLabelsFormatter(),
+                        opin_path_fmt=u"art{doc_id}.neut.Test.txt")),
                 synonyms=actual_synonyms,
                 error_on_duplicates=False,
                 error_on_synonym_end_missed=True),

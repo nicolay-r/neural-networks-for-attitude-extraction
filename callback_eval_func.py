@@ -21,3 +21,10 @@ def calculate_results(doc_ids, evaluator,
     # evaluate every document.
     logged_cmp_pairs_it = progress_bar_iter(cmp_pairs_iter, desc=u"Evaluate", unit=u'pairs')
     return evaluator.evaluate(cmp_pairs=logged_cmp_pairs_it)
+
+
+def iter_with_neutral(etalon_opins, neut_opins):
+    for etalon_opin in etalon_opins:
+        yield etalon_opin
+    for neut_opinion in neut_opins:
+        yield neut_opinion

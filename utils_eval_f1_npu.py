@@ -23,7 +23,7 @@ from args.stemmer import StemmerArg
 from args.terms_per_context import TermsPerContextArg
 from args.train.model_name_tag import ModelNameTagArg
 from callback_eval import CallbackEvalF1NPU
-from callback_eval_func import calculate_results
+from callback_eval_func import calculate_results, iter_with_neutral
 from common import Common
 from data_training import RuSentRelTrainingData
 from exp_io import CustomNetworkExperimentIO
@@ -31,14 +31,16 @@ from exp_io import CustomNetworkExperimentIO
 
 class ExperimentF1pnuEvaluator(ExperimentEngine):
 
-    def __init__(self, experiment, data_type, max_epochs_count, keep_last_only=True):
+    def __init__(self, experiment, data_type, max_epochs_count, forced, keep_last_only=True):
         assert(isinstance(max_epochs_count, int))
+        assert(isinstance(forced, bool))
 
         super(ExperimentF1pnuEvaluator, self).__init__(experiment)
 
         self.__data_type = data_type
         self.__max_epochs_count = max_epochs_count
         self.__keep_last_only = keep_last_only
+        self.__forced = forced
 
     def __get_target_dir(self):
         model_io = self._experiment.DataIO.ModelIO
@@ -57,6 +59,7 @@ class ExperimentF1pnuEvaluator(ExperimentEngine):
 
         # Perform cancellation if the related file already existed.
         if callback.has_verbose_log_filepath():
+            print u"Skipping [log file already exists]"
             return
 
         exp_io = self._experiment.ExperimentIO
@@ -71,6 +74,7 @@ class ExperimentF1pnuEvaluator(ExperimentEngine):
                     doc_id=next(iter(cmp_doc_ids_set)))
 
                 if not exists(collection_dir):
+                    print u"Skipping [Collection dir was not found]: {}".format(collection_dir)
                     continue
 
                 print u"Eval source: {}".format(collection_dir)
@@ -79,10 +83,11 @@ class ExperimentF1pnuEvaluator(ExperimentEngine):
                 calculate_results(
                     doc_ids=cmp_doc_ids_set,
                     evaluator=exp_data.Evaluator,
-                    iter_etalon_opins_by_doc_id_func=lambda doc_id:
-                        self._experiment.OpinionOperations.try_read_neutrally_annotated_opinion_collection(
+                    iter_etalon_opins_by_doc_id_func=lambda doc_id: iter_with_neutral(
+                        etalon_opins=self._experiment.OpinionOperations.read_etalon_opinion_collection(doc_id),
+                        neut_opins=self._experiment.OpinionOperations.try_read_neutrally_annotated_opinion_collection(
                             doc_id=doc_id,
-                            data_type=self.__data_type),
+                            data_type=self.__data_type)),
                     iter_result_opins_by_doc_id_func=lambda doc_id:
                         self._experiment.OpinionOperations.read_result_opinion_collection(
                             data_type=self.__data_type,
@@ -119,6 +124,14 @@ if __name__ == "__main__":
                         nargs='?',
                         help="Labels count in an output classifier")
 
+    parser.add_argument('--force',
+                        dest='force',
+                        type=bool,
+                        const=False,
+                        default=False,
+                        nargs='?',
+                        help='Perform forced data serialization')
+
     # Parsing arguments.
     args = parser.parse_args()
 
@@ -128,6 +141,7 @@ if __name__ == "__main__":
     terms_per_context = TermsPerContextArg.default
     rusentrel_version = RuSentRelVersionArg.default
     stemmer = StemmerArg.supported[StemmerArg.default]
+    force_eval = args.force
     labels_scaler = create_labels_scaler(labels_count)
     eval_mode = EvaluationModes.Extraction
     dist_in_terms_between_attitude_ends = None
@@ -142,7 +156,7 @@ if __name__ == "__main__":
                       for ra_name in RuAttitudesVersionsService.iter_supported_names()],
         u"input_types": [ModelInputType.SingleInstance],
         u'model_names': Common.default_results_considered_model_names_list(),
-        u'balancing': [True, False],
+        u'balancing': [True],
         u'model_name_tags': list(Common.iter_tag_values()),
         u"frames_versions": [RuSentiFramesVersionsService.get_type_by_name(frames_version)
                              for frames_version in RuSentiFramesVersionsService.iter_supported_names()],
@@ -190,13 +204,15 @@ if __name__ == "__main__":
         experiment_data.set_model_io(model_io)
 
         # Check dir existence in advance.
-        if not exists(model_io.get_model_dir()):
-            print u"Skipping: {}".format(model_io.get_model_dir())
+        model_dir = model_io.get_model_dir()
+        if not exists(model_dir):
+            print u"Skipping [path not exists]: {}".format(model_dir)
             return
 
         engine = ExperimentF1pnuEvaluator(experiment=experiment,
                                           data_type=DataType.Test,
-                                          max_epochs_count=max_epochs_count)
+                                          max_epochs_count=max_epochs_count,
+                                          forced=force_eval)
 
         # Starting evaluation process.
         engine.run()
