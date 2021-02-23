@@ -31,7 +31,7 @@ from callback import NeuralNetworkCustomEvaluationCallback
 from common import Common
 # TODO. Move this parameters into args/input_format.py
 from data_training import RuSentRelTrainingData
-from experiment_io import CustomNetworkExperimentIO
+from exp_io import CustomNetworkExperimentIO
 from factory_networks import \
     compose_network_and_network_config_funcs, \
     create_bags_collection_type

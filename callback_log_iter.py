@@ -35,7 +35,7 @@ def parse_last(filepath, col):
     with open(filepath, 'r') as f:
         for line in f.readlines():
             for p in line.split(PARAMS_SEP):
-                if col not in p:
+                if (col + NAME_VALUE_SEP) not in p:
                     continue
                 value = p.split(NAME_VALUE_SEP)[1]
                 last = float(value)

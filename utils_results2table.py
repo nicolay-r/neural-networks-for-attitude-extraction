@@ -48,7 +48,8 @@ class ResultType(Enum):
     TrainingEpochTime = u'train-epoch-time'
     TrainingTotalTime = u'train-total-time'
     TrainingAccuracy = u'train-acc'
-    F1Train = u'f1-last-train'
+    F1LastTrain = u'f1-last-train'
+    F1LastTest = u'f1-last-test'
     EpochsCount = u'epochs'
     # Using WIMS-2020 related paper format for results improvement calucalation.
     # Considering f1-test values by default.
@@ -206,9 +207,13 @@ class ResultsTable(object):
             for it_index in range(iters):
                 yield join(Common.log_dir, Common.create_log_train_filename(data_type=DataType.Train,
                                                                             iter_index=it_index))
-        elif result_type == ResultType.F1Train:
+        elif result_type == ResultType.F1LastTrain:
             for it_index in range(iters):
                 yield join(Common.log_dir, Common.create_log_eval_filename(data_type=DataType.Train,
+                                                                           iter_index=it_index))
+        elif result_type == ResultType.F1LastTest:
+            for it_index in range(iters):
+                yield join(Common.log_dir, Common.create_log_eval_filename(data_type=DataType.Test,
                                                                            iter_index=it_index))
         elif result_type == ResultType.LearningRate:
             for it_index in range(iters):
@@ -250,7 +255,8 @@ class ResultsTable(object):
             times = self.__parse_iter_results(files_per_iter=files_per_iter,
                                               eval_ctx=eval_ctx)
             return [epochs[i] * times[i] for i in range(len(epochs))]
-        elif r_type == ResultType.F1Train:
+        elif r_type == ResultType.F1LastTrain or \
+             r_type == ResultType.F1LastTest:
             return [parse_last(filepath=fp, col=TwoClassEvalResult.C_F1) for fp in files_per_iter]
         elif r_type == ResultType.LearningRate:
             return [parse_float_network_parameter(fp, u'learning_rate') for fp in files_per_iter]
@@ -605,7 +611,7 @@ class FineTunedResultsProvider(ResultsTable):
 
         # For every tag key we gathering results
         # within a single experiment dir.
-        for ra_version_loc in self.__tags.iterkeys():
+        for ra_version_loc in Common.iter_tag_keys():
             super(FineTunedResultsProvider, self).register(
                 model_name=model_name,
                 folding_type=folding_type,
