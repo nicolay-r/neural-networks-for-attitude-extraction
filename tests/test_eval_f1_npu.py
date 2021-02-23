@@ -15,7 +15,7 @@ from arekit.contrib.source.rusentrel.opinions.collection import RuSentRelOpinion
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
 from arekit.contrib.source.zip_utils import ZipArchiveUtils
 from arekit.processing.lemmatization.mystem import MystemWrapper
-from callback_eval_func import calculate_results, iter_with_neutral
+from callback_eval_func import calculate_results, create_etalon_with_neutral
 
 
 class Results(Enum):
@@ -71,17 +71,19 @@ class TestEvalF1NPU(unittest.TestCase):
         result = calculate_results(
             doc_ids=RuSentRelIOUtils.iter_test_indices(RuSentRelVersions.V11),
             evaluator=ThreeClassEvaluator(DataType.Test),
-            iter_etalon_opins_by_doc_id_func=lambda doc_id: OpinionCollection(
-                opinions=iter_with_neutral(
+            iter_etalon_opins_by_doc_id_func=lambda doc_id:
+                create_etalon_with_neutral(
+                    collection=OpinionCollection(
+                        None,
+                        synonyms=actual_synonyms,
+                        error_on_duplicates=True,
+                        error_on_synonym_end_missed=True),
                     etalon_opins=RuSentRelOpinionCollection.iter_opinions_from_doc(doc_id=doc_id),
                     neut_opins=CustomZippedResultsIOUtils.iter_doc_opinions(
                         doc_id=doc_id,
                         result_version=Results.Etalon,
                         labels_fmt=CustomRuSentRelLabelsFormatter(),
                         opin_path_fmt=u"art{doc_id}.neut.Test.txt")),
-                synonyms=actual_synonyms,
-                error_on_duplicates=False,
-                error_on_synonym_end_missed=True),
             iter_result_opins_by_doc_id_func=lambda doc_id: OpinionCollection(
                 opinions=CustomZippedResultsIOUtils.iter_doc_opinions(
                     doc_id=doc_id,

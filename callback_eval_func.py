@@ -1,5 +1,6 @@
 from arekit.common.evaluation.evaluators.three_class import ThreeClassEvaluator
 from arekit.common.evaluation.utils import OpinionCollectionsToCompareUtils
+from arekit.common.opinions.collection import OpinionCollection
 from arekit.common.utils import progress_bar_iter
 
 
@@ -23,8 +24,20 @@ def calculate_results(doc_ids, evaluator,
     return evaluator.evaluate(cmp_pairs=logged_cmp_pairs_it)
 
 
-def iter_with_neutral(etalon_opins, neut_opins):
-    for etalon_opin in etalon_opins:
-        yield etalon_opin
-    for neut_opinion in neut_opins:
-        yield neut_opinion
+def create_etalon_with_neutral(collection, etalon_opins, neut_opins):
+    assert(isinstance(collection, OpinionCollection))
+    assert(len(collection) == 0)
+
+    def __it_all():
+
+        for etalon_opin in etalon_opins:
+            yield etalon_opin
+
+        for neut_opinion in neut_opins:
+            yield neut_opinion
+
+    for o in __it_all():
+        if not collection.has_synonymous_opinion(o):
+            collection.add_opinion(o)
+
+    return collection

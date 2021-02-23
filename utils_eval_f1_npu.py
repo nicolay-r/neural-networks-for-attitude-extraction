@@ -10,7 +10,6 @@ from arekit.common.experiment.engine.cv_based import ExperimentEngine
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.common.experiment.scales.factory import create_labels_scaler
 from arekit.contrib.experiments.factory import create_experiment
-from arekit.contrib.experiments.synonyms.provider import RuSentRelSynonymsCollectionProvider
 from arekit.contrib.experiments.types import ExperimentTypes
 from arekit.contrib.networks.core.io_utils import NetworkIOUtils
 from arekit.contrib.networks.core.model_io import NeuralNetworkModelIO
@@ -23,7 +22,7 @@ from args.stemmer import StemmerArg
 from args.terms_per_context import TermsPerContextArg
 from args.train.model_name_tag import ModelNameTagArg
 from callback_eval import CallbackEvalF1NPU
-from callback_eval_func import calculate_results, iter_with_neutral
+from callback_eval_func import calculate_results, create_etalon_with_neutral
 from common import Common
 from data_training import RuSentRelTrainingData
 from exp_io import CustomNetworkExperimentIO
@@ -40,7 +39,15 @@ class ExperimentF1pnuEvaluator(ExperimentEngine):
         self.__data_type = data_type
         self.__max_epochs_count = max_epochs_count
         self.__keep_last_only = keep_last_only
-        self.__forced = forced
+        self.__force_eval = forced
+
+    def __compose_etalon_opin_collection(self, doc_id):
+        return create_etalon_with_neutral(
+            collection=self._experiment.OpinionOperations.create_opinion_collection(),
+            etalon_opins=self._experiment.OpinionOperations.read_etalon_opinion_collection(doc_id),
+            neut_opins=self._experiment.OpinionOperations.try_read_neutrally_annotated_opinion_collection(
+                doc_id=doc_id,
+                data_type=self.__data_type))
 
     def __get_target_dir(self):
         model_io = self._experiment.DataIO.ModelIO
@@ -58,7 +65,7 @@ class ExperimentF1pnuEvaluator(ExperimentEngine):
         cmp_doc_ids_set = set(self._experiment.DocumentOperations.iter_news_indices(data_type=self.__data_type))
 
         # Perform cancellation if the related file already existed.
-        if callback.has_verbose_log_filepath():
+        if callback.has_verbose_log_filepath() and not self.__force_eval:
             print u"Skipping [log file already exists]"
             return
 
@@ -83,11 +90,8 @@ class ExperimentF1pnuEvaluator(ExperimentEngine):
                 calculate_results(
                     doc_ids=cmp_doc_ids_set,
                     evaluator=exp_data.Evaluator,
-                    iter_etalon_opins_by_doc_id_func=lambda doc_id: iter_with_neutral(
-                        etalon_opins=self._experiment.OpinionOperations.read_etalon_opinion_collection(doc_id),
-                        neut_opins=self._experiment.OpinionOperations.try_read_neutrally_annotated_opinion_collection(
-                            doc_id=doc_id,
-                            data_type=self.__data_type)),
+                    iter_etalon_opins_by_doc_id_func=lambda doc_id:
+                        self.__compose_etalon_opin_collection(doc_id),
                     iter_result_opins_by_doc_id_func=lambda doc_id:
                         self._experiment.OpinionOperations.read_result_opinion_collection(
                             data_type=self.__data_type,
@@ -127,7 +131,7 @@ if __name__ == "__main__":
     parser.add_argument('--force',
                         dest='force',
                         type=bool,
-                        const=False,
+                        const=True,
                         default=False,
                         nargs='?',
                         help='Perform forced data serialization')
