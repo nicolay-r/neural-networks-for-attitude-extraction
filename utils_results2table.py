@@ -8,6 +8,7 @@ import pandas as pd
 from os.path import join, exists
 from enum import Enum
 
+from arekit.common.evaluation.results.three_class import ThreeClassEvalResult
 from arekit.common.evaluation.results.two_class import TwoClassEvalResult
 from arekit.common.experiment.data_type import DataType
 from arekit.common.experiment.scales.factory import create_labels_scaler
@@ -50,6 +51,8 @@ class ResultType(Enum):
     TrainingAccuracy = u'train-acc'
     F1LastTrain = u'f1-last-train'
     F1LastTest = u'f1-last-test'
+    PrecNeutLastTest = u'prec-u-last-test'
+    RecallNeutLastTest = u'recall-u-last-test'
     EpochsCount = u'epochs'
     # Using WIMS-2020 related paper format for results improvement calucalation.
     # Considering f1-test values by default.
@@ -211,7 +214,9 @@ class ResultsTable(object):
             for it_index in range(iters):
                 yield join(Common.log_dir, Common.create_log_eval_filename(data_type=DataType.Train,
                                                                            iter_index=it_index))
-        elif result_type == ResultType.F1LastTest:
+        elif result_type == ResultType.F1LastTest or \
+              result_type == ResultType.PrecNeutLastTest or \
+              result_type == ResultType.RecallNeutLastTest:
             for it_index in range(iters):
                 yield join(Common.log_dir, Common.create_log_eval_filename(data_type=DataType.Test,
                                                                            iter_index=it_index))
@@ -258,6 +263,12 @@ class ResultsTable(object):
         elif r_type == ResultType.F1LastTrain or \
              r_type == ResultType.F1LastTest:
             return [parse_last(filepath=fp, col=TwoClassEvalResult.C_F1) for fp in files_per_iter]
+        elif r_type == ResultType.PrecNeutLastTest:
+            return [parse_last(filepath=fp, col=ThreeClassEvalResult.C_NEU_PREC)
+                    for fp in files_per_iter]
+        elif r_type == ResultType.RecallNeutLastTest:
+            return [parse_last(filepath=fp, col=ThreeClassEvalResult.C_NEU_RECALL)
+                    for fp in files_per_iter]
         elif r_type == ResultType.LearningRate:
             return [parse_float_network_parameter(fp, u'learning_rate') for fp in files_per_iter]
         elif r_type == ResultType.DSDiffAttImprovement:
