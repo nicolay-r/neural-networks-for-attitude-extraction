@@ -15,11 +15,13 @@ def create_iteration_verbose_eval_msg(eval_result, data_type, epoch_index):
     return u'\n'.join([title] + contents)
 
 
-def create_iteration_short_eval_msg(eval_result, data_type, epoch_index):
+def create_iteration_short_eval_msg(eval_result, data_type, epoch_index, rounding_value):
     assert (isinstance(eval_result, BaseEvalResult) or
             isinstance(eval_result, ThreeClassEvalResult))
     title = u"Stat for '[{dtype}]', e={epoch}".format(dtype=data_type, epoch=epoch_index)
-    params = [u"{m_name}{nv_sep}{value}".format(m_name=metric_name, nv_sep=NAME_VALUE_SEP, value=round(value, 2))
+    params = [u"{m_name}{nv_sep}{value}".format(m_name=metric_name,
+                                                nv_sep=NAME_VALUE_SEP,
+                                                value=round(value, rounding_value))
               for metric_name, value in eval_result.iter_total_by_param_results()]
     contents = PARAMS_SEP.join(params)
     return u'\n'.join([title, contents])

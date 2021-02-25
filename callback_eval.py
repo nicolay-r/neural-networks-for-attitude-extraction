@@ -33,7 +33,9 @@ class CallbackEvalF1NPU(Callback):
 
         eval_short_msg = create_iteration_short_eval_msg(eval_result=result,
                                                          data_type=data_type,
-                                                         epoch_index=epoch_index)
+                                                         epoch_index=epoch_index,
+                                                         # We utilize increased precision.
+                                                         rounding_value=4)
 
         # Saving results.
         self.__eval_verbose_file.write(u"{}\n".format(eval_verbose_msg))

@@ -217,7 +217,8 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
 
         eval_msg = create_iteration_short_eval_msg(eval_result=result,
                                                    data_type=data_type,
-                                                   epoch_index=epoch_index)
+                                                   epoch_index=epoch_index,
+                                                   rounding_value=2)
 
         # Writing evaluation logging results.
         logger.info(eval_msg)
