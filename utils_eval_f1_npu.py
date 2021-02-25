@@ -86,7 +86,7 @@ class ExperimentF1pnuEvaluator(ExperimentEngine):
                 print u"Eval source: {}".format(collection_dir)
 
                 # Calculate results.
-                calculate_results(
+                result = calculate_results(
                     doc_ids=cmp_doc_ids_set,
                     evaluator=exp_data.Evaluator,
                     iter_etalon_opins_by_doc_id_func=lambda doc_id:
@@ -96,11 +96,6 @@ class ExperimentF1pnuEvaluator(ExperimentEngine):
                             data_type=self.__data_type,
                             doc_id=doc_id,
                             epoch_index=epoch_index))
-
-                # evaluate
-                result = self._experiment.evaluate(data_type=self.__data_type,
-                                                   epoch_index=epoch_index)
-                result.calculate()
 
                 # saving results.
                 callback.write_results(result=result,
