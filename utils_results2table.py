@@ -51,6 +51,7 @@ class ResultType(Enum):
     TrainingAccuracy = u'train-acc'
     F1LastTrain = u'f1-last-train'
     F1LastTest = u'f1-last-test'
+    F1NeutLastTest = u'f1-u-last-test'
     PrecNeutLastTest = u'prec-u-last-test'
     RecallNeutLastTest = u'recall-u-last-test'
     EpochsCount = u'epochs'
@@ -102,7 +103,7 @@ class ResultsTable(object):
 
     MODEL_NAME_COL = u'model_name'
     DS_TYPE_COL = u'ds_type'
-    
+
     sl_template = u"rsr-{rsr_version}-{folding_str}-balanced-tpc50_{labels_count}l"
     sl_ds_template = u"rsr-{rsr_version}-ra-{ra_version}-{folding_str}-balanced-tpc50_{labels_count}l"
 
@@ -215,8 +216,9 @@ class ResultsTable(object):
                 yield join(Common.log_dir, Common.create_log_eval_filename(data_type=DataType.Train,
                                                                            iter_index=it_index))
         elif result_type == ResultType.F1LastTest or \
-              result_type == ResultType.PrecNeutLastTest or \
-              result_type == ResultType.RecallNeutLastTest:
+             result_type == ResultType.F1NeutLastTest or \
+             result_type == ResultType.PrecNeutLastTest or \
+             result_type == ResultType.RecallNeutLastTest:
             for it_index in range(iters):
                 yield join(Common.log_dir, Common.create_log_eval_filename(data_type=DataType.Test,
                                                                            iter_index=it_index))
@@ -263,6 +265,8 @@ class ResultsTable(object):
         elif r_type == ResultType.F1LastTrain or \
              r_type == ResultType.F1LastTest:
             return [parse_last(filepath=fp, col=TwoClassEvalResult.C_F1) for fp in files_per_iter]
+        elif r_type == ResultType.F1NeutLastTest:
+            return [parse_last(filepath=fp, col=ThreeClassEvalResult.C_F1_NEU) for fp in files_per_iter]
         elif r_type == ResultType.PrecNeutLastTest:
             return [parse_last(filepath=fp, col=ThreeClassEvalResult.C_NEU_PREC)
                     for fp in files_per_iter]
@@ -525,10 +529,10 @@ class ResultsTable(object):
 
         # Perform rounding.
         rounded_df = self.__df.round(decimals=round_decimals)
- 
+
         # Perform results scaling (Optional).
         if (coef_scaler > 1.0):
-            rounded_df[rounded_df.select_dtypes(include=['number']).columns] *= coef_scaler 
+            rounded_df[rounded_df.select_dtypes(include=['number']).columns] *= coef_scaler
 
         # composing output filepath.
         basename = self._create_output_basename()
