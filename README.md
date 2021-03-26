@@ -32,7 +32,7 @@ Using `run_train_classifier.sh` to run an experiment in following formats:
 * Fixed separation of RuSentRel 
 * k-Fold cross validation.
 
-## Benchmark results 
+> TODO. Provide script details `run_serialization.py`, `run_training.py`
 
 ## References
 > TODO. Provide references for such experiments, prior models.
