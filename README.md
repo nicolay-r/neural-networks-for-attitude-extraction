@@ -1,6 +1,12 @@
 ## Neural Networks Applications in Sentiment Attitude Extraction 
 
-This repository is an application for neural-networks of AREkit framework, devoted to sentiment attitude extraction task.
+This repository is an application for neural-networks of AREkit framework, devoted 
+to sentiment **attitude extraction** task [[initial-paper]](https://arxiv.org/pdf/1808.08932.pdf), applied for a document **contexts**:
+
+![](docs/task-intro.png)
+> Figure: Example of a context with attitudes mentioned in
+it; named entities **«Russia»** and **«NATO»** have the negative attitude towards each other with additional indication of other
+named entities.
 
 It provides applications for:
 * [Data serialization](#application-1-data-serialization);
