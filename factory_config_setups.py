@@ -1,4 +1,4 @@
-from arekit.contrib.experiments.types import ExperimentTypes
+from arekit.contrib.experiment_rusentrel.types import ExperimentTypes
 from arekit.contrib.networks.context.configurations.base.base import DefaultNetworkConfig
 from arekit.contrib.networks.enum_name_types import ModelNames
 from arekit.contrib.networks.multi.configurations.base import BaseMultiInstanceConfig

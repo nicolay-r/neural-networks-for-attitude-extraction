@@ -5,7 +5,7 @@ from arekit.common.evaluation.evaluators.modes import EvaluationModes
 from arekit.common.evaluation.evaluators.two_class import TwoClassEvaluator
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.common.languages.ru.pos_service import PartOfSpeechTypesService
-from arekit.contrib.experiments.factory import create_experiment
+from arekit.contrib.experiment_rusentrel.factory import create_experiment
 from arekit.contrib.networks.context.configurations.base.base import DefaultNetworkConfig
 from arekit.contrib.networks.core.model_io import NeuralNetworkModelIO
 from arekit.contrib.networks.run_training import NetworksTrainingEngine

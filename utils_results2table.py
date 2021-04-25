@@ -14,7 +14,7 @@ from arekit.common.experiment.data_type import DataType
 from arekit.common.experiment.scales.factory import create_labels_scaler
 from arekit.common.experiment.scales.two import TwoLabelScaler
 from arekit.common.labels.base import PositiveLabel, NegativeLabel, NeutralLabel
-from arekit.contrib.experiments.rusentrel.folding import DEFAULT_CV_COUNT
+from arekit.contrib.experiment_rusentrel.sl.folding import DEFAULT_CV_COUNT
 from args.train.model_input_type import ModelInputTypeArg
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.contrib.networks.enum_input_types import ModelInputType

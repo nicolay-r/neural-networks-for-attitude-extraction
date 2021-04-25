@@ -2,7 +2,7 @@ import argparse
 
 from arekit.common.entities.formatters.factory import create_entity_formatter
 from arekit.common.experiment.folding.types import FoldingType
-from arekit.contrib.experiments.factory import create_experiment
+from arekit.contrib.experiment_rusentrel.factory import create_experiment
 from arekit.processing.lemmatization.mystem import MystemWrapper
 from arekit.processing.pos.mystem_wrap import POSMystemWrapper
 from args.balance import UseBalancingArg

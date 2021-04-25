@@ -7,8 +7,8 @@ from arekit.common.evaluation.evaluators.three_class import ThreeClassEvaluator
 from arekit.common.experiment.data_type import DataType
 from arekit.common.labels.str_fmt import StringLabelsFormatter
 from arekit.common.opinions.collection import OpinionCollection
-from arekit.contrib.experiments.rusentrel.labels_formatter import RuSentRelNeutralLabelsFormatter
-from arekit.contrib.experiments.synonyms.provider import RuSentRelSynonymsCollectionProvider
+from arekit.contrib.experiment_rusentrel.sl.labels_formatter import RuSentRelNeutralLabelsFormatter
+from arekit.contrib.experiment_rusentrel.synonyms.provider import RuSentRelSynonymsCollectionProvider
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions, RuSentRelIOUtils
 from arekit.contrib.source.rusentrel.labels_fmt import RuSentRelLabelsFormatter
 from arekit.contrib.source.rusentrel.opinions.collection import RuSentRelOpinionCollection
@@ -23,6 +23,12 @@ class Results(Enum):
     Etalon = u'annot-3-scale'
 
     Test = u'test_results'
+
+    Test2 = u'test_results_2'
+
+    Test3 = u'test_results_3_cnn'
+
+    Test4 = u'cnn-joined'
 
 
 class CustomRuSentRelLabelsFormatter(RuSentRelLabelsFormatter):
@@ -89,7 +95,7 @@ class TestEvalF1NPU(unittest.TestCase):
                     doc_id=doc_id,
                     labels_fmt=RuSentRelLabelsFormatter(),
                     opin_path_fmt=u"{doc_id}.opin.txt",
-                    result_version=Results.Test),
+                    result_version=Results.Test4),
                 synonyms=actual_synonyms,
                 error_on_duplicates=False,
                 error_on_synonym_end_missed=False)

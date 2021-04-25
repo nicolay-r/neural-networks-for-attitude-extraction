@@ -9,8 +9,8 @@ from arekit.common.experiment.data_type import DataType
 from arekit.common.experiment.engine.cv_based import ExperimentEngine
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.common.experiment.scales.factory import create_labels_scaler
-from arekit.contrib.experiments.factory import create_experiment
-from arekit.contrib.experiments.types import ExperimentTypes
+from arekit.contrib.experiment_rusentrel.factory import create_experiment
+from arekit.contrib.experiment_rusentrel.types import ExperimentTypes
 from arekit.contrib.networks.core.io_utils import NetworkIOUtils
 from arekit.contrib.networks.core.model_io import NeuralNetworkModelIO
 from arekit.contrib.networks.enum_input_types import ModelInputType

@@ -1,4 +1,4 @@
-from arekit.contrib.experiments.types import ExperimentTypesService
+from arekit.contrib.experiment_rusentrel.types import ExperimentTypesService
 from args.base import BaseArg
 
 
