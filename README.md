@@ -68,6 +68,7 @@ It provides applications for:
 
 ## Dependencies
 
+* Python-2.7
 * AREKit == 0.20.5
 
 ## Installation
@@ -115,29 +116,29 @@ CUDA_VISIBLE_DEVICES=0 python run_training.py --do-eval
 ## Script Arguments Manual
 
 Common flags:
-* `--experiment` -- набор данных обучения моделей:
-    * `rsr` -- коллекция [RuSentRel](https://github.com/nicolay-r/RuSentRel) для обучения с учителем;
-    * `ra` -- коллекция [RuAttitudes](https://github.com/nicolay-r/RuAttitudes) для предобучения;
-    * `rsr+ra` -- combined RuSentRel и RuAttitudes.
-* `--cv\_count` -- формат разбиения набора данных;
-    * 1 -- использование фиксированного формата разбиения;
-    * k -- использование кросс-валидационного разбиения на $k$-частей;
-* `--frames_versions` -- версия коллекции RuSentiFrames{}:
-    * `v2.0` -- коллекция фреймов RuSentiFrames-2.0;
-* `--ra_ver` -- версия коллекции RuAttitudes (если используется):
-    * `v1_2` -- коллекция \ruattitudesVersion{1.0};
-    * `v2_0_base` -- коллекция \raBase{};
-    * `v2_0_large` -- коллекция \raLarge{};
-    * `v2_0_base_neut` -- коллекция \raBase{}-Neut;
-    * `v2_0_large_neut` -- коллекция \raLarge{}-Neut;
+* `--experiment` -- is an experiment which could be as follows:
+    * `rsr` -- supervised learning + evaluation within [RuSentRel](https://github.com/nicolay-r/RuSentRel) collection;
+    * `ra` -- pretraining with [RuAttitudes](https://github.com/nicolay-r/RuAttitudes) collection;
+    * `rsr+ra` -- combined training within RuSentRel and RuAttitudes and evalut.
+* `--cv_count` -- data folding mode:
+    * `1` -- predefined docs separation onto TRAIN/TEST (RuSentRel);
+    * `k` -- CV-based folding onto `k`-folds; (`k=3` supported);
+* `--frames_versions` -- RuSentiFrames collection version:
+    * `v2.0` -- RuSentiFrames-2.0;
+* `--ra_ver` -- RuAttitudes version, if collection is applicable (`ra` or `rsr+ra` experiments):
+    * `v1_2` -- RuAttitudes-1.0 [paper](https://www.aclweb.org/anthology/R19-1118/);
+    * `v2_0_base`;
+    * `v2_0_large`;
+    * `v2_0_base_neut`;
+    * `v2_0_large_neut`;
     
 Training specific flags:
-* `--model_name` -- название используемого кодировщика в общей модели нейронной сети [[list]](#models-list);
-* `--do_eval` -- флаг, указывает на выполнение оценки модели в процессе обучения;
+* `--model_name` -- model to train (see [[list]](#models-list));
+* `--do_eval` -- activates evaluation during training process;
 * `--bags_per_minibatch` -- количество мешков в мини-партии;
 * `--balanced_input` -- флаг, указывает на использование сбалансированной коллекции в обучении модели;
-* `--emb-filepath` -- путь к предобученной \wordtovec{} модели векторных представлений слов;
-* `--entity-fmt` -- тип форматирования термов сущностей в контексте.
-    * `rus-simple`  -- использование русскоязычных строк-масок: объект, субъект, сущость;
-    * `sharp-simple` -- использование следующих масок: \#O (для объектов), \#S (для субъектов), \#E (для остальных сущностей контекста); такой формат представления используется в языковых моделях;
-* `--balance-samples` -- флаг включения/отключения балансировки коллекции контекстов по классам;
+* `--emb-filepath` -- path to Word2Vec model;
+* `--entity-fmt` -- entities formatting type:
+    * `rus-simple`  -- using russian masks: `объект`, `субъект`, `сущость`;
+    * `sharp-simple` -- using BERT related notation for meta tokens: `#O` (object), `#S` (subjects), `#E` (entities);
+* `--balance-samples` -- activates sample balancing;
