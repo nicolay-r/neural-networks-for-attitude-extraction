@@ -4,7 +4,6 @@ from collections import OrderedDict
 from itertools import chain
 from os.path import join
 
-from arekit.common.evaluation.results.two_class import TwoClassEvalResult
 from arekit.common.experiment.data_type import DataType
 from arekit.common.experiment.formats.base import BaseExperiment
 from arekit.common.utils import create_dir_if_not_exists
@@ -15,6 +14,7 @@ from arekit.contrib.networks.core.callback.utils_model_eval import evaluate_mode
 from arekit.contrib.networks.core.cancellation import OperationCancellation
 from arekit.contrib.networks.core.model import BaseTensorflowModel
 from arekit.contrib.source.rusentrel.labels_fmt import RuSentRelLabelsFormatter
+from arekit.contrib.experiment_rusentrel.evaluation.results.two_class import TwoClassEvalResult
 
 from callback_log_cfg import write_config_setups
 from callback_log_exp import create_experiment_eval_msgs

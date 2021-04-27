@@ -3,10 +3,10 @@ from os.path import dirname, join
 
 from enum import Enum
 
-from arekit.common.evaluation.evaluators.three_class import ThreeClassEvaluator
 from arekit.common.experiment.data_type import DataType
 from arekit.common.labels.str_fmt import StringLabelsFormatter
 from arekit.common.opinions.collection import OpinionCollection
+from arekit.contrib.experiment_rusentrel.evaluation.evaluators.three_class import ThreeClassEvaluator
 from arekit.contrib.experiment_rusentrel.label_fmts.neut_label import RuSentRelNeutralLabelsFormatter
 from arekit.contrib.experiment_rusentrel.synonyms.provider import RuSentRelSynonymsCollectionProvider
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions, RuSentRelIOUtils

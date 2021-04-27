@@ -1,7 +1,7 @@
-from arekit.common.evaluation.evaluators.three_class import ThreeClassEvaluator
 from arekit.common.evaluation.utils import OpinionCollectionsToCompareUtils
 from arekit.common.opinions.collection import OpinionCollection
 from arekit.common.utils import progress_bar_iter
+from arekit.contrib.experiment_rusentrel.evaluation.evaluators.three_class import ThreeClassEvaluator
 
 
 def calculate_results(doc_ids, evaluator,
