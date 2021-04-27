@@ -4,6 +4,9 @@ from arekit.common.embeddings.base import Embedding
 from arekit.common.entities.str_fmt import StringEntitiesFormatter
 from arekit.common.frame_variants.collection import FrameVariantsCollection
 from arekit.common.opinions.formatter import OpinionCollectionsFormatter
+from arekit.contrib.experiment_rusentrel.label_fmts.rusentiframes import \
+    ExperimentRuSentiFramesLabelsFormatter, \
+    ExperimentRuSentiFramesEffectLabelsFormatter
 from arekit.contrib.networks.core.data.serializing import NetworkSerializationData
 from arekit.contrib.source.rusentiframes.types import RuSentiFramesVersions
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
@@ -49,7 +52,11 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
         self.__word_embedding = embedding
         self.__opinion_formatter = opinion_formatter
 
-        self.__frames_collection = RuSentiFramesCollection.read_collection(version=frames_version)
+        self.__frames_collection = RuSentiFramesCollection.read_collection(
+            version=frames_version,
+            labels_fmt=ExperimentRuSentiFramesLabelsFormatter(),
+            effect_labels_fmt=ExperimentRuSentiFramesEffectLabelsFormatter())
+
         self.__unique_frame_variants = FrameVariantsCollection.create_unique_variants_from_iterable(
             variants_with_id=self.__frames_collection.iter_frame_id_and_variants(),
             stemmer=self.Stemmer)
