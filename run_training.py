@@ -4,6 +4,7 @@ from os.path import join
 from arekit.common.evaluation.evaluators.modes import EvaluationModes
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.common.languages.ru.pos_service import PartOfSpeechTypesService
+from arekit.common.model.labeling.modes import LabelCalculationMode
 from arekit.contrib.experiment_rusentrel.evaluation.evaluators.two_class import TwoClassEvaluator
 from arekit.contrib.experiment_rusentrel.factory import create_experiment
 from arekit.contrib.networks.context.configurations.base.base import DefaultNetworkConfig
@@ -155,6 +156,7 @@ if __name__ == "__main__":
     #####################
     callback = NeuralNetworkCustomEvaluationCallback(do_eval=do_eval,
                                                      train_acc_limit=train_acc_limit,
+                                                     label_calc_mode=LabelCalculationMode.AVERAGE,
                                                      train_f1_limit=train_f1_limit)
 
     # We keep parameters only for fixed experiment type by default.

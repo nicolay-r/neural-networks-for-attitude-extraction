@@ -6,6 +6,7 @@ from os.path import join
 
 from arekit.common.experiment.data_type import DataType
 from arekit.common.experiment.formats.base import BaseExperiment
+from arekit.common.model.labeling.modes import LabelCalculationMode
 from arekit.common.utils import create_dir_if_not_exists
 
 from arekit.contrib.networks.core.callback.base import Callback
@@ -33,16 +34,19 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
     __log_eval_iter_verbose_filename = u"cb_eval_verbose_{iter}_{dtype}.log"
 
     def __init__(self, do_eval,
+                 label_calc_mode,
                  train_acc_limit,
                  train_f1_limit):
         assert(isinstance(train_acc_limit, float) or train_acc_limit is None)
         assert(isinstance(train_f1_limit, float) or train_f1_limit is None)
+        assert(isinstance(label_calc_mode, LabelCalculationMode))
         assert(isinstance(do_eval, bool))
 
         super(NeuralNetworkCustomEvaluationCallback, self).__init__()
 
         self.__experiment = None
         self.__model = None
+        self.__label_calc_mode = label_calc_mode
 
         self.__test_results_exp_history = OrderedDict()
         self.__eval_on_epochs = None
@@ -184,6 +188,7 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
                 epoch_index=epoch_index,
                 model=self.__model,
                 labels_formatter=eval_label_formatter,
+                label_calc_mode=self.__label_calc_mode,
                 log_dir=self.__log_dir)
 
         # Saving the obtained results.
