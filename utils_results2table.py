@@ -9,6 +9,7 @@ from os.path import join, exists
 from enum import Enum
 
 from arekit.common.experiment.data_type import DataType
+from arekit.common.labels.base import NeutralLabel
 from arekit.contrib.experiment_rusentrel.evaluation.results.three_class import ThreeClassEvalResult
 from arekit.contrib.experiment_rusentrel.evaluation.results.two_class import TwoClassEvalResult
 from arekit.contrib.experiment_rusentrel.labels.scalers.two import TwoLabelScaler
