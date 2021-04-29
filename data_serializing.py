@@ -4,9 +4,9 @@ from arekit.common.embeddings.base import Embedding
 from arekit.common.entities.str_fmt import StringEntitiesFormatter
 from arekit.common.frame_variants.collection import FrameVariantsCollection
 from arekit.common.opinions.formatter import OpinionCollectionsFormatter
-from arekit.contrib.experiment_rusentrel.label_fmts.rusentiframes import \
-    ExperimentRuSentiFramesLabelsFormatter, \
-    ExperimentRuSentiFramesEffectLabelsFormatter
+from arekit.contrib.experiment_rusentrel.labels.formatters.rusentiframes import \
+    ExperimentRuSentiFramesEffectLabelsFormatter, ExperimentRuSentiFramesLabelsFormatter
+from arekit.contrib.experiment_rusentrel.labels.scalers.three import ThreeLabelScaler
 from arekit.contrib.networks.core.data.serializing import NetworkSerializationData
 from arekit.contrib.source.rusentiframes.types import RuSentiFramesVersions
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
@@ -61,6 +61,9 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
             variants_with_id=self.__frames_collection.iter_frame_id_and_variants(),
             stemmer=self.Stemmer)
 
+        # NOTE: Neutral and other labels.
+        self.__frame_roles_label_scaler = ThreeLabelScaler()
+
     # region public properties
 
     @property
@@ -94,5 +97,9 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
     @property
     def TermsPerContext(self):
         return self.__terms_per_context
+
+    @property
+    def FrameRolesLabelScaler(self):
+        raise self.__frame_roles_label_scaler
 
     # endregion

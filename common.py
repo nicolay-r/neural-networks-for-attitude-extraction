@@ -3,8 +3,8 @@ import logging
 
 from arekit.common.experiment.data_type import DataType
 from arekit.common.experiment.folding.types import FoldingType
-from arekit.contrib.experiment_rusentrel.scales.three import ThreeLabelScaler
-from arekit.contrib.experiment_rusentrel.scales.two import TwoLabelScaler
+from arekit.contrib.experiment_rusentrel.labels.scalers.three import ThreeLabelScaler
+from arekit.contrib.experiment_rusentrel.labels.scalers.two import TwoLabelScaler
 from arekit.contrib.networks.enum_input_types import ModelInputType
 from arekit.contrib.networks.enum_name_types import ModelNames
 from arekit.contrib.source.ruattitudes.io_utils import RuAttitudesVersions

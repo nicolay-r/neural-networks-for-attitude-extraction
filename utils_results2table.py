@@ -12,9 +12,8 @@ from arekit.common.experiment.data_type import DataType
 from arekit.common.labels.base import NeutralLabel
 from arekit.contrib.experiment_rusentrel.evaluation.results.three_class import ThreeClassEvalResult
 from arekit.contrib.experiment_rusentrel.evaluation.results.two_class import TwoClassEvalResult
-from arekit.contrib.experiment_rusentrel.labels import NegativeLabel, PositiveLabel
-from arekit.contrib.experiment_rusentrel.scales.factory import create_labels_scaler
-from arekit.contrib.experiment_rusentrel.scales.two import TwoLabelScaler
+from arekit.contrib.experiment_rusentrel.labels.scalers.two import TwoLabelScaler
+from arekit.contrib.experiment_rusentrel.labels.types import PositiveLabel, NegativeLabel
 from arekit.contrib.experiment_rusentrel.sl.folding import DEFAULT_CV_COUNT
 from args.train.model_input_type import ModelInputTypeArg
 from arekit.common.experiment.folding.types import FoldingType
@@ -346,7 +345,7 @@ class ResultsTable(object):
             def calc_for_iter(iter_index, fp):
 
                 # creating scaler.
-                scaler = create_labels_scaler(eval_ctx.labels_count)
+                scaler = Common.create_labels_scaler(eval_ctx.labels_count)
 
                 # creating dict to perform convertion from type to label.
                 type_to_label = {

@@ -9,7 +9,6 @@ from arekit.common.experiment.engine.cv_based import ExperimentEngine
 from arekit.common.experiment.folding.types import FoldingType
 from arekit.contrib.experiment_rusentrel.evaluation.evaluators.three_class import ThreeClassEvaluator
 from arekit.contrib.experiment_rusentrel.factory import create_experiment
-from arekit.contrib.experiment_rusentrel.scales.factory import create_labels_scaler
 from arekit.contrib.experiment_rusentrel.types import ExperimentTypes
 from arekit.contrib.networks.core.io_utils import NetworkIOUtils
 from arekit.contrib.networks.core.model_io import NeuralNetworkModelIO
@@ -140,7 +139,7 @@ if __name__ == "__main__":
     rusentrel_version = RuSentRelVersionArg.default
     stemmer = StemmerArg.supported[StemmerArg.default]
     force_eval = args.force
-    labels_scaler = create_labels_scaler(labels_count)
+    labels_scaler = Common.create_labels_scaler(labels_count)
     eval_mode = EvaluationModes.Extraction
     dist_in_terms_between_attitude_ends = None
 
