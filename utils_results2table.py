@@ -13,7 +13,7 @@ from arekit.common.labels.base import NeutralLabel
 from arekit.contrib.experiment_rusentrel.evaluation.results.three_class import ThreeClassEvalResult
 from arekit.contrib.experiment_rusentrel.evaluation.results.two_class import TwoClassEvalResult
 from arekit.contrib.experiment_rusentrel.labels.scalers.two import TwoLabelScaler
-from arekit.contrib.experiment_rusentrel.labels.types import ExperimentPositiveLabel, ExperimentNegativeLabel, \
+from arekit.contrib.experiment_rusentrel.labels.types import ExperimentPositiveLabel, ExperimentNegativeLabel
 from arekit.contrib.experiment_rusentrel.sl.folding import DEFAULT_CV_COUNT
 from args.train.model_input_type import ModelInputTypeArg
 from arekit.common.experiment.folding.types import FoldingType

@@ -14,7 +14,8 @@ from arekit.contrib.networks.core.callback.utils_hidden_states import save_model
 from arekit.contrib.networks.core.callback.utils_model_eval import evaluate_model
 from arekit.contrib.networks.core.cancellation import OperationCancellation
 from arekit.contrib.networks.core.model import BaseTensorflowModel
-from arekit.contrib.source.rusentrel.labels_fmt import RuSentRelLabelsFormatter
+
+from arekit.contrib.experiment_rusentrel.labels.formatters.rusentrel import RuSentRelExperimentLabelsFormatter
 from arekit.contrib.experiment_rusentrel.evaluation.results.two_class import TwoClassEvalResult
 
 from callback_log_cfg import write_config_setups
@@ -173,9 +174,7 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
     def __eval_and_log_results(self, operation_cancel, epoch_index, avg_fit_cost):
         assert(isinstance(operation_cancel, OperationCancellation))
 
-        # We use the latter temporary. Maybe it might be in a way better to refactor this aspect.
-        # For now such formatter could not be taken from the related experiment.
-        eval_label_formatter = RuSentRelLabelsFormatter()
+        eval_label_formatter = RuSentRelExperimentLabelsFormatter()
 
         result = {}
 

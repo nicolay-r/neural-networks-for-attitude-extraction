@@ -8,9 +8,9 @@ from arekit.common.labels.str_fmt import StringLabelsFormatter
 from arekit.common.opinions.collection import OpinionCollection
 from arekit.contrib.experiment_rusentrel.evaluation.evaluators.three_class import ThreeClassEvaluator
 from arekit.contrib.experiment_rusentrel.labels.formatters.neut_label import RuSentRelNeutralLabelsFormatter
+from arekit.contrib.experiment_rusentrel.labels.formatters.rusentrel import RuSentRelExperimentLabelsFormatter
 from arekit.contrib.experiment_rusentrel.synonyms.provider import RuSentRelSynonymsCollectionProvider
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions, RuSentRelIOUtils
-from arekit.contrib.source.rusentrel.labels_fmt import RuSentRelLabelsFormatter
 from arekit.contrib.source.rusentrel.opinions.collection import RuSentRelOpinionCollection
 from arekit.contrib.source.rusentrel.opinions.formatter import RuSentRelOpinionCollectionFormatter
 from arekit.contrib.source.zip_utils import ZipArchiveUtils
@@ -31,7 +31,7 @@ class Results(Enum):
     Test4 = u'cnn-joined'
 
 
-class CustomRuSentRelLabelsFormatter(RuSentRelLabelsFormatter):
+class CustomRuSentRelLabelsFormatter(RuSentRelExperimentLabelsFormatter):
 
     def __init__(self):
         super(CustomRuSentRelLabelsFormatter, self).__init__()
@@ -93,7 +93,7 @@ class TestEvalF1NPU(unittest.TestCase):
             iter_result_opins_by_doc_id_func=lambda doc_id: OpinionCollection(
                 opinions=CustomZippedResultsIOUtils.iter_doc_opinions(
                     doc_id=doc_id,
-                    labels_fmt=RuSentRelLabelsFormatter(),
+                    labels_fmt=RuSentRelExperimentLabelsFormatter(),
                     opin_path_fmt=u"{doc_id}.opin.txt",
                     result_version=Results.Test4),
                 synonyms=actual_synonyms,
