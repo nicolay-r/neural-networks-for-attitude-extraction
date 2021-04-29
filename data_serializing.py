@@ -4,13 +4,15 @@ from arekit.common.embeddings.base import Embedding
 from arekit.common.entities.str_fmt import StringEntitiesFormatter
 from arekit.common.frame_variants.collection import FrameVariantsCollection
 from arekit.common.opinions.formatter import OpinionCollectionsFormatter
-from arekit.contrib.experiment_rusentrel.labels.formatters.rusentiframes import \
-    ExperimentRuSentiFramesEffectLabelsFormatter, ExperimentRuSentiFramesLabelsFormatter
 from arekit.contrib.experiment_rusentrel.labels.scalers.three import ThreeLabelScaler
+from arekit.contrib.experiment_rusentrel.labels.types import ExperimentPositiveLabel, ExperimentNegativeLabel
 from arekit.contrib.networks.core.data.serializing import NetworkSerializationData
 from arekit.contrib.source.rusentiframes.types import RuSentiFramesVersions
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions
 from arekit.contrib.source.rusentiframes.collection import RuSentiFramesCollection
+from arekit.contrib.experiment_rusentrel.labels.formatters.rusentiframes import \
+    ExperimentRuSentiFramesEffectLabelsFormatter, \
+    ExperimentRuSentiFramesLabelsFormatter
 from arekit.processing.lemmatization.base import Stemmer
 from arekit.processing.pos.base import POSTagger
 
@@ -64,6 +66,12 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
         # NOTE: Neutral and other labels.
         self.__frame_roles_label_scaler = ThreeLabelScaler()
 
+        # NOTE: Considering only sentiment labels in results evaluation.
+        self.__supported_collection_labels = {
+            ExperimentPositiveLabel(),
+            ExperimentNegativeLabel()
+        }
+
     # region public properties
 
     @property
@@ -100,6 +108,10 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
 
     @property
     def FrameRolesLabelScaler(self):
-        raise self.__frame_roles_label_scaler
+        return self.__frame_roles_label_scaler
+
+    @property
+    def SupportedCollectionLabels(self):
+        return self.__supported_collection_labels
 
     # endregion
