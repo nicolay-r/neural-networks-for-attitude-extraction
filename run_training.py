@@ -155,6 +155,7 @@ if __name__ == "__main__":
     # Initialize callback
     #####################
     callback = NeuralNetworkCustomEvaluationCallback(do_eval=do_eval,
+                                                     label_scaler=Common.create_labels_scaler(labels_count),
                                                      train_acc_limit=train_acc_limit,
                                                      label_calc_mode=LabelCalculationMode.AVERAGE,
                                                      train_f1_limit=train_f1_limit)
@@ -176,7 +177,7 @@ if __name__ == "__main__":
     # Creating experiment
     evaluator = TwoClassEvaluator(eval_mode)
     experiment_data = RuSentRelTrainingData(
-        labels_scaler=Common.create_labels_scaler(labels_count),
+        labels_count=labels_count,
         stemmer=stemmer,
         opinion_formatter=Common.create_opinion_collection_formatter(),
         evaluator=evaluator,
@@ -220,7 +221,7 @@ if __name__ == "__main__":
     assert(isinstance(config, DefaultNetworkConfig))
 
     # Default settings, applied from cmd arguments.
-    config.modify_classes_count(value=experiment.DataIO.LabelsScaler.classes_count())
+    config.modify_classes_count(value=experiment.DataIO.LabelsCount)
     config.modify_learning_rate(learning_rate)
     config.modify_use_class_weights(True)
     config.modify_dropout_keep_prob(dropout_keep_prob)

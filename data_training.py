@@ -7,13 +7,15 @@ from callback_eval import CallbackEvalF1NPU
 
 class RuSentRelTrainingData(TrainingData):
 
-    def __init__(self, labels_scaler, stemmer, opinion_formatter, evaluator, callback):
+    def __init__(self, labels_count, stemmer, opinion_formatter, evaluator, callback):
+        assert(isinstance(labels_count, int))
         assert(isinstance(callback, NeuralNetworkCustomEvaluationCallback) or
                isinstance(callback, CallbackEvalF1NPU))
         assert(isinstance(stemmer, Stemmer))
         assert(isinstance(opinion_formatter, OpinionCollectionsFormatter))
 
-        super(RuSentRelTrainingData, self).__init__(labels_scaler, stemmer)
+        super(RuSentRelTrainingData, self).__init__(stemmer=stemmer,
+                                                    labels_count=labels_count)
 
         self.__callback = callback
         self.__opinion_formatter = opinion_formatter

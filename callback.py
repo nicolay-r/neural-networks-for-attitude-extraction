@@ -6,6 +6,7 @@ from os.path import join
 
 from arekit.common.experiment.data_type import DataType
 from arekit.common.experiment.formats.base import BaseExperiment
+from arekit.common.labels.scaler import BaseLabelScaler
 from arekit.common.model.labeling.modes import LabelCalculationMode
 from arekit.common.utils import create_dir_if_not_exists
 
@@ -35,9 +36,11 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
     __log_eval_iter_verbose_filename = u"cb_eval_verbose_{iter}_{dtype}.log"
 
     def __init__(self, do_eval,
+                 label_scaler,
                  label_calc_mode,
                  train_acc_limit,
                  train_f1_limit):
+        assert(isinstance(label_scaler, BaseLabelScaler))
         assert(isinstance(train_acc_limit, float) or train_acc_limit is None)
         assert(isinstance(train_f1_limit, float) or train_f1_limit is None)
         assert(isinstance(label_calc_mode, LabelCalculationMode))
@@ -47,6 +50,7 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
 
         self.__experiment = None
         self.__model = None
+        self.__label_scaler = label_scaler
         self.__label_calc_mode = label_calc_mode
 
         self.__test_results_exp_history = OrderedDict()
@@ -181,6 +185,7 @@ class NeuralNetworkCustomEvaluationCallback(Callback):
         for data_type in self.__iter_supported_data_types():
             assert(isinstance(data_type, DataType))
             result[data_type] = evaluate_model(
+                label_scaler=self.__label_scaler,
                 experiment=self.__experiment,
                 save_hidden_params=self.__key_save_hidden_parameters,
                 data_type=data_type,
