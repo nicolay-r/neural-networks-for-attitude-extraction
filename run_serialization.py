@@ -76,7 +76,9 @@ if __name__ == "__main__":
     # Preparing necessary structures for further initializations.
     experiment_data = RuSentRelExperimentSerializationData(
         labels_scaler=Common.create_labels_scaler(labels_count),
-        embedding=Common.load_rusvectores_word_embedding(embedding_filepath),
+        embedding=Common.load_rusvectores_word_embedding(
+            filepath=embedding_filepath,
+            stemmer=stemmer),
         terms_per_context=terms_per_context,
         frames_version=frames_version,
         rusentrel_version=rusentrel_version,

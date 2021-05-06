@@ -107,9 +107,13 @@ class Common:
         logger.info("============")
 
     @staticmethod
-    def load_rusvectores_word_embedding(filepath):
+    def load_rusvectores_word_embedding(filepath, stemmer):
         logger.info("Loading word embedding: {}".format(filepath))
-        return RusvectoresEmbedding.from_word2vec_format(filepath=filepath, binary=True)
+        # Loading embedding.
+        embedding = RusvectoresEmbedding.from_word2vec_format(filepath=filepath, binary=True)
+        # Provide stemmer instance.
+        embedding.set_stemmer(stemmer)
+        return embedding
 
     @staticmethod
     def create_opinion_collection_formatter():
