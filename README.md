@@ -96,7 +96,7 @@ Using `run_serialization.sh` in order to prepare data for a particular experimen
 ```shell script
 python run_serialization.py 
     --cv-count 3 --frames-version v2_0 
-    --experiment rsr+ra --labels-count 3 
+    --experiment rsr+ra --labels-count 3 --ra-ver v1_0
     --emb-filepath data/news_rusvectores2.bin.gz 
     --entity-fmt rus-simple --balance-samples True
 ```
@@ -108,7 +108,7 @@ Using `run_train_classifier.sh` to run an experiment.
 ```shell script
 CUDA_VISIBLE_DEVICES=0 python run_training.py --do-eval 
     --bags-per-minibatch 32 --dropout-keep-prob 0.80 --cv-count 3 
-    --labels-count 3 --experiment rsr --model-input-type ctx 
+    --labels-count 3 --experiment rsr+ra --model-input-type ctx --ra-ver v1_0
     --model-name cnn --test-every-k-epoch 5 --learning-rate 0.1 
     --balanced-input True --train-acc-limit 0.99  --epochs 100
 ```
