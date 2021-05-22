@@ -4,6 +4,8 @@ from arekit.common.embeddings.base import Embedding
 from arekit.common.entities.str_fmt import StringEntitiesFormatter
 from arekit.common.frame_variants.collection import FrameVariantsCollection
 from arekit.common.opinions.formatter import OpinionCollectionsFormatter
+from arekit.contrib.experiment_rusentrel.annot.algo import RuSentRelDefaultNeutralAnnotationAlgorithm
+from arekit.contrib.experiment_rusentrel.annot.factory import ExperimentNeutralAnnotatorFactory
 from arekit.contrib.experiment_rusentrel.labels.scalers.three import ThreeLabelScaler
 from arekit.contrib.experiment_rusentrel.labels.types import ExperimentPositiveLabel, ExperimentNegativeLabel
 from arekit.contrib.networks.core.data.serializing import NetworkSerializationData
@@ -42,10 +44,13 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
         assert(isinstance(dist_in_terms_between_att_ends, int) or dist_in_terms_between_att_ends is None)
         assert(isinstance(terms_per_context, int))
 
-        self.__dist_in_terms_between_att_ends = dist_in_terms_between_att_ends
-
-        super(RuSentRelExperimentSerializationData, self).__init__(labels_scaler=labels_scaler,
-                                                                   stemmer=stemmer)
+        super(RuSentRelExperimentSerializationData, self).__init__(
+            neutral_annot=ExperimentNeutralAnnotatorFactory.create(
+                labels_count=labels_scaler.LabelsCount,
+                create_algo=lambda: RuSentRelDefaultNeutralAnnotationAlgorithm(
+                    dist_in_terms_bound=dist_in_terms_between_att_ends)),
+            labels_scaler=labels_scaler,
+            stemmer=stemmer)
 
         self.__pos_tagger = pos_tagger
         self.__terms_per_context = terms_per_context
@@ -77,10 +82,6 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
     @property
     def PosTagger(self):
         return self.__pos_tagger
-
-    @property
-    def DistanceInTermsBetweenOpinionEndsBound(self):
-        return self.__dist_in_terms_between_att_ends
 
     @property
     def StringEntityFormatter(self):
