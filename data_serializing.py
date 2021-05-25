@@ -2,10 +2,10 @@ import logging
 
 from arekit.common.embeddings.base import Embedding
 from arekit.common.entities.str_fmt import StringEntitiesFormatter
-from arekit.common.frame_variants.collection import FrameVariantsCollection
 from arekit.common.opinions.formatter import OpinionCollectionsFormatter
 from arekit.contrib.experiment_rusentrel.annot.algo import RuSentRelDefaultNeutralAnnotationAlgorithm
 from arekit.contrib.experiment_rusentrel.annot.factory import ExperimentNeutralAnnotatorFactory
+from arekit.contrib.experiment_rusentrel.frame_variants import ExperimentFrameVariantsCollection
 from arekit.contrib.experiment_rusentrel.labels.scalers.three import ThreeLabelScaler
 from arekit.contrib.experiment_rusentrel.labels.types import ExperimentPositiveLabel, ExperimentNegativeLabel
 from arekit.contrib.networks.core.data.serializing import NetworkSerializationData
@@ -64,9 +64,11 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
             labels_fmt=ExperimentRuSentiFramesLabelsFormatter(),
             effect_labels_fmt=ExperimentRuSentiFramesEffectLabelsFormatter())
 
-        self.__unique_frame_variants = FrameVariantsCollection.create_unique_variants_from_iterable(
-            variants_with_id=self.__frames_collection.iter_frame_id_and_variants(),
-            stemmer=self.Stemmer)
+        self.__unique_frame_variants = ExperimentFrameVariantsCollection(stemmer)
+
+        # Filling collection.
+        self.__unique_frame_variants.fill_from_iterable(
+            variants_with_id=self.__frames_collection.iter_frame_id_and_variants())
 
         # NOTE: Neutral and other labels.
         self.__frame_roles_label_scaler = ThreeLabelScaler()
