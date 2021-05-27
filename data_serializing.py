@@ -4,7 +4,7 @@ from arekit.common.embeddings.base import Embedding
 from arekit.common.entities.str_fmt import StringEntitiesFormatter
 from arekit.common.opinions.formatter import OpinionCollectionsFormatter
 from arekit.contrib.experiment_rusentrel.annot.algo import RuSentRelDefaultNeutralAnnotationAlgorithm
-from arekit.contrib.experiment_rusentrel.annot.factory import ExperimentNeutralAnnotatorFactory
+from arekit.contrib.experiment_rusentrel.annot.factory import ExperimentAnnotatorFactory
 from arekit.contrib.experiment_rusentrel.frame_variants import ExperimentFrameVariantsCollection
 from arekit.contrib.experiment_rusentrel.labels.scalers.three import ThreeLabelScaler
 from arekit.contrib.experiment_rusentrel.labels.types import ExperimentPositiveLabel, ExperimentNegativeLabel
@@ -45,7 +45,7 @@ class RuSentRelExperimentSerializationData(NetworkSerializationData):
         assert(isinstance(terms_per_context, int))
 
         super(RuSentRelExperimentSerializationData, self).__init__(
-            neutral_annot=ExperimentNeutralAnnotatorFactory.create(
+            annot=ExperimentAnnotatorFactory.create(
                 labels_count=labels_scaler.LabelsCount,
                 create_algo=lambda: RuSentRelDefaultNeutralAnnotationAlgorithm(
                     dist_in_terms_bound=dist_in_terms_between_att_ends)),

@@ -44,7 +44,7 @@ class ExperimentF1pnuEvaluator(ExperimentEngine):
         return create_etalon_with_neutral(
             collection=self._experiment.OpinionOperations.create_opinion_collection(),
             etalon_opins=self._experiment.OpinionOperations.read_etalon_opinion_collection(doc_id),
-            neut_opins=self._experiment.OpinionOperations.try_read_neutrally_annotated_opinion_collection(
+            neut_opins=self._experiment.OpinionOperations.try_read_annotated_opinion_collection(
                 doc_id=doc_id,
                 data_type=self.__data_type))
 
