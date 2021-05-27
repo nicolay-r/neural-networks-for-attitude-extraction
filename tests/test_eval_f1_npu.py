@@ -7,7 +7,7 @@ from arekit.common.experiment.data_type import DataType
 from arekit.common.labels.str_fmt import StringLabelsFormatter
 from arekit.common.opinions.collection import OpinionCollection
 from arekit.contrib.experiment_rusentrel.evaluation.evaluators.three_class import ThreeClassEvaluator
-from arekit.contrib.experiment_rusentrel.labels.formatters.neut_label import RuSentRelNeutralLabelsFormatter
+from arekit.contrib.experiment_rusentrel.labels.formatters.neut_label import ExperimentNeutralLabelsFormatter
 from arekit.contrib.experiment_rusentrel.labels.formatters.rusentrel import RuSentRelExperimentLabelsFormatter
 from arekit.contrib.experiment_rusentrel.synonyms.provider import RuSentRelSynonymsCollectionProvider
 from arekit.contrib.source.rusentrel.io_utils import RuSentRelVersions, RuSentRelIOUtils
@@ -36,7 +36,7 @@ class CustomRuSentRelLabelsFormatter(RuSentRelExperimentLabelsFormatter):
     def __init__(self):
         super(CustomRuSentRelLabelsFormatter, self).__init__()
 
-        neut_fmt = RuSentRelNeutralLabelsFormatter()
+        neut_fmt = ExperimentNeutralLabelsFormatter()
         for key, value in neut_fmt._stol.iteritems():
             self._stol[key] = value
 
