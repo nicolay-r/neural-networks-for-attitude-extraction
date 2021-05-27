@@ -74,6 +74,8 @@ class TestEvalF1NPU(unittest.TestCase):
             stemmer=stemmer,
             version=RuSentRelVersions.V11)
 
+        labels_fmt = CustomRuSentRelLabelsFormatter()
+
         result = calculate_results(
             doc_ids=RuSentRelIOUtils.iter_test_indices(RuSentRelVersions.V11),
             evaluator=ThreeClassEvaluator(DataType.Test),
@@ -84,16 +86,18 @@ class TestEvalF1NPU(unittest.TestCase):
                         synonyms=actual_synonyms,
                         error_on_duplicates=True,
                         error_on_synonym_end_missed=True),
-                    etalon_opins=RuSentRelOpinionCollection.iter_opinions_from_doc(doc_id=doc_id),
+                    etalon_opins=RuSentRelOpinionCollection.iter_opinions_from_doc(
+                        doc_id=doc_id,
+                        labels_fmt=labels_fmt),
                     neut_opins=CustomZippedResultsIOUtils.iter_doc_opinions(
                         doc_id=doc_id,
                         result_version=Results.Etalon,
-                        labels_fmt=CustomRuSentRelLabelsFormatter(),
+                        labels_fmt=labels_fmt,
                         opin_path_fmt=u"art{doc_id}.neut.Test.txt")),
             iter_result_opins_by_doc_id_func=lambda doc_id: OpinionCollection(
                 opinions=CustomZippedResultsIOUtils.iter_doc_opinions(
                     doc_id=doc_id,
-                    labels_fmt=RuSentRelExperimentLabelsFormatter(),
+                    labels_fmt=labels_fmt,
                     opin_path_fmt=u"{doc_id}.opin.txt",
                     result_version=Results.Test4),
                 synonyms=actual_synonyms,
