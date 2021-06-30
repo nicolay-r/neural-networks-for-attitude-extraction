@@ -61,7 +61,8 @@ class CustomZippedResultsIOUtils(ZipArchiveUtils):
             inner_path=join(opin_path_fmt.format(doc_id=doc_id)),
             process_func=lambda input_file: RuSentRelOpinionCollectionFormatter._iter_opinions_from_file(
                 input_file=input_file,
-                labels_formatter=labels_fmt),
+                labels_formatter=labels_fmt,
+                error_on_non_supported=True),
             version=result_version)
 
 
