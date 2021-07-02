@@ -75,7 +75,7 @@ It provides applications for:
 AREkit repository:
 ```shell script
 # Clone repository in local folder of the currect project. 
-git clone -b 0.21.0-rc git@github.com:nicolay-r/AREkit.git ../arekit
+git clone -b 0.21.0-rc git@github.com:nicolay-r/AREkit.git arekit
 # Install dependencies.
 pip install -r arekit/requirements.txt
 ```
