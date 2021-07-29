@@ -74,12 +74,8 @@ It provides applications for:
 
 ## Installation
 
-AREkit repository:
 ```shell script
-# Clone repository in local folder of the currect project. 
-git clone -b 0.21.0-rc git@github.com:nicolay-r/AREkit.git arekit
-# Install dependencies.
-pip install -r arekit/requirements.txt
+pip install git+https://github.com/nicolay-r/AREkit/tree/0.21.0-rc
 ```
 
 ### Prepare the data
