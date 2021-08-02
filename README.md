@@ -68,22 +68,14 @@ It provides applications for:
     - Single MLP
         [[code]](https://github.com/nicolay-r/AREkit/tree/0.21.0-rc/contrib/networks/multi/architectures/base/base_single_mlp.py);
 
-## Dependencies
-
-* AREKit == 0.21.0
-
 ## Installation
 
+1. AREkit library.
 ```shell script
-# Clone repository in local folder of the currect project. 
-git clone -b 0.21.0-rc git@github.com:nicolay-r/AREkit.git arekit
-# Install dependencies.
-pip install -r arekit/requirements.txt
+pip install git+https://github.com/nicolay-r/AREkit.git@0.21.0-rc
 ```
 
-### Prepare the data
-
-We utilize RusVectores `news-2015` embedding:
+2. Prepare the data. We utilize RusVectores `news-2015` embedding:
 ```shell script
 mkdir -p data
 curl http://rusvectores.org/static/models/rusvectores2/news_mystem_skipgram_1000_20_2015.bin.gz -o "data/news_rusvectores2.bin.gz"
