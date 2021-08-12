@@ -144,3 +144,19 @@ Training specific flags:
     * `rus-simple`  -- using russian masks: `объект`, `субъект`, `сущость`;
     * `sharp-simple` -- using BERT related notation for meta tokens: `#O` (object), `#S` (subjects), `#E` (entities);
 * `--balance-samples` -- activates sample balancing;
+
+
+## References
+```
+@inproceedings{rusnachenko2021language,
+    title={Language Models Application in Sentiment Attitude Extraction Task},
+    author={Rusnachenko, Nicolay},
+    booktitle={Proceedings of the Institute for System Programming of the RAS (Proceedings of ISP RAS), vol.33},
+    year={2021},
+    number={3},
+    pages={199--222},
+    authorvak={true},
+    authorconf={false},
+    language={russian}
+}
+```
