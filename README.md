@@ -1,5 +1,7 @@
 ## Neural Networks Applications in Sentiment Attitude Extraction 
 
+> **UPD January 10th, 2021:** These scripts mostly become a part of [AREkit-0.22.0](https://github.com/nicolay-r/AREkit) demo and examples! [demo-readme](https://github.com/nicolay-r/AREkit/tree/master/examples)
+
 This repository is an application for neural-networks of AREkit framework, devoted 
 to sentiment **attitude extraction** task [[initial-paper]](https://arxiv.org/pdf/1808.08932.pdf), applied for a document **contexts**:
 
