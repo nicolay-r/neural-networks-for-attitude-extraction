@@ -1,3 +1,7 @@
+
+![](https://img.shields.io/badge/Python-2.7-brightgreen.svg)
+![](https://img.shields.io/badge/AREkit-0.20.5-orange.svg)
+
 ## Neural Networks Applications in Sentiment Attitude Extraction 
 
 > **UPD January 10th, 2021:** These scripts mostly become a part of [AREkit-0.22.0](https://github.com/nicolay-r/AREkit) demo and examples! [[demo-readme]](https://github.com/nicolay-r/AREkit/tree/master/examples)
